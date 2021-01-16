@@ -1,0 +1,12 @@
+@import url(themes-light-rules.css);
+
+* {
+    -fxc-1: #e9e9eb;
+    -fxc-2: #3d619b;
+    -fxc-3: #ef4b4c;
+    -fxc-4: #43506c;
+    -fxc-5: #7393c9;
+
+    /* Initial themeing */
+    -fx-base: -fxc-1;
+}

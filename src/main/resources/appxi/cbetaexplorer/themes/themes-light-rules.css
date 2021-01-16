@@ -1,0 +1,200 @@
+* {
+    -fx-font-family: 'Microsoft Yahei';
+    -fx-text-fill: #333333;
+    -fx-font-size: 16;
+}
+
+.tooltip {
+    -fx-background-color: derive(-fxc-1, 10%);
+    -fx-background-radius: 0;
+    -fx-padding: 4 8;
+}
+.button,
+.toggle-button,
+.radio-button,
+.menu-button {
+    -fx-background-radius: 0;
+    -fx-background-insets: 0;
+}
+
+.split-pane {
+    -fx-background-radius: 0;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+    -fx-border-width: 0;
+}
+.split-pane-divider {
+    -fx-background-color: derive(-fxc-1, -5%);
+    -fx-pref-width: 3px;
+}
+.virtual-flow .corner,
+.scroll-bar {
+    -fx-background-color: transparent;
+    -fx-opacity: 0.5;
+}
+.scroll-bar:hover {
+    -fx-opacity: 1;
+}
+.scroll-bar:vertical {
+    -fx-pref-width: .8em;
+}
+.scroll-bar:horizontal {
+    -fx-pref-height: .8em;
+}
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button {
+    -fx-pref-width: 0;
+    -fx-pref-height: 0;
+    -fx-opacity: 0;
+}
+.scroll-bar .thumb {
+    -fx-background-radius: 0;
+    -fx-background-color: derive(-fxc-1, -30%);
+}
+.web-view .scroll-bar .thumb {
+    -fx-background-radius: 0;
+    -fx-background-color: derive(-fxc-1, -50%);
+}
+.tool-bar {
+    -fx-background-color: derive(-fxc-1, 0%);
+}
+.tree-view {
+    -fx-padding: 0;
+}
+.tree-view, .tree-cell {
+    -fx-background-color: derive(-fxc-1, 0%);
+}
+.tree-cell:filled {
+    -fx-border-color: derive(-fxc-1, -8%);
+    -fx-border-width: 0 0 .05em 0;
+    -fx-border-style: dotted;
+}
+.tree-cell:filled:selected {
+    -fx-background-color: derive(-fxc-5, -10%);
+    -fx-text-fill: -fxc-1;
+}
+.tree-cell:filled:selected .arrow {
+    -fx-background-color: -fxc-1;
+}
+.tree-cell:filled:hover {
+    -fx-background-color: derive(-fxc-5, 10%);
+    -fx-text-fill: -fxc-1;
+}
+
+
+.bookview-pane .flexible-bar {
+    -fx-background-radius: 0;
+    -fx-background-color: #b1b1b1;
+    -fx-padding: 8;
+    -fx-opacity: .25;
+}
+.bookview-pane .flexible-bar:hover {
+    -fx-opacity: 1;
+}
+
+
+.accordion {
+    -fx-padding: 0;
+    -fx-background-color: derive(-fxc-1, 0%);
+}
+.accordion .title,
+.accordion .content {
+    -fx-background-color: derive(-fxc-1, 0%);
+    -fx-border-width: 1 0 0 0;
+    -fx-border-color: derive(-fxc-1, -10%);
+}
+.accordion .content {
+}
+.accordion .first-titled-pane .title {
+    -fx-border-width: 0 0 1 0;
+}
+.accordion .content {
+    -fx-padding: 0;
+}
+
+
+.workbench .openviews {
+    -fx-background-color: derive(-fxc-1, 0%);
+}
+.workbench .openviews .tab-header-area {
+    -fx-padding: 0;
+}
+.workbench .openviews .tab-header-background {
+    -fx-background-color: derive(-fxc-1, 0%);
+    -fx-border-width: 0 0 1 0;
+    -fx-border-color: derive(-fxc-1, -5%);
+}
+.workbench .openviews .tab-header-area .tab {
+    -fx-background-color: derive(-fxc-2, 100%);
+    -fx-background-radius: 0;
+    -fx-background-insets: 0;
+    -fx-padding: 2 8;
+    -fx-border-width: 0 1 0 0;
+    -fx-border-color: derive(-fxc-1, -5%);
+}
+.workbench .openviews .tab-header-area .tab .tab-label {
+    -fx-padding: 0 6 0 3;
+}
+.workbench .openviews .tab-header-area .tab .tab-close-button {
+    -fx-shape: "M19,6.41L17.59,5 12,10.59 6.41,5 5,6.41 10.59,12 5,17.59 6.41,19 12,13.41 17.59,19 19,17.59 13.41,12z";
+    -fx-scale-shape: false;
+}
+.workbench .openviews .tab-header-area .tab:selected {
+    -fx-background-color: -fxc-4;
+}
+.workbench .openviews .tab-header-area .tab:selected .tab-label {
+    -fx-text-fill: -fxc-1;
+    -fx-fill: -fxc-1;
+}
+.workbench .openviews .tab-header-area .tab:selected .tab-close-button {
+    -fx-background-color: -fxc-1;
+}
+.workbench .openviews .tab-header-area .tab:selected .glyph-icon {
+    -fx-fill: -fxc-1;
+}
+.workbench .openviews .tab-header-area .tab .focus-indicator {
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+}
+.workbench .openviews .tab-header-area .tab:hover {
+    -fx-background-color: derive(-fxc-4, 50%);
+}
+
+
+.workbench .workviews .button,
+.workbench .workviews .toggle-button,
+.workbench .workviews .menu-button {
+    -fx-background-color: transparent;
+}
+.workbench .workviews .button:hover,
+.workbench .workviews .toggle-button:hover,
+.workbench .workviews .menu-button:hover {
+    -fx-background-color: derive(-fxc-1, -5%);
+}
+
+
+.workbench .worktools .tool-bar {
+    -fx-background-color: derive(-fxc-2, 0%);
+}
+.workbench .worktools .toggle-button:selected {
+    -fx-border-color: -fxc-3;
+}
+.workbench .worktools .toggle-button .glyph-icon,
+.workbench .worktools .button .glyph-icon {
+    -fx-font-size: 1.2em !important;
+    -fx-fill: derive(-fxc-1, -10%);
+}
+.workbench .worktools .toggle-button:hover .glyph-icon,
+.workbench .worktools .toggle-button:selected .glyph-icon,
+.workbench .worktools .button:hover .glyph-icon {
+    -fx-fill: -fxc-3;
+}
+
+
+.workbench .infotools {
+    -fx-background-color: derive(-fxc-1, -10%);
+}
+.workbench .infotools * {
+    -fx-font-size: 12;
+    -fx-text-fill: derive(-fxc-1, -50%);
+}

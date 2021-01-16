@@ -1,0 +1,14 @@
+body {
+    background-color: #e3ebed;
+    color: #333333;
+}
+
+span.app {
+}
+
+span.app::after {
+    /* content: '[*]';
+    font-size: small;
+    color: red;
+    vertical-align: super; */
+}

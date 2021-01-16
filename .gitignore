@@ -1,0 +1,23 @@
+# maven
+/target
+
+# eclipse
+/.settings
+/.classpath
+/.project
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# more
+/.cached
+/.config
+/.hanlp-cache/
+/.hanlp-data/
+/.tome-cache
+/src/main/java/org/appxi/cbeta/explorer/bak
+/src/main/java/org/appxi/cbeta/explorer/AppLauncherDebug.java
+/src/main/java/org/appxi/cbeta/explorer/AppWorkbenchDebug.java
