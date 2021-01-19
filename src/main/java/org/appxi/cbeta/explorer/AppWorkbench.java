@@ -28,22 +28,22 @@ public class AppWorkbench extends WorkbenchApplication {
 
     private void initThemes() {
         final Theme webLight = Theme.light("web-light", "亮", "#e9e9eb")
-                .addStylesheet(getClass().getResource("/appxi/cbetaexplorer/themes/style-light.css"));
+                .addStylesheet(getClass().getResource("/appxi/cbetaExplorer/themes/style-light.css"));
         final Theme webLight2 = Theme.light("web-light-2", "明亮", "#328291")
-                .addStylesheet(getClass().getResource("/appxi/cbetaexplorer/themes/style-light-2.css"));
+                .addStylesheet(getClass().getResource("/appxi/cbetaExplorer/themes/style-light-2.css"));
         final Theme webDark = Theme.dark("web-dark", "暗", "#3b3b3b")
-                .addStylesheet(getClass().getResource("/appxi/cbetaexplorer/themes/style-dark.css"));
+                .addStylesheet(getClass().getResource("/appxi/cbetaExplorer/themes/style-dark.css"));
 
         themeProvider.addTheme(ThemeSet.light("light", "亮", "#e9e9eb")
-                .addStylesheet(getClass().getResource("/appxi/cbetaexplorer/themes/theme-light.css"))
+                .addStylesheet(getClass().getResource("/appxi/cbetaExplorer/themes/theme-light.css"))
                 .addTheme(webLight, webLight2));
 
         themeProvider.addTheme(ThemeSet.light("light-2", "明亮", "#328291")
-                .addStylesheet(getClass().getResource("/appxi/cbetaexplorer/themes/theme-light-2.css"))
+                .addStylesheet(getClass().getResource("/appxi/cbetaExplorer/themes/theme-light-2.css"))
                 .addTheme(webLight2, webLight));
 
         themeProvider.addTheme(ThemeSet.dark("dark", "暗", "#3b3b3b")
-                .addStylesheet(getClass().getResource("/appxi/cbetaexplorer/themes/theme-dark.css"))
+                .addStylesheet(getClass().getResource("/appxi/cbetaExplorer/themes/theme-dark.css"))
                 .addTheme(webDark));
     }
 
@@ -60,6 +60,11 @@ public class AppWorkbench extends WorkbenchApplication {
     }
 
     @Override
+    protected String getApplicationId() {
+        return "cbetaExplorer";
+    }
+
+    @Override
     protected String getApplicationTitle() {
         return "智悲乐藏";
     }
@@ -69,7 +74,7 @@ public class AppWorkbench extends WorkbenchApplication {
         final int[] iconSizes = new int[]{24, 32, 48, 64, 72, 96, 128};
         final List<URL> result = new ArrayList<>(iconSizes.length);
         for (int iconSize : iconSizes) {
-            result.add(getClass().getResource("/appxi/cbetaexplorer/icons/icon-" + iconSize + ".png"));
+            result.add(getClass().getResource("/appxi/cbetaExplorer/icons/icon-" + iconSize + ".png"));
         }
         return result;
     }

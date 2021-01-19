@@ -21,7 +21,7 @@ public class AppPreloader extends Preloader {
 
         rootPane = new BorderPane();
         final ImageView imageView = new ImageView();
-        imageView.setImage(new Image(getClass().getResourceAsStream("/appxi/cbetaexplorer/images/splash.jpg")));
+        imageView.setImage(new Image(getClass().getResourceAsStream("/appxi/cbetaExplorer/images/splash.jpg")));
         rootPane.setCenter(imageView);
         progressBar = new ProgressBar(0);
         progressBar.setPrefWidth(800);

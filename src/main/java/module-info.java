@@ -1,4 +1,4 @@
-module appxi.cbetaexplorer {
+module appxi.cbetaExplorer {
     requires java.logging;
     requires javafx.base;
     requires transitive javafx.controls;
