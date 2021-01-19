@@ -1,5 +1,6 @@
 package org.appxi.cbeta.explorer.search;
 
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.geometry.Pos;
@@ -14,69 +15,38 @@ import org.appxi.cbeta.explorer.event.BookEvent;
 import org.appxi.cbeta.explorer.event.ChapterEvent;
 import org.appxi.cbeta.explorer.event.DataEvent;
 import org.appxi.hanlp.convert.ChineseConvertors;
-import org.appxi.holder.IntHolder;
-import org.appxi.holder.RawHolder;
 import org.appxi.javafx.control.AlignedBar;
 import org.appxi.javafx.control.DialogPaneEx;
 import org.appxi.javafx.control.WorkbenchPane;
 import org.appxi.javafx.workbench.WorkbenchController;
 import org.appxi.tome.cbeta.CbetaBook;
-import org.appxi.tome.cbeta.CbetaHelper;
 import org.appxi.tome.model.Chapter;
 import org.appxi.util.StringHelper;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 
 class SearchService {
     private static final int SEARCH_RESULT_LIMIT = 1000;
 
-    private final SearchEngineMem searchEngine;
-    private final WorkbenchController workbenchController;
-    private final WorkbenchPane workbenchPane;
+    public final SearchEngine searchEngine;
+    public final WorkbenchController workbenchController;
+    public final WorkbenchPane workbenchPane;
+
     private boolean showing;
 
-    public SearchService(WorkbenchController workbenchController) {
+    public SearchService(WorkbenchController workbenchController, SearchEngine searchEngine) {
         this.workbenchController = workbenchController;
-        this.searchEngine = new SearchEngineMem();
-        //
-        workbenchPane = workbenchController.getViewport();
+        this.searchEngine = searchEngine;
+        this.workbenchPane = workbenchController.getViewport();
+    }
+
+    public void setupInitialize() {
         workbenchController.getPrimaryScene().getAccelerators().put(
                 new KeyCodeCombination(KeyCode.O, KeyCombination.SHORTCUT_DOWN),
                 this::show);
         workbenchPane.addEventHandler(KeyEvent.KEY_PRESSED, this::handleEventToShow);
         workbenchController.getEventBus().addEventHandler(DataEvent.SEARCH_OPEN, event -> this.show());
-    }
-
-    public void setupInitialize() {
-        CompletableFuture.runAsync(() -> {
-            ChineseConvertors.s2t("测试");
-            try {
-                Thread.sleep(600);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            long st = System.currentTimeMillis();
-            CbetaxHelper.books.getDataMap().values().parallelStream().forEach(book -> {
-                final Collection<SearchRecord> records = new ArrayList<>();
-                records.add(new SearchRecord(book.id, null, StringHelper.concat(book.id, " - ", book.title, " / ", book.authorInfo)));
-                CbetaHelper.walkTocChapters(book, (href, text) -> {
-                    records.add(new SearchRecord(book.id, href, StringHelper.concat(book.title, " / ", text)));
-                    // return false to break walking
-                    return false;
-                });
-                searchEngine.addSearchRecords(records);
-                records.clear();
-            });
-            workbenchController.getEventBus().fireEvent(new DataEvent(DataEvent.SEARCH_READY));
-            System.out.println("init search records used time: " + (System.currentTimeMillis() - st));
-            System.out.println("records size: " + SearchEngineMem.DATABASE.size());
-        }).whenComplete((o, err) -> {
-            System.out.println("111111    " + System.currentTimeMillis());
-            System.gc();
-        });
+        ChineseConvertors.s2t("测试");
     }
 
     private long previousShiftPressedTime;
@@ -111,7 +81,9 @@ class SearchService {
             handled = showing;
         }
         if (handled) {
-            hide();
+            if (null != searchingTask && searchingTask.inSearching())
+                searchingTask.cancelSearching();
+            else hide();
             evt.consume();
         }
     }
@@ -126,7 +98,7 @@ class SearchService {
             dialogPane = new DialogPaneEx();
             dialogPane.getStyleClass().add("search-pane");
             StackPane.setAlignment(dialogPane, Pos.TOP_CENTER);
-            dialogPane.setPrefSize(960, 600);
+            dialogPane.setPrefSize(1280, 720);
             dialogPane.setMinSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
             dialogPane.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
             dialogPane.addEventHandler(KeyEvent.KEY_PRESSED, this::handleEventToHide);
@@ -162,7 +134,7 @@ class SearchService {
                         this.setText(null);
                         return;
                     }
-                    this.setText(item.content());
+                    this.setText(item.toString());
                 }
             });
 
@@ -178,7 +150,6 @@ class SearchService {
     }
 
     public void hide() {
-        searchingCanceled = true;
         showing = false;
         workbenchPane.hideMasking(dialogPane);
         workbenchPane.masking.removeEventHandler(KeyEvent.KEY_PRESSED, this::handleEventToHide);
@@ -213,60 +184,78 @@ class SearchService {
         }
     }
 
-    private boolean searchingCanceled;
+    private SearchingTask searchingTask;
     private String searchingText;
 
     private void handleSearchingOnSearchInputChanged(String input) {
-        final String text = CbetaxHelper.stripUnexpected(input).replaceAll("[,，]$", "");
-        if (Objects.equals(this.searchingText, text))
+        final String inputText = CbetaxHelper.stripUnexpected(input).replaceAll("[,，]$", "");
+        if (Objects.equals(this.searchingText, inputText))
             return;
-        this.searchingText = ChineseConvertors.s2t(text);
+        this.searchingText = inputText;
+        if (null != searchingTask && searchingTask.inSearching())
+            searchingTask.cancelSearching();
+
         searchResult.getItems().clear();
-        if (searchingText.isBlank()) {
+        if (this.searchingText.isBlank()) {
             searchInfo.setText("请输入...");
             return;
         }
-        System.out.println(searchingText); // for debug
 
-        final RawHolder<String[]> words = new RawHolder<>(searchingText.split("[,，]"));
-        if (words.value != null && words.value.length == 1)
-            words.value = null;
+        String searchText = ChineseConvertors.s2t(inputText);
+        String[] searchWords = searchText.split("[,，]");
+        if (searchWords.length == 1)
+            searchWords = null;
 
-        final IntHolder matches = new IntHolder(0);
-
-        searchingCanceled = false;
-        for (SearchRecord record : SearchEngineMem.DATABASE) {
-            if (searchingCanceled) break;
-            matching(record, words, matches);
-            if (matches.value > SEARCH_RESULT_LIMIT)
-                searchingCanceled = true;
-        }
-//        for (CbetaBook book : CbetaxHelper.books.getDataMap().values()) {
-//            if (searchingCanceled) break;
-//            matching(book, words, matches);
-//        }
-//        if (booksModelInited) {
-//        } else {
-//            TreeHelper.walkLeafs(controller.treeView.getRoot(), item -> {
-//                final Book book = item.getValue();
-//                if (null == book) return false;
-//                matching(book, words, matches);
-//                return searchingCanceled;
-//            });
-//        }
-        if (matches.value < 1)
-            searchInfo.setText("未找到匹配项");
-        else searchInfo.setText(StringHelper.concat("找到 ", matches.value, matches.value > SEARCH_RESULT_LIMIT ? "+" : "", " 项"));
+        searchingTask = new SearchingTask(searchText, searchWords);
+        new Thread(searchingTask).start();
     }
 
-    private void matching(SearchRecord record, RawHolder<String[]> words, IntHolder matches) {
-        final String content = record.content();
-        boolean matched = content.contains(searchingText);
-        if (!matched && null != words.value)
-            matched = StringHelper.containsAny(content, words.value);
-        if (matched) {
-            matches.value++;
-            searchResult.getItems().add(record);
+    void updateSearchInfo() {
+        if (this.searchingText.isBlank()) {
+            searchResult.getItems().clear();
+            searchInfo.setText("请输入...");
+            return;
+        }
+        int matches = searchResult.getItems().size();
+        searchInfo.setText(matches < 1 ? "未找到匹配项"
+                : StringHelper.concat("找到 ", matches, matches >= SEARCH_RESULT_LIMIT ? "+" : "", " 项"));
+    }
+
+    class SearchingTask implements Runnable {
+        boolean searching, limitReached;
+        String text, words[];
+
+        public SearchingTask(String text, String[] words) {
+            this.text = text;
+            this.words = words;
+        }
+
+        @Override
+        public void run() {
+            searching = true;
+            searchEngine.search(text, words, (idx, record) -> {
+                limitReached = idx > SEARCH_RESULT_LIMIT;
+
+                Platform.runLater(() -> {
+                    if (!searching || limitReached)
+                        return;
+                    searchResult.getItems().add(record);
+                    updateSearchInfo();
+                });
+                return !searching || limitReached;
+            });
+            searching = false;
+            limitReached = true;
+            Platform.runLater(SearchService.this::updateSearchInfo);
+        }
+
+        boolean inSearching() {
+            return searching || !limitReached;
+        }
+
+        void cancelSearching() {
+            searching = false;
+            limitReached = true;
         }
     }
 }

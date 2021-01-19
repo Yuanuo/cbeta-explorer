@@ -6,20 +6,20 @@ import org.appxi.tome.cbeta.BookTreeBase;
 import org.appxi.tome.cbeta.BookTreeMode;
 import org.appxi.tome.cbeta.CbetaBook;
 
+import java.util.List;
+
 public class BookTree extends BookTreeBase<TreeItem<CbetaBook>> {
-    public BookTree(BookMap bookMap, BookTreeMode mode) {
-        super(bookMap, new TreeItem<>(null), mode);
+    public BookTree(BookMap books, BookTreeMode mode) {
+        super(books, new TreeItem<>(null), mode);
     }
 
     @Override
-    protected CbetaBook createCbetaBook() {
-        return new CbetaBook();
+    protected TreeItem<CbetaBook> createTreeItem(CbetaBook itemValue) {
+        return new TreeItem<>(itemValue);
     }
 
     @Override
-    protected TreeItem<CbetaBook> createTreeItem(TreeItem<CbetaBook> parent, CbetaBook book) {
-        final TreeItem<CbetaBook> node = new TreeItem<>(book);
-        parent.getChildren().add(node);
-        return node;
+    protected void setTreeChildren(TreeItem<CbetaBook> parent, List<TreeItem<CbetaBook>> children) {
+        parent.getChildren().addAll(children);
     }
 }

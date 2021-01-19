@@ -19,6 +19,7 @@ import org.appxi.javafx.workbench.views.WorkbenchOpenpartController;
 import org.appxi.prefs.UserPrefs;
 import org.appxi.tome.cbeta.BookTreeMode;
 import org.appxi.tome.cbeta.CbetaBook;
+import org.appxi.util.DevtoolHelper;
 
 import java.util.Objects;
 
@@ -57,10 +58,10 @@ public class BooksController extends WorkbenchWorkpartControllerExt {
         btnMore.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
         btnMore.setGraphic(new FontAwesomeIconView(FontAwesomeIcon.ELLIPSIS_H));
 
-        final RadioMenuItem mBulei = new RadioMenuItem("部类目录");
-        mBulei.setToggleGroup(treeViewModeGroup);
-        mBulei.setUserData("catalog");
-        mBulei.setOnAction(this::handleTreeViewModeAction);
+        final RadioMenuItem mCatalog = new RadioMenuItem("部类目录");
+        mCatalog.setToggleGroup(treeViewModeGroup);
+        mCatalog.setUserData("catalog");
+        mCatalog.setOnAction(this::handleTreeViewModeAction);
 
         final RadioMenuItem mSimple = new RadioMenuItem("简易目录");
         mSimple.setToggleGroup(treeViewModeGroup);
@@ -72,7 +73,7 @@ public class BooksController extends WorkbenchWorkpartControllerExt {
         mAdvance.setUserData("advance");
         mAdvance.setOnAction(this::handleTreeViewModeAction);
         //
-        btnMore.getItems().addAll(new SeparatorMenuItemEx("目录模式"), mBulei, mSimple, mAdvance);
+        btnMore.getItems().addAll(new SeparatorMenuItemEx("目录模式"), mCatalog, mSimple, mAdvance);
         //
         this.toolbar.addRight(btnSearch, btnLocate, btnMore);
         //
@@ -126,6 +127,6 @@ public class BooksController extends WorkbenchWorkpartControllerExt {
         final TreeItem<CbetaBook> rootItem = bookTree.getDataTree();
         rootItem.setExpanded(true);
         Platform.runLater(() -> treeView.setRoot(rootItem));
-        System.out.println("load booklist views used times: " + (System.currentTimeMillis() - st));
+        DevtoolHelper.LOG.info("load booklist views used times: " + (System.currentTimeMillis() - st));
     }
 }

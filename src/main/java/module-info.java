@@ -1,5 +1,5 @@
 module appxi.cbetaexplorer {
-
+    requires java.logging;
     requires javafx.base;
     requires transitive javafx.controls;
     requires transitive javafx.graphics;
@@ -11,11 +11,12 @@ module appxi.cbetaexplorer {
     requires appxi.tome;
     requires appxi.javafx;
     requires appxi.timeago;
-    requires hanlp.convert;
+    requires appxi.hanlp.convert;
     requires org.jsoup;
     requires de.jensd.fx.fontawesomefx.fontawesome;
 
     exports org.appxi.cbeta.explorer;
+    exports org.appxi.cbeta.explorer.bak;
 
     opens org.appxi.cbeta.explorer.reader;
 }

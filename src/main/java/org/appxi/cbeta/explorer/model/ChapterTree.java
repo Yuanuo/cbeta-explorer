@@ -4,13 +4,13 @@ import javafx.scene.control.TreeItem;
 import org.appxi.javafx.control.TreeViewExt;
 import org.appxi.javafx.helper.TreeHelper;
 import org.appxi.tome.cbeta.CbetaBook;
-import org.appxi.tome.cbeta.ChapterTreeBase;
+import org.appxi.tome.cbeta.ChapterTreeParser;
 import org.appxi.tome.model.Chapter;
 import org.appxi.util.ext.Node;
 
 import java.util.Comparator;
 
-public class ChapterTree extends ChapterTreeBase<TreeItem<Chapter>> {
+public class ChapterTree extends ChapterTreeParser<TreeItem<Chapter>> {
     public ChapterTree(CbetaBook book) {
         super(book, new TreeItem<>(new Chapter()), new TreeItem<>(new Chapter()), null);
     }

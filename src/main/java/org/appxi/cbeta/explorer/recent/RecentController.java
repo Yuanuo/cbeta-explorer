@@ -91,7 +91,7 @@ public class RecentController extends WorkbenchWorkpartControllerExt {
             final BookviewController controller = new BookviewController(book);
             if (recent.getBoolean(key, false))
                 selectedController.value = controller;
-            getWorkbenchController().addWorkbenchViewpartController(controller);
+            getWorkbenchController().addWorkbenchOpenpartController(controller, true);
             controller.setupInitialize();
         });
         if (null != selectedController.value) {

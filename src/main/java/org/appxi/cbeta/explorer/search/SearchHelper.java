@@ -15,12 +15,15 @@ public abstract class SearchHelper {
         return null == searchById ? null : searchById.apply(id);
     }
 
+    private static SearchEngine searchEngine;
     private static SearchService searchService;
 
     public static void setupSearchService(WorkbenchController controller) {
         if (null != searchService)
             return;
-        searchService = new SearchService(controller);
+        searchEngine = new SearchEngineMem(controller);
+        searchService = new SearchService(controller, searchEngine);
         searchService.setupInitialize();
+        searchEngine.setupInitialize();
     }
 }
