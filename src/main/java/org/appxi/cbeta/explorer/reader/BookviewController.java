@@ -213,7 +213,7 @@ public class BookviewController extends WorkbenchOpenpartController {
         currentChapter = chapter;
 
         final long st = System.currentTimeMillis();
-        final String includeBase = UserPrefs.workDir().toUri().toString();
+        final String includeBase = UserPrefs.workDir().resolve("app").toUri().toString();
         final HanLang sourceHan = HanLang.hant, targetHan = HanLang.hans;
         final String htmlDoc = this.bookDocument.getVolumeHtmlDocument(currentChapter.path, targetHan,
                 body -> ChineseConvertors.convert(StringHelper.concat("<body data-finder-wrapper data-finder-scroll-offset=\"175\">\n",
