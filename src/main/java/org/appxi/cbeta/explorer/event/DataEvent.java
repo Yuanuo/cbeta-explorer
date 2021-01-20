@@ -12,6 +12,8 @@ public class DataEvent extends Event {
 
     public static final EventType<DataEvent> SEARCH_OPEN = new EventType<>(Event.ANY, "SEARCH_OPEN");
 
+    public static final EventType<DataEvent> DISPLAY_HAN = new EventType<>(Event.ANY, "DISPLAY_HAN");
+
     public DataEvent(EventType<DataEvent> eventType) {
         super(eventType);
     }

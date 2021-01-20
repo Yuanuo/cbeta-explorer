@@ -11,6 +11,7 @@ import javafx.scene.layout.StackPane;
 import netscape.javascript.JSObject;
 import org.appxi.cbeta.explorer.event.BookEvent;
 import org.appxi.cbeta.explorer.event.ChapterEvent;
+import org.appxi.cbeta.explorer.event.DataEvent;
 import org.appxi.cbeta.explorer.model.ChapterTree;
 import org.appxi.hanlp.convert.ChineseConvertors;
 import org.appxi.holder.RawHolder;
@@ -115,12 +116,14 @@ public class BookviewController extends WorkbenchOpenpartController {
     @Override
     public void setupInitialize() {
         getEventBus().addEventHandler(ThemeEvent.CHANGED, this::setupTheme);
+        getEventBus().addEventHandler(DataEvent.DISPLAY_HAN, this::handleDisplayHanChanged);
     }
 
     @Override
     public void onViewportClosed(Event event) {
         getEventBus().removeEventHandler(ThemeEvent.CHANGED, this::setupTheme);
         getEventBus().removeEventHandler(ApplicationEvent.STOPPING, this::handleApplicationEventStopping);
+        getEventBus().removeEventHandler(DataEvent.DISPLAY_HAN, this::handleDisplayHanChanged);
         setPrimaryTitle(null);
     }
 
@@ -191,6 +194,13 @@ public class BookviewController extends WorkbenchOpenpartController {
         }
     }
 
+    private void handleDisplayHanChanged(DataEvent event) {
+        saveUserExperienceData();
+        Chapter temp = this.currentChapter;
+        this.currentChapter = null;
+        openChapter(null, temp);
+    }
+
     private Chapter currentChapter;
 
     private void handleChaptersTreeViewEnterOrDoubleClickAction(final InputEvent event, final TreeItem<Chapter> treeItem) {
@@ -214,12 +224,12 @@ public class BookviewController extends WorkbenchOpenpartController {
 
         final long st = System.currentTimeMillis();
         final String includeBase = UserPrefs.workDir().resolve("app").toUri().toString();
-        final HanLang sourceHan = HanLang.hant, targetHan = HanLang.hans;
+        final HanLang targetHan = HanLang.valueBy(UserPrefs.prefs.getString("display.han", HanLang.hant.lang));
         final String htmlDoc = this.bookDocument.getVolumeHtmlDocument(currentChapter.path, targetHan,
                 body -> ChineseConvertors.convert(StringHelper.concat("<body data-finder-wrapper data-finder-scroll-offset=\"175\">\n",
                         "  <a data-finder-activator style=\"display:none\"></a>\n",
                         "  <div data-finder-content>", body.html(), "</div>\n",
-                        "</body>"), sourceHan, targetHan),
+                        "</body>"), HanLang.hant, targetHan),
 
                 StringHelper.concat(includeBase, "resources/scripts/jquery.0.js"),
                 StringHelper.concat(includeBase, "resources/scripts/jquery.isinviewport.js"),
@@ -293,7 +303,7 @@ public class BookviewController extends WorkbenchOpenpartController {
 
     public class JavaConnector {
         public String convertInput(String input) {
-            return ChineseConvertors.s2t(input);
+            return ChineseConvertors.toHant(input);
         }
 
         public String[] getBookmarks() {

@@ -46,7 +46,7 @@ class SearchService {
                 this::show);
         workbenchPane.addEventHandler(KeyEvent.KEY_PRESSED, this::handleEventToShow);
         workbenchController.getEventBus().addEventHandler(DataEvent.SEARCH_OPEN, event -> this.show());
-        ChineseConvertors.s2t("测试");
+        ChineseConvertors.toHant("测试");
     }
 
     private long previousShiftPressedTime;
@@ -201,7 +201,7 @@ class SearchService {
             return;
         }
 
-        String searchText = ChineseConvertors.s2t(inputText);
+        String searchText = ChineseConvertors.toHant(inputText);
         String[] searchWords = searchText.split("[,，]");
         if (searchWords.length == 1)
             searchWords = null;
