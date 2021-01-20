@@ -7,13 +7,14 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TreeItem;
 import org.appxi.cbeta.explorer.event.BookEvent;
 import org.appxi.cbeta.explorer.event.DataEvent;
+import org.appxi.cbeta.explorer.home.WelcomeController;
 import org.appxi.cbeta.explorer.reader.BookviewController;
 import org.appxi.cbeta.explorer.search.SearchHelper;
 import org.appxi.cbeta.explorer.workbench.WorkbenchWorkpartControllerExt;
-import org.appxi.holder.RawHolder;
 import org.appxi.javafx.control.TreeViewEx;
 import org.appxi.javafx.control.TreeViewExt;
 import org.appxi.javafx.desktop.ApplicationEvent;
+import org.appxi.javafx.workbench.views.WorkbenchOpenpartController;
 import org.appxi.prefs.Preferences;
 import org.appxi.prefs.PreferencesInProperties;
 import org.appxi.prefs.UserPrefs;
@@ -83,20 +84,25 @@ public class RecentController extends WorkbenchWorkpartControllerExt {
 
     private void loadRecentViews() {
         final Preferences recent = createRecentViews(true);
-        final RawHolder<BookviewController> selectedController = new RawHolder<>();
-        recent.getPropertyKeys().forEach(key -> {
+        WorkbenchOpenpartController selectedController = null, addedController = null;
+        for (String key : recent.getPropertyKeys()) {
             final CbetaBook book = SearchHelper.searchById(key);
             if (null == book)
-                return;
-            final BookviewController controller = new BookviewController(book);
+                continue;
+            addedController = new BookviewController(book);
             if (recent.getBoolean(key, false))
-                selectedController.value = controller;
-            getWorkbenchController().addWorkbenchOpenpartController(controller, true);
-            controller.setupInitialize();
-        });
-        if (null != selectedController.value) {
-            getWorkbenchViewport().selectOpenpart(selectedController.value.viewId);
+                selectedController = addedController;
+            getWorkbenchController().addWorkbenchOpenpartController(addedController, true);
+            addedController.setupInitialize();
         }
+        if (null == addedController) {
+            addedController = new WelcomeController();
+            getWorkbenchController().addWorkbenchOpenpartController(addedController, true);
+            addedController.setupInitialize();
+        }
+        if (null == selectedController)
+            selectedController = addedController;
+        getWorkbenchViewport().selectOpenpart(selectedController.viewId);
     }
 
     private void saveRecentBooks() {
@@ -148,9 +154,9 @@ public class RecentController extends WorkbenchWorkpartControllerExt {
                 this.timeAgoMsgs = TimeAgo.MessagesBuilder.start().withLocale("zh").build();
 
             for (RecentBook recent : recents) {
-                final String timeago = TimeAgo.using(recent.updateAt.getTime(), timeAgoMsgs);
-                if (null == group || !Objects.equals(group.getValue(), timeago)) {
-                    groups.add(group = new TreeItem<>(timeago));
+                final String timeAgo = TimeAgo.using(recent.updateAt.getTime(), timeAgoMsgs);
+                if (null == group || !Objects.equals(group.getValue(), timeAgo)) {
+                    groups.add(group = new TreeItem<>(timeAgo));
                 }
                 group.getChildren().add(new TreeItem<>(recent));
             }
