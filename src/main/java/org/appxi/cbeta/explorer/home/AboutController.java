@@ -41,7 +41,7 @@ public class AboutController extends WorkbenchWorktoolController {
     @Override
     public void onViewportSelected(boolean firstTime) {
         final Alert alert = new Alert(Alert.AlertType.NONE);
-        alert.setTitle("About");
+        alert.setTitle(viewName);
 
         final Label head = new Label(AppInfo.NAME, new ImageView(getClass().getResource("/appxi/cbetaExplorer/icons/icon-64.png").toExternalForm()));
         head.setStyle("-fx-font-size: 2em; -fx-font-weight: bold; -fx-padding: .5em 1em 1em .5em;");
@@ -77,8 +77,7 @@ public class AboutController extends WorkbenchWorktoolController {
         final DialogPaneEx pane = new DialogPaneEx();
         pane.setContent(new VBox(head, info));
         alert.setDialogPane(pane);
-        alert.getDialogPane().getButtonTypes().add(ButtonType.OK);
 
-        alert.show();
+        showAlertWithThemeAndWaitForNothing(alert);
     }
 }
