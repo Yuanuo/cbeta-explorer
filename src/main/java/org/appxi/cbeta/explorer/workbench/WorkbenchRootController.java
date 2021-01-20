@@ -63,7 +63,7 @@ public class WorkbenchRootController extends WorkbenchController {
     }
 
     private void createAboutLinkAtStatusBar() {
-//        final Hyperlink link = new Hyperlink("智悲乐藏v21.010");
+//        final Hyperlink link = new Hyperlink(AppInfo.NAME + " " + AppInfo.VERSION);
 //        link.setVisited(true);
 //        link.setStyle("-fx-underline: false;");
 //        getViewport().infotools.addRight(link);

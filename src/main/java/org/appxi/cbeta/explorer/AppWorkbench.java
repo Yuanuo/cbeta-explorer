@@ -61,12 +61,12 @@ public class AppWorkbench extends WorkbenchApplication {
 
     @Override
     protected String getApplicationId() {
-        return "cbetaExplorer";
+        return AppInfo.ID;
     }
 
     @Override
     protected String getApplicationTitle() {
-        return "智悲乐藏";
+        return AppInfo.NAME;
     }
 
     @Override
