@@ -19,7 +19,7 @@ public abstract class CbetaxHelper {
                 return;
             }
             final DirectoryChooser dirChooser = new DirectoryChooser();
-            dirChooser.setTitle("Choose CBETA Home Directory");
+            dirChooser.setTitle("请选择CBETA数据主目录（cbeta 或 cbeta/Bookcase/CBETA）");
             final File selectedDir = dirChooser.showDialog(primaryStage);
             if (null == selectedDir) {
                 System.exit(-1);

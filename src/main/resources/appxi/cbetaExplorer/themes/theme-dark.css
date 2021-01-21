@@ -28,6 +28,9 @@
     -fx-background-radius: 0;
     -fx-background-insets: 0;
 }
+.text-area .content {
+    -fx-background-color: derive(-fxc-1, 10%);
+}
 
 .split-pane {
     -fx-background-radius: 0;
