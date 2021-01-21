@@ -43,23 +43,23 @@ public class PreferencesController extends WorkbenchWorktoolController {
 
     @Override
     public void onViewportSelected(boolean firstTime) {
-        final Alert alert = new Alert(Alert.AlertType.NONE);
-        alert.setTitle(viewName);
-        alert.setResizable(true);
-
         final List<Node> nodes = new ArrayList<>();
 
         buildThemeConfig(nodes);
-
         buildDisplayHanConfig(nodes);
 
-        final DialogPaneEx pane = new DialogPaneEx();
-        pane.setStyle("-fx-padding: 1em;");
-        pane.setMinSize(480, 640);
+        final ScrollPane scrollPane = new ScrollPane(new VBox(nodes.toArray(new Node[0])));
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
 
-        pane.setContent(new ScrollPane(new VBox(nodes.toArray(new Node[0]))));
-        alert.setDialogPane(pane);
+        final DialogPaneEx dialogPane = new DialogPaneEx();
+        dialogPane.setStyle("-fx-padding: 1em;");
+        dialogPane.setPrefSize(480, 640);
+        dialogPane.setContent(scrollPane);
 
+        final Alert alert = new Alert(Alert.AlertType.NONE);
+        alert.setTitle(viewName);
+        alert.setDialogPane(dialogPane);
         showAlertWithThemeAndWaitForNothing(alert);
     }
 

@@ -5,7 +5,6 @@ import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.image.ImageView;
@@ -44,7 +43,7 @@ public class AboutController extends WorkbenchWorktoolController {
         alert.setTitle(viewName);
 
         final Label head = new Label(AppInfo.NAME, new ImageView(getClass().getResource("/appxi/cbetaExplorer/icons/icon-64.png").toExternalForm()));
-        head.setStyle("-fx-font-size: 2em; -fx-font-weight: bold; -fx-padding: .5em 1em 1em .5em;");
+        head.setStyle("-fx-font-size: 2em; -fx-padding: .5em 1em 1em .5em;");
 
         final TextArea info = new TextArea();
         VBox.setVgrow(info, Priority.ALWAYS);
