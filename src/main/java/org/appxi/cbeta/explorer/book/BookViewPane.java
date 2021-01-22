@@ -1,4 +1,4 @@
-package org.appxi.cbeta.explorer.reader;
+package org.appxi.cbeta.explorer.book;
 
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView;
@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class BookviewPane extends StackPaneEx {
+public class BookViewPane extends StackPaneEx {
     protected final SplitPane viewspane;
     protected final StackPane workview;
     protected final WebPane webPane;
@@ -31,7 +31,7 @@ public class BookviewPane extends StackPaneEx {
     private ToggleButton workviewToggle, moretoolToggle;
     private Theme currentTheme;
 
-    public BookviewPane() {
+    public BookViewPane() {
         super();
 
         this.workview = new StackPane();
@@ -179,7 +179,7 @@ public class BookviewPane extends StackPaneEx {
         }
     }
 
-    public BookviewPane addWorkview(Node workview) {
+    public BookViewPane addWorkview(Node workview) {
         this.workview.getChildren().add(workview);
         return this;
     }

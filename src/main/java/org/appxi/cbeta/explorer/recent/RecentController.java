@@ -8,7 +8,7 @@ import javafx.scene.control.TreeItem;
 import org.appxi.cbeta.explorer.event.BookEvent;
 import org.appxi.cbeta.explorer.event.DataEvent;
 import org.appxi.cbeta.explorer.home.WelcomeController;
-import org.appxi.cbeta.explorer.reader.BookviewController;
+import org.appxi.cbeta.explorer.book.BookViewController;
 import org.appxi.cbeta.explorer.search.SearchHelper;
 import org.appxi.cbeta.explorer.workbench.WorkbenchWorkpartControllerExt;
 import org.appxi.javafx.control.TreeViewEx;
@@ -89,7 +89,7 @@ public class RecentController extends WorkbenchWorkpartControllerExt {
             final CbetaBook book = SearchHelper.searchById(key);
             if (null == book)
                 continue;
-            addedController = new BookviewController(book);
+            addedController = new BookViewController(book);
             if (recent.getBoolean(key, false))
                 selectedController = addedController;
             getWorkbenchController().addWorkbenchOpenpartController(addedController, true);
@@ -120,7 +120,7 @@ public class RecentController extends WorkbenchWorkpartControllerExt {
     private void saveRecentViews() {
         final Preferences recent = createRecentViews(false);
         getWorkbenchViewport().getOpentools().forEach(tab -> {
-            if (tab.getUserData() instanceof BookviewController controller)
+            if (tab.getUserData() instanceof BookViewController controller)
                 recent.setProperty(controller.book.id, tab.isSelected());
         });
         recent.save();

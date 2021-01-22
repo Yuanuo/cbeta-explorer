@@ -18,5 +18,5 @@ module appxi.cbetaExplorer {
     exports org.appxi.cbeta.explorer;
     exports org.appxi.cbeta.explorer.bak;
 
-    opens org.appxi.cbeta.explorer.reader;
+    opens org.appxi.cbeta.explorer.book;
 }

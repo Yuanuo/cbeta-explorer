@@ -54,9 +54,6 @@ function handleOnResizeBody() {
     }, 200);
 }
 
-document.addEventListener('DOMContentLoaded', function (event) {
-    new AnchorJS({placement: 'left', icon: ''}).add('div[class~=head], p[id]');
-});
 $(document).ready(function () {
     documentLoaded = true;
     document.body.onresize = handleOnResizeBody;

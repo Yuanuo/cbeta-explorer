@@ -10,10 +10,10 @@ import org.appxi.cbeta.explorer.CbetaxHelper;
 import org.appxi.cbeta.explorer.event.BookEvent;
 import org.appxi.cbeta.explorer.event.DataEvent;
 import org.appxi.cbeta.explorer.model.BookTree;
-import org.appxi.cbeta.explorer.reader.BookviewController;
 import org.appxi.cbeta.explorer.workbench.WorkbenchWorkpartControllerExt;
 import org.appxi.javafx.control.SeparatorMenuItemEx;
 import org.appxi.javafx.control.TreeViewExt;
+import org.appxi.javafx.desktop.ApplicationEvent;
 import org.appxi.javafx.helper.TreeHelper;
 import org.appxi.javafx.workbench.views.WorkbenchOpenpartController;
 import org.appxi.prefs.UserPrefs;
@@ -23,11 +23,11 @@ import org.appxi.util.DevtoolHelper;
 
 import java.util.Objects;
 
-public class BooksController extends WorkbenchWorkpartControllerExt {
+public class BookListController extends WorkbenchWorkpartControllerExt {
     private final ToggleGroup treeViewModeGroup = new ToggleGroup();
     private final TreeViewExt<CbetaBook> treeView;
 
-    public BooksController() {
+    public BookListController() {
         super("BOOKS", "典籍");
 
         this.treeView = new TreeViewExt<>((e, t) -> getEventBus().fireEvent(new BookEvent(BookEvent.OPEN, t.getValue())));
@@ -94,13 +94,15 @@ public class BooksController extends WorkbenchWorkpartControllerExt {
         }
         if (null != navToggle)
             navToggle.setSelected(true);
+
+        getEventBus().addEventHandler(ApplicationEvent.STARTED, event -> InternalHelper.initHtmlIncludes());
         //
         getEventBus().addEventHandler(DataEvent.BOOKS_READY, event -> handleTreeViewModeAction(null));
     }
 
     private void handleLocateInTreeViewAction(ActionEvent event) {
         final WorkbenchOpenpartController openpart = getWorkbenchViewport().selectedOpenpart();
-        if (!(openpart instanceof BookviewController controller))
+        if (!(openpart instanceof BookViewController controller))
             return;
 
         final TreeItem<CbetaBook> treeItem = TreeHelper.findFirstByValue(treeView.getRoot(), controller.book);

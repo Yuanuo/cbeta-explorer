@@ -2,12 +2,12 @@ package org.appxi.cbeta.explorer.workbench;
 
 import javafx.application.Platform;
 import javafx.event.Event;
-import org.appxi.cbeta.explorer.book.BooksController;
+import org.appxi.cbeta.explorer.book.BookListController;
 import org.appxi.cbeta.explorer.event.BookEvent;
 import org.appxi.cbeta.explorer.event.ChapterEvent;
 import org.appxi.cbeta.explorer.home.AboutController;
 import org.appxi.cbeta.explorer.prefs.PreferencesController;
-import org.appxi.cbeta.explorer.reader.BookviewController;
+import org.appxi.cbeta.explorer.book.BookViewController;
 import org.appxi.cbeta.explorer.recent.RecentController;
 import org.appxi.javafx.workbench.WorkbenchController;
 import org.appxi.javafx.workbench.views.WorkbenchViewpartController;
@@ -35,7 +35,7 @@ public class WorkbenchRootController extends WorkbenchController {
     }
 
     private void handleOpenBookOrChapter(Event event, CbetaBook book, Chapter chapter) {
-        final BookviewController openpart = (BookviewController) getViewport().findOpenpart(book.id);
+        final BookViewController openpart = (BookViewController) getViewport().findOpenpart(book.id);
         if (null != openpart) {
             getViewport().selectOpenpart(openpart.viewId);
             event.consume();
@@ -43,7 +43,7 @@ public class WorkbenchRootController extends WorkbenchController {
             return;
         }
         Platform.runLater(() -> {
-            final BookviewController controller = new BookviewController(book, chapter);
+            final BookViewController controller = new BookViewController(book, chapter);
             addWorkbenchViewpartController(controller);
             controller.setupInitialize();
             getViewport().selectOpenpart(controller.viewId);
@@ -53,7 +53,7 @@ public class WorkbenchRootController extends WorkbenchController {
     @Override
     protected List<WorkbenchViewpartController> createViewpartControllers() {
         final List<WorkbenchViewpartController> result = new ArrayList<>();
-        result.add(new BooksController());
+        result.add(new BookListController());
         result.add(new RecentController());
 //        result.add(new BookmarksController());
 //        result.add(new BooknotesController());

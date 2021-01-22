@@ -1,4 +1,4 @@
-package org.appxi.cbeta.explorer.reader;
+package org.appxi.cbeta.explorer.book;
 
 import javafx.beans.Observable;
 import javafx.collections.ObservableList;
@@ -36,11 +36,11 @@ import java.nio.file.Path;
 import java.util.Objects;
 import java.util.function.Predicate;
 
-public class BookviewController extends WorkbenchOpenpartController {
+public class BookViewController extends WorkbenchOpenpartController {
     public final CbetaBook book;
     private final BookDocument bookDocument;
 
-    private BookviewPane bookviewPane;
+    private BookViewPane bookviewPane;
     private Accordion workViews;
     private TitledPane tocsPane, volsPane, metaPane;
     private TreeViewExt<Chapter> tocTree, volTree;
@@ -48,11 +48,11 @@ public class BookviewController extends WorkbenchOpenpartController {
 
     private final Chapter initChapter;
 
-    public BookviewController(CbetaBook book) {
+    public BookViewController(CbetaBook book) {
         this(book, null);
     }
 
-    public BookviewController(CbetaBook book, Chapter initChapter) {
+    public BookViewController(CbetaBook book, Chapter initChapter) {
         super(book.id, book.title);
         this.book = book;
         this.bookDocument = new BookDocumentEx(book);
@@ -80,7 +80,7 @@ public class BookviewController extends WorkbenchOpenpartController {
 
         this.workViews = new Accordion(this.tocsPane, this.volsPane, this.metaPane);
 
-        this.bookviewPane = new BookviewPane();
+        this.bookviewPane = new BookViewPane();
         this.bookviewPane.addWorkview(this.workViews);
 
         this.webPane = this.bookviewPane.webPane;
@@ -223,23 +223,13 @@ public class BookviewController extends WorkbenchOpenpartController {
         currentChapter = chapter;
 
         final long st = System.currentTimeMillis();
-        final String includeBase = UserPrefs.workDir().resolve("app").toUri().toString();
         final HanLang targetHan = HanLang.valueBy(UserPrefs.prefs.getString("display.han", HanLang.hant.lang));
         final String htmlDoc = this.bookDocument.getVolumeHtmlDocument(currentChapter.path, targetHan,
                 body -> ChineseConvertors.convert(StringHelper.concat("<body data-finder-wrapper data-finder-scroll-offset=\"175\">\n",
                         "  <a data-finder-activator style=\"display:none\"></a>\n",
                         "  <div data-finder-content>", body.html(), "</div>\n",
                         "</body>"), HanLang.hant, targetHan),
-
-                StringHelper.concat(includeBase, "resources/scripts/jquery.0.js"),
-                StringHelper.concat(includeBase, "resources/scripts/jquery.isinviewport.js"),
-//              StringHelper.concat(includeBase, "resources/scripts/anchor.min.js"),
-                StringHelper.concat(includeBase, "resources/scripts/jquery.highlight.js"),
-                StringHelper.concat(includeBase, "resources/scripts/jquery.scrollto.js"),
-                StringHelper.concat(includeBase, "resources/scripts/jquery.finder.js"),
-
-                StringHelper.concat(includeBase, "resources/styles/app.css"),
-                StringHelper.concat(includeBase, "resources/scripts/app.js")
+                InternalHelper.htmlIncludes
         );
         this.webPane.setOnLoadSucceedAction(we -> {
             // set an interface object named 'javaConnector' in the web engine's page
@@ -286,11 +276,14 @@ public class BookviewController extends WorkbenchOpenpartController {
     }
 
     public void saveUserExperienceData() {
-        final double scrollTopPercentage = webPane.getScrollTopPercentage();
-        UserPrefs.recents.setProperty(book.id + ".percent", scrollTopPercentage);
+        try {
+            final double scrollTopPercentage = webPane.getScrollTopPercentage();
+            UserPrefs.recents.setProperty(book.id + ".percent", scrollTopPercentage);
 
-        final String selector = webPane.executeScript("scrollTop1Selector()");
-        UserPrefs.recents.setProperty(book.id + ".selector", selector);
+            final String selector = webPane.executeScript("scrollTop1Selector()");
+            UserPrefs.recents.setProperty(book.id + ".selector", selector);
+        } catch (Exception ignore) {
+        }
 //        DevtoolHelper.LOG.info("save... selector=" + selector + ", atPercentage = " + scrollTopPercentage);
     }
 
