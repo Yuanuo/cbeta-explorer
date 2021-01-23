@@ -26,6 +26,32 @@
 
 如果你也有这样的需求，希望本程序可以为你带来帮助。
 
+## 如何使用
+
++ 下载适用于本机平台的安装包（msi、deb、dmg）并执行安装
++ 确保本机有CBETA经藏数据。通常为如下目录结构：
+  + figures
+  + font
+  + gaiji-CB
+  + help
+  + index
+  + rj-gif
+  + sd-gif
+  + searchrange
+  + toc
+  + XML
+  + advance_nav.xhtml
+  + bookdata.txt
+  + bulei_nav.xhtml
+  + catalog.txt
+  + cbreader.js
+  + index.xml
+  + jquery.min.js
+  + menu_nav.xhtml
+  + simple_nav.xhtml
+  + spine.txt
++ 通过快捷方式启动程序即可。第一次启动时需要选择CBETA经藏数据的主目录。
+
 ## 多平台支持
 
 由于本程序基于Java/JavaFX/OpenJFX开发，可轻易实现跨平台，目前经过测试的三个平台
