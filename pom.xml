@@ -5,7 +5,7 @@
 
 	<groupId>org.appxi</groupId>
 	<artifactId>cbeta-explorer</artifactId>
-	<version>21.01.00</version>
+	<version>21.01.23</version>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -22,7 +22,7 @@
 		<dependency>
 			<groupId>org.appxi</groupId>
 			<artifactId>appxi-tome</artifactId>
-			<version>21.01.00</version>
+			<version>21.01.23</version>
 		</dependency>
 		<dependency>
 			<groupId>org.appxi</groupId>
