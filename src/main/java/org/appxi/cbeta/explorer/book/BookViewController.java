@@ -202,6 +202,7 @@ public class BookViewController extends WorkbenchOpenpartController {
     }
 
     private Chapter currentChapter;
+    private HanLang displayHan;
 
     private void handleChaptersTreeViewEnterOrDoubleClickAction(final InputEvent event, final TreeItem<Chapter> treeItem) {
         if (null == treeItem || null != event && !treeItem.isLeaf()) return;
@@ -223,12 +224,12 @@ public class BookViewController extends WorkbenchOpenpartController {
         currentChapter = chapter;
 
         final long st = System.currentTimeMillis();
-        final HanLang targetHan = HanLang.valueBy(UserPrefs.prefs.getString("display.han", HanLang.hant.lang));
-        final String htmlDoc = this.bookDocument.getVolumeHtmlDocument(currentChapter.path, targetHan,
+        displayHan = HanLang.valueBy(UserPrefs.prefs.getString("display.han", HanLang.hant.lang));
+        final String htmlDoc = this.bookDocument.getVolumeHtmlDocument(currentChapter.path, displayHan,
                 body -> ChineseConvertors.convert(StringHelper.concat("<body data-finder-wrapper data-finder-scroll-offset=\"175\">\n",
                         "  <a data-finder-activator style=\"display:none\"></a>\n",
                         "  <div data-finder-content>", body.html(), "</div>\n",
-                        "</body>"), HanLang.hant, targetHan),
+                        "</body>"), HanLang.hant, displayHan),
                 InternalHelper.htmlIncludes
         );
         this.webPane.setOnLoadSucceedAction(we -> {
@@ -296,7 +297,7 @@ public class BookViewController extends WorkbenchOpenpartController {
 
     public class JavaConnector {
         public String convertInput(String input) {
-            return ChineseConvertors.toHant(input);
+            return ChineseConvertors.convert(input, null, displayHan);
         }
 
         public String[] getBookmarks() {
