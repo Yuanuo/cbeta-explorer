@@ -1,6 +1,5 @@
 package org.appxi.cbeta.explorer.search;
 
-import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.geometry.Pos;
@@ -81,8 +80,8 @@ class SearchService {
             handled = showing;
         }
         if (handled) {
-            if (null != searchingTask && searchingTask.inSearching())
-                searchingTask.cancelSearching();
+            if (searching)
+                searching = false;
             else hide();
             evt.consume();
         }
@@ -184,7 +183,7 @@ class SearchService {
         }
     }
 
-    private SearchingTask searchingTask;
+    private boolean searching, limitReached;
     private String searchingText;
 
     private void handleSearchingOnSearchInputChanged(String input) {
@@ -192,8 +191,6 @@ class SearchService {
         if (Objects.equals(this.searchingText, inputText))
             return;
         this.searchingText = inputText;
-        if (null != searchingTask && searchingTask.inSearching())
-            searchingTask.cancelSearching();
 
         searchResult.getItems().clear();
         if (this.searchingText.isBlank()) {
@@ -205,9 +202,15 @@ class SearchService {
         String[] searchWords = searchText.split("[,，]");
         if (searchWords.length == 1)
             searchWords = null;
-
-        searchingTask = new SearchingTask(searchText, searchWords);
-        new Thread(searchingTask).start();
+        searching = true;
+        searchEngine.search(searchText, searchWords, (idx, record) -> {
+            limitReached = idx > SEARCH_RESULT_LIMIT;
+            searchResult.getItems().add(record);
+            updateSearchInfo();
+            return !searching || limitReached;
+        });
+        updateSearchInfo();
+        searching = false;
     }
 
     void updateSearchInfo() {
@@ -218,44 +221,6 @@ class SearchService {
         }
         int matches = searchResult.getItems().size();
         searchInfo.setText(matches < 1 ? "未找到匹配项"
-                : StringHelper.concat("找到 ", matches, matches >= SEARCH_RESULT_LIMIT ? "+" : "", " 项"));
-    }
-
-    class SearchingTask implements Runnable {
-        boolean searching, limitReached;
-        String text, words[];
-
-        public SearchingTask(String text, String[] words) {
-            this.text = text;
-            this.words = words;
-        }
-
-        @Override
-        public void run() {
-            searching = true;
-            searchEngine.search(text, words, (idx, record) -> {
-                limitReached = idx > SEARCH_RESULT_LIMIT;
-
-                Platform.runLater(() -> {
-                    if (!searching || limitReached)
-                        return;
-                    searchResult.getItems().add(record);
-                    updateSearchInfo();
-                });
-                return !searching || limitReached;
-            });
-            searching = false;
-            limitReached = true;
-            Platform.runLater(SearchService.this::updateSearchInfo);
-        }
-
-        boolean inSearching() {
-            return searching || !limitReached;
-        }
-
-        void cancelSearching() {
-            searching = false;
-            limitReached = true;
-        }
+                : StringHelper.concat("找到 ", Math.min(matches, SEARCH_RESULT_LIMIT), matches > SEARCH_RESULT_LIMIT ? "+" : "", " 项"));
     }
 }
