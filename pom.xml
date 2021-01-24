@@ -9,15 +9,14 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<maven.compiler.source>16</maven.compiler.source>
-		<maven.compiler.target>16</maven.compiler.target>
+		<maven.compiler.release>16</maven.compiler.release>
 	</properties>
 
 	<dependencies>
 		<dependency>
 			<groupId>org.appxi</groupId>
 			<artifactId>appxi-javafx</artifactId>
-			<version>21.01.00</version>
+			<version>21.01.24</version>
 		</dependency>
 		<dependency>
 			<groupId>org.appxi</groupId>
@@ -32,43 +31,8 @@
 		<dependency>
 			<groupId>org.appxi</groupId>
 			<artifactId>appxi-hanlp-convert</artifactId>
-			<version>21.01.00</version>
+			<version>21.01.24</version>
 		</dependency>
-
-		<!-- https://mvnrepository.com/artifact/com.h2database/h2 -->
-<!--		<dependency>-->
-<!--			<groupId>com.h2database</groupId>-->
-<!--			<artifactId>h2</artifactId>-->
-<!--			<version>2.0.201-SNAPSHOT</version>-->
-<!--			<exclusions>-->
-<!--				<exclusion>-->
-<!--					<groupId>*</groupId>-->
-<!--					<artifactId>*</artifactId>-->
-<!--				</exclusion>-->
-<!--			</exclusions>-->
-<!--		</dependency>-->
-		<!-- https://mvnrepository.com/artifact/com.dieselpoint/norm -->
-		<!--<dependency>
-			<groupId>com.dieselpoint</groupId>
-			<artifactId>norm</artifactId>
-			<version>1.0</version>
-		</dependency>-->
-<!--		<dependency>-->
-<!--			<groupId>org.apache.openjpa</groupId>-->
-<!--			<artifactId>openjpa-persistence</artifactId>-->
-<!--			<version>3.1.2</version>-->
-<!--		</dependency>-->
-<!--		<dependency>-->
-<!--			<groupId>org.eclipse.persistence</groupId>-->
-<!--			<artifactId>javax.persistence</artifactId>-->
-<!--			<version>2.2.0</version>-->
-<!--		</dependency>-->
-
-<!--		<dependency>-->
-<!--			<groupId>org.eclipse.persistence</groupId>-->
-<!--			<artifactId>eclipselink</artifactId>-->
-<!--			<version>2.5.2</version>-->
-<!--		</dependency>-->
 	</dependencies>
 
 	<build>
@@ -92,10 +56,6 @@
 						</goals>
 					</execution>
 				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-jar-plugin</artifactId>
 			</plugin>
 		</plugins>
 	</build>
