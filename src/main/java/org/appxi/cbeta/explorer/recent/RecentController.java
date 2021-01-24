@@ -5,10 +5,10 @@ import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView;
 import javafx.application.Platform;
 import javafx.scene.control.Label;
 import javafx.scene.control.TreeItem;
+import org.appxi.cbeta.explorer.book.BookViewController;
 import org.appxi.cbeta.explorer.event.BookEvent;
 import org.appxi.cbeta.explorer.event.DataEvent;
 import org.appxi.cbeta.explorer.home.WelcomeController;
-import org.appxi.cbeta.explorer.book.BookViewController;
 import org.appxi.cbeta.explorer.search.SearchHelper;
 import org.appxi.cbeta.explorer.workbench.WorkbenchWorkpartControllerExt;
 import org.appxi.javafx.control.TreeViewEx;
@@ -48,6 +48,11 @@ public class RecentController extends WorkbenchWorkpartControllerExt {
                 item.name = book.title;
                 recentBooksMap.put(book.id, item);
             } else item.updateAt = new Date();
+        });
+        getEventBus().addEventHandler(BookEvent.CLOSE, event -> {
+            final CbetaBook book = event.book;
+            RecentBook item = recentBooksMap.get(book.id);
+            item.updateAt = new Date();
         });
         getEventBus().addEventHandler(ApplicationEvent.STOPPING, event -> {
             saveRecentBooks();

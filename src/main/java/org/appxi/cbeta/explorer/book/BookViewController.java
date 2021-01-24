@@ -42,8 +42,8 @@ public class BookViewController extends WorkbenchOpenpartController {
 
     private BookViewPane bookviewPane;
     private Accordion workViews;
-    private TitledPane tocsPane, volsPane, metaPane;
-    private TreeViewExt<Chapter> tocTree, volTree;
+    private TitledPane tocsPane, volsPane, infoPane;
+    private TreeViewExt<Chapter> tocsTree, volsTree;
     private WebPane webPane;
 
     private final Chapter initChapter;
@@ -70,15 +70,15 @@ public class BookViewController extends WorkbenchOpenpartController {
         if (null != this.bookviewPane)
             return this.bookviewPane;
 
-        this.tocTree = new TreeViewExt<>(this::handleChaptersTreeViewEnterOrDoubleClickAction);
-        this.tocsPane = new TitledPane("目次", this.tocTree);
+        this.tocsTree = new TreeViewExt<>(this::handleChaptersTreeViewEnterOrDoubleClickAction);
+        this.tocsPane = new TitledPane("目次", this.tocsTree);
 
-        this.volTree = new TreeViewExt<>(this::handleChaptersTreeViewEnterOrDoubleClickAction);
-        this.volsPane = new TitledPane("卷次", this.volTree);
+        this.volsTree = new TreeViewExt<>(this::handleChaptersTreeViewEnterOrDoubleClickAction);
+        this.volsPane = new TitledPane("卷次", this.volsTree);
 
-        this.metaPane = new TitledPane("信息", new Label("Coming soon..."));
+        this.infoPane = new TitledPane("信息", new Label("Coming soon..."));
 
-        this.workViews = new Accordion(this.tocsPane, this.volsPane, this.metaPane);
+        this.workViews = new Accordion(this.tocsPane, this.volsPane, this.infoPane);
 
         this.bookviewPane = new BookViewPane();
         this.bookviewPane.addWorkview(this.workViews);
@@ -91,9 +91,9 @@ public class BookViewController extends WorkbenchOpenpartController {
     public final TreeItem<Chapter> selectedChapterItem() {
         final TitledPane expandedPane = this.workViews.getExpandedPane();
         if (expandedPane == this.tocsPane)
-            return this.tocTree.getSelectionModel().getSelectedItem();
+            return this.tocsTree.getSelectionModel().getSelectedItem();
         else if (expandedPane == this.volsPane)
-            return this.volTree.getSelectionModel().getSelectedItem();
+            return this.volsTree.getSelectionModel().getSelectedItem();
         else
             return null;
     }
@@ -125,6 +125,7 @@ public class BookViewController extends WorkbenchOpenpartController {
         getEventBus().removeEventHandler(ApplicationEvent.STOPPING, this::handleApplicationEventStopping);
         getEventBus().removeEventHandler(DataEvent.DISPLAY_HAN, this::handleDisplayHanChanged);
         setPrimaryTitle(null);
+        getEventBus().fireEvent(new BookEvent(BookEvent.CLOSE, this.book));
     }
 
     @Override
@@ -137,7 +138,7 @@ public class BookViewController extends WorkbenchOpenpartController {
             this.webPane.getWebEngine().setUserDataDirectory(UserPrefs.confDir().toFile());
 
             // init nav-view
-            ChapterTree.parseBookChaptersToTree(book, this.tocTree, this.volTree);
+            ChapterTree.parseBookChaptersToTree(book, this.tocsTree, this.volsTree);
 
             RawHolder<TitledPane> targetPane = new RawHolder<>();
             RawHolder<TreeView<Chapter>> targetTree = new RawHolder<>();
@@ -157,12 +158,12 @@ public class BookViewController extends WorkbenchOpenpartController {
                 }
             }
             if (null == targetTreeItem.value) {
-                if (this.tocTree.getRoot().getChildren().size() > 0) {
+                if (this.tocsTree.getRoot().getChildren().size() > 0) {
                     targetPane.value = this.tocsPane;
-                    targetTree.value = this.tocTree;
+                    targetTree.value = this.tocsTree;
                 } else {
                     targetPane.value = this.volsPane;
-                    targetTree.value = this.volTree;
+                    targetTree.value = this.volsTree;
                 }
                 ObservableList<TreeItem<Chapter>> tmpList = targetTree.value.getRoot().getChildren();
                 targetTreeItem.value = tmpList.isEmpty() ? null : tmpList.get(0);
@@ -174,22 +175,22 @@ public class BookViewController extends WorkbenchOpenpartController {
             handleChaptersTreeViewEnterOrDoubleClickAction(null, targetTreeItem.value);
         }
         setPrimaryTitle(book.title);
-        getEventBus().fireEvent(new BookEvent(BookEvent.VIEW, this.bookDocument.book));
+        getEventBus().fireEvent(new BookEvent(BookEvent.VIEW, this.book));
     }
 
     private void detectAvailTarget(RawHolder<TitledPane> targetPane,
                                    RawHolder<TreeView<Chapter>> targetTree,
                                    RawHolder<TreeItem<Chapter>> targetTreeItem,
                                    Predicate<TreeItem<Chapter>> findByExpr) {
-        targetTreeItem.value = TreeHelper.findFirst(tocTree.getRoot(), findByExpr);
+        targetTreeItem.value = TreeHelper.findFirst(tocsTree.getRoot(), findByExpr);
         if (null != targetTreeItem.value) {
             targetPane.value = this.tocsPane;
-            targetTree.value = this.tocTree;
+            targetTree.value = this.tocsTree;
         } else {
-            targetTreeItem.value = TreeHelper.findFirst(volTree.getRoot(), findByExpr);
+            targetTreeItem.value = TreeHelper.findFirst(volsTree.getRoot(), findByExpr);
             if (null != targetTreeItem.value) {
                 targetPane.value = this.volsPane;
-                targetTree.value = this.volTree;
+                targetTree.value = this.volsTree;
             }
         }
     }
