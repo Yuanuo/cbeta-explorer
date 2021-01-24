@@ -9,6 +9,7 @@ import org.appxi.cbeta.explorer.home.AboutController;
 import org.appxi.cbeta.explorer.prefs.PreferencesController;
 import org.appxi.cbeta.explorer.book.BookViewController;
 import org.appxi.cbeta.explorer.recent.RecentController;
+import org.appxi.cbeta.explorer.tool.EpubRenameController;
 import org.appxi.javafx.workbench.WorkbenchController;
 import org.appxi.javafx.workbench.views.WorkbenchViewpartController;
 import org.appxi.tome.cbeta.CbetaBook;
@@ -55,6 +56,7 @@ public class WorkbenchRootController extends WorkbenchController {
         final List<WorkbenchViewpartController> result = new ArrayList<>();
         result.add(new BookListController());
         result.add(new RecentController());
+        result.add(new EpubRenameController());
 //        result.add(new BookmarksController());
 //        result.add(new BooknotesController());
         result.add(new PreferencesController());

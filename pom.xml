@@ -22,7 +22,7 @@
 		<dependency>
 			<groupId>org.appxi</groupId>
 			<artifactId>appxi-tome</artifactId>
-			<version>21.01.23</version>
+			<version>21.01.24</version>
 		</dependency>
 		<dependency>
 			<groupId>org.appxi</groupId>
