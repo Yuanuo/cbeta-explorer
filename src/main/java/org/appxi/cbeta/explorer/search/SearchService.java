@@ -25,7 +25,7 @@ import org.appxi.util.StringHelper;
 import java.util.Objects;
 
 class SearchService {
-    private static final int SEARCH_RESULT_LIMIT = 1000;
+    private static final int SEARCH_RESULT_LIMIT = 100;
 
     public final SearchEngine searchEngine;
     public final WorkbenchController workbenchController;

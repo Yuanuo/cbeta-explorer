@@ -2,7 +2,7 @@ package org.appxi.cbeta.explorer.search;
 
 import org.appxi.util.StringHelper;
 
-public record SearchRecord(String bookId, String bookTitle,
+public record SearchRecord(boolean stdBook, String bookId, String bookTitle,
                            String chapter, String chapterTitle,
                            String authorInfo, String content) {
 
