@@ -7,6 +7,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TreeItem;
 import org.appxi.cbeta.explorer.book.BookViewController;
 import org.appxi.cbeta.explorer.event.BookEvent;
+import org.appxi.cbeta.explorer.event.ChapterEvent;
 import org.appxi.cbeta.explorer.event.DataEvent;
 import org.appxi.cbeta.explorer.home.WelcomeController;
 import org.appxi.cbeta.explorer.search.SearchHelper;
@@ -39,27 +40,25 @@ public class RecentController extends WorkbenchWorkpartControllerExt {
 
     @Override
     public void setupInitialize() {
-        getEventBus().addEventHandler(BookEvent.OPEN, event -> {
-            final CbetaBook book = event.book;
-            RecentBook item = recentBooksMap.get(book.id);
-            if (null == item) {
-                item = new RecentBook();
-                item.id = book.id;
-                item.name = book.title;
-                recentBooksMap.put(book.id, item);
-            } else item.updateAt = new Date();
-        });
-        getEventBus().addEventHandler(BookEvent.CLOSE, event -> {
-            final CbetaBook book = event.book;
-            RecentBook item = recentBooksMap.get(book.id);
-            item.updateAt = new Date();
-        });
+        getEventBus().addEventHandler(BookEvent.OPEN, event -> handleToSaveOrUpdateRecentBook(event.book));
+        getEventBus().addEventHandler(BookEvent.CLOSE, event -> handleToSaveOrUpdateRecentBook(event.book));
+        getEventBus().addEventHandler(ChapterEvent.OPEN, event -> handleToSaveOrUpdateRecentBook(event.book));
         getEventBus().addEventHandler(ApplicationEvent.STOPPING, event -> {
             saveRecentBooks();
             saveRecentViews();
         });
         loadRecentBooks();
         getEventBus().addEventHandler(DataEvent.BOOKS_READY, event -> Platform.runLater(this::loadRecentViews));
+    }
+
+    private void handleToSaveOrUpdateRecentBook(CbetaBook book) {
+        RecentBook item = recentBooksMap.get(book.id);
+        if (null == item) {
+            item = new RecentBook();
+            item.id = book.id;
+            item.name = book.title;
+            recentBooksMap.put(book.id, item);
+        } else item.updateAt = new Date();
     }
 
     private Preferences createRecentBooks(boolean load) {
