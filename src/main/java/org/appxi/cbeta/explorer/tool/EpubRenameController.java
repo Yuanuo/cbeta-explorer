@@ -6,6 +6,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import org.appxi.cbeta.explorer.CbetaxHelper;
@@ -43,74 +44,73 @@ public class EpubRenameController extends WorkbenchWorkpartControllerExt {
 
     @Override
     public void onViewportSelected(boolean firstTime) {
-//        if (firstTime) {
-        final Label info = new Label("由于CBETA提供的EPUB电子书使用图书ID作为文件名，若是人来查找需要的图书电子档，实在不太方便。\n此工具用于将所有EPUB文件名称规范化并且导出到合适的目录结构中，以解决此问题。\n");
-        info.setWrapText(true);
+        if (firstTime) {
+            final Label info = new Label("由于CBETA提供的EPUB电子书使用图书ID作为文件名，若是人来查找需要的图书电子档，实在不太方便。\n此工具用于将所有EPUB文件名称规范化并且导出到合适的目录结构中，以解决此问题。\n");
+            info.setWrapText(true);
 
-        Label sourcePathLabel = new Label("输入（ZIP压缩包）");
-        sourcePathLabel.setStyle("-fx-padding: 1em 0;");
+            Label sourcePathLabel = new Label("输入（ZIP压缩包）");
+            sourcePathLabel.setStyle("-fx-padding: 1em 0;");
 
-        TextField sourcePathField = new TextField();
-        sourcePathField.setEditable(false);
-        HBox.setHgrow(sourcePathField, Priority.ALWAYS);
-        Button sourcePathBtn = new Button("...");
-        RawHolder<File> sourceFileHold = new RawHolder<>();
-        sourcePathBtn.setOnAction(evt -> {
-            FileChooser fc = new FileChooser();
-            fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("zip", "*.zip"));
-            sourceFileHold.value = fc.showOpenDialog(getPrimaryStage());
-            if (null != sourceFileHold.value) {
-                sourcePathField.setText(sourceFileHold.value.getAbsolutePath());
-            }
-        });
-        HBox sourcePathHBox = new HBox(sourcePathField, sourcePathBtn);
+            TextField sourcePathField = new TextField();
+            sourcePathField.setEditable(false);
+            HBox.setHgrow(sourcePathField, Priority.ALWAYS);
+            Button sourcePathBtn = new Button("...");
+            RawHolder<File> sourceFileHold = new RawHolder<>();
+            sourcePathBtn.setOnAction(evt -> {
+                FileChooser fc = new FileChooser();
+                fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("zip", "*.zip"));
+                sourceFileHold.value = fc.showOpenDialog(getPrimaryStage());
+                if (null != sourceFileHold.value) {
+                    sourcePathField.setText(sourceFileHold.value.getAbsolutePath());
+                }
+            });
+            HBox sourcePathHBox = new HBox(sourcePathField, sourcePathBtn);
 
-        Label targetTypeLabel = new Label("使用目录模式");
-        targetTypeLabel.setStyle("-fx-padding: 1em 0;");
+            Label targetTypeLabel = new Label("使用目录模式");
+            targetTypeLabel.setStyle("-fx-padding: 1em 0;");
 
-        ComboBox<String> targetTypeBox = new ComboBox<>();
-        targetTypeBox.getItems().addAll(BookTreeMode.catalog.name(), BookTreeMode.simple.name(), BookTreeMode.advance.name());
-        targetTypeBox.getSelectionModel().select(0);
+            ComboBox<String> targetTypeBox = new ComboBox<>();
+            targetTypeBox.getItems().addAll(BookTreeMode.catalog.name(), BookTreeMode.simple.name(), BookTreeMode.advance.name());
+            targetTypeBox.getSelectionModel().select(0);
 
-        Label targetPathLabel = new Label("输出到文件夹");
-        targetPathLabel.setStyle("-fx-padding: 1em 0;");
+            Label targetPathLabel = new Label("输出到文件夹");
+            targetPathLabel.setStyle("-fx-padding: 1em 0;");
 
-        TextField targetPathField = new TextField();
-        targetPathField.setEditable(false);
-        HBox.setHgrow(targetPathField, Priority.ALWAYS);
-        Button targetPathBtn = new Button("...");
-        targetPathBtn.setOnAction(evt -> {
-            DirectoryChooser dc = new DirectoryChooser();
-            if (null != sourceFileHold.value)
-                dc.setInitialDirectory(sourceFileHold.value.getParentFile());
-            File selDir = dc.showDialog(getPrimaryStage());
-            if (null != selDir)
-                targetPathField.setText(selDir.getAbsolutePath());
-        });
-        HBox targetPathHBox = new HBox(targetPathField, targetPathBtn);
+            TextField targetPathField = new TextField();
+            targetPathField.setEditable(false);
+            HBox.setHgrow(targetPathField, Priority.ALWAYS);
+            Button targetPathBtn = new Button("...");
+            targetPathBtn.setOnAction(evt -> {
+                DirectoryChooser dc = new DirectoryChooser();
+                if (null != sourceFileHold.value)
+                    dc.setInitialDirectory(sourceFileHold.value.getParentFile());
+                File selDir = dc.showDialog(getPrimaryStage());
+                if (null != selDir)
+                    targetPathField.setText(selDir.getAbsolutePath());
+            });
+            HBox targetPathHBox = new HBox(targetPathField, targetPathBtn);
 
-        Button applyBtn = new Button("Apply");
-        applyBtn.setOnAction(event -> {
-            String result = handleApplyAction(sourcePathField.getText(),
-                    targetTypeBox.getSelectionModel().getSelectedItem(), targetPathField.getText());
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setHeaderText(null);
-            alert.setContentText(result);
-            showAlertWithThemeAndWaitForNothing(alert);
-        });
-        HBox applyBtnHBox = new HBox(applyBtn);
-        applyBtnHBox.setAlignment(Pos.CENTER);
-        applyBtnHBox.setStyle("-fx-padding: 1em 0;");
+            Button applyBtn = new Button("Apply");
+            applyBtn.setOnAction(event -> {
+                String result = handleApplyAction(sourcePathField.getText(),
+                        targetTypeBox.getSelectionModel().getSelectedItem(), targetPathField.getText());
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setHeaderText(null);
+                alert.setContentText(result);
+                showAlertWithThemeAndWaitForNothing(alert);
+            });
+            HBox applyBtnHBox = new HBox(applyBtn);
+            applyBtnHBox.setAlignment(Pos.CENTER);
+            applyBtnHBox.setStyle("-fx-padding: 1em 0;");
 
-
-        viewpartVbox.setStyle("-fx-padding: 1em .5em;");
-        this.viewpartVbox.getChildren().clear();
-        this.viewpartVbox.getChildren().addAll(info,
-                sourcePathLabel, sourcePathHBox,
-                targetTypeLabel, targetTypeBox,
-                targetPathLabel, targetPathHBox,
-                applyBtnHBox);
-//        }
+            VBox innerVBox = new VBox(info,
+                    sourcePathLabel, sourcePathHBox,
+                    targetTypeLabel, targetTypeBox,
+                    targetPathLabel, targetPathHBox,
+                    applyBtnHBox);
+            innerVBox.setStyle("-fx-padding: 1em .5em;");
+            this.viewpartVbox.getChildren().add(innerVBox);
+        }
     }
 
     private String handleApplyAction(String sourcePath, String bookTreeMode, String targetPath) {
