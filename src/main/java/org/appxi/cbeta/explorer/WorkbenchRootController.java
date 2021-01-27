@@ -1,27 +1,28 @@
-package org.appxi.cbeta.explorer.workbench;
+package org.appxi.cbeta.explorer;
 
 import javafx.application.Platform;
 import javafx.event.Event;
 import org.appxi.cbeta.explorer.book.BookListController;
+import org.appxi.cbeta.explorer.book.BookViewController;
 import org.appxi.cbeta.explorer.event.BookEvent;
 import org.appxi.cbeta.explorer.event.ChapterEvent;
 import org.appxi.cbeta.explorer.home.AboutController;
 import org.appxi.cbeta.explorer.prefs.PreferencesController;
-import org.appxi.cbeta.explorer.book.BookViewController;
 import org.appxi.cbeta.explorer.recent.RecentController;
 import org.appxi.cbeta.explorer.tool.EpubRenameController;
-import org.appxi.javafx.workbench.WorkbenchController;
-import org.appxi.javafx.workbench.views.WorkbenchViewpartController;
+import org.appxi.javafx.workbench.WorkbenchApplication;
+import org.appxi.javafx.workbench.WorkbenchPrimaryController;
+import org.appxi.javafx.workbench.WorkbenchViewController;
 import org.appxi.tome.cbeta.CbetaBook;
 import org.appxi.tome.model.Chapter;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class WorkbenchRootController extends WorkbenchController {
+public class WorkbenchRootController extends WorkbenchPrimaryController {
 
-    public WorkbenchRootController() {
-        super("ROOT-WORKBENCH", "Workbench");
+    public WorkbenchRootController(WorkbenchApplication application) {
+        super("ROOT-WORKBENCH", "Workbench", application);
     }
 
     @Override
@@ -36,31 +37,31 @@ public class WorkbenchRootController extends WorkbenchController {
     }
 
     private void handleOpenBookOrChapter(Event event, CbetaBook book, Chapter chapter) {
-        final BookViewController openpart = (BookViewController) getViewport().findOpenpart(book.id);
-        if (null != openpart) {
-            getViewport().selectOpenpart(openpart.viewId);
+        final BookViewController viewController = (BookViewController) getViewport().findMainViewController(book.id);
+        if (null != viewController) {
+            getViewport().selectMainView(viewController.viewId);
             event.consume();
-            Platform.runLater(() -> openpart.openChapter(null, chapter));
+            Platform.runLater(() -> viewController.openChapter(null, chapter));
             return;
         }
         Platform.runLater(() -> {
-            final BookViewController controller = new BookViewController(book, chapter);
-            addWorkbenchViewpartController(controller);
+            final BookViewController controller = new BookViewController(book, chapter, getApplication());
+            getViewport().addWorkbenchViewAsMainView(controller, false);
             controller.setupInitialize();
-            getViewport().selectOpenpart(controller.viewId);
+            getViewport().selectMainView(controller.viewId);
         });
     }
 
     @Override
-    protected List<WorkbenchViewpartController> createViewpartControllers() {
-        final List<WorkbenchViewpartController> result = new ArrayList<>();
-        result.add(new BookListController());
-        result.add(new RecentController());
-        result.add(new EpubRenameController());
+    protected List<WorkbenchViewController> createViewControllers() {
+        final List<WorkbenchViewController> result = new ArrayList<>();
+        result.add(new BookListController(getApplication()));
+        result.add(new RecentController(getApplication()));
+        result.add(new EpubRenameController(getApplication()));
 //        result.add(new BookmarksController());
 //        result.add(new BooknotesController());
-        result.add(new PreferencesController());
-        result.add(new AboutController());
+        result.add(new PreferencesController(getApplication()));
+        result.add(new AboutController(getApplication()));
         return result;
     }
 

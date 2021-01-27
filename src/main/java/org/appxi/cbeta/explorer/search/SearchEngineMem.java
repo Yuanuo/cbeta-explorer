@@ -2,7 +2,7 @@ package org.appxi.cbeta.explorer.search;
 
 import org.appxi.cbeta.explorer.CbetaxHelper;
 import org.appxi.cbeta.explorer.event.DataEvent;
-import org.appxi.javafx.workbench.WorkbenchController;
+import org.appxi.javafx.workbench.WorkbenchApplication;
 import org.appxi.tome.cbeta.CbetaBook;
 import org.appxi.tome.cbeta.CbetaHelper;
 import org.appxi.util.DevtoolHelper;
@@ -15,10 +15,10 @@ import java.util.function.BiPredicate;
 class SearchEngineMem implements SearchEngine {
     public static final List<SearchRecord> DATABASE = new ArrayList<>(10240);
 
-    private final WorkbenchController workbenchController;
+    private final WorkbenchApplication application;
 
-    public SearchEngineMem(WorkbenchController workbenchController) {
-        this.workbenchController = workbenchController;
+    public SearchEngineMem(WorkbenchApplication application) {
+        this.application = application;
     }
 
     @Override
@@ -42,7 +42,7 @@ class SearchEngineMem implements SearchEngine {
                 DATABASE.addAll(records);
                 records.clear();
             });
-            workbenchController.getEventBus().fireEvent(new DataEvent(DataEvent.SEARCH_READY));
+            application.eventBus.fireEvent(new DataEvent(DataEvent.SEARCH_READY));
             DevtoolHelper.LOG.info("init search records used time: " + (System.currentTimeMillis() - st));
             DevtoolHelper.LOG.info("searchable records size: " + DATABASE.size());
         }).whenComplete((o, err) -> {
@@ -63,7 +63,7 @@ class SearchEngineMem implements SearchEngine {
     static final List<FiPredicateX3<SearchRecord, String, String[]>> searchFilters = List.of(
             (data, text, words) -> {
                 if (data.stdBook() && null == data.chapterTitle()) {
-                    if (data.bookId().contains(text)) return true;
+                    return data.bookId().contains(text);
                 }
                 return false;
             }

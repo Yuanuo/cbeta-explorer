@@ -1,9 +1,9 @@
 package org.appxi.cbeta.explorer.recent;
 
-import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
-import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView;
+import de.jensd.fx.glyphs.materialicons.MaterialIcon;
+import de.jensd.fx.glyphs.materialicons.MaterialIconView;
 import javafx.application.Platform;
-import javafx.scene.control.Label;
+import javafx.scene.Node;
 import javafx.scene.control.TreeItem;
 import org.appxi.cbeta.explorer.book.BookViewController;
 import org.appxi.cbeta.explorer.event.BookEvent;
@@ -11,11 +11,12 @@ import org.appxi.cbeta.explorer.event.ChapterEvent;
 import org.appxi.cbeta.explorer.event.DataEvent;
 import org.appxi.cbeta.explorer.home.WelcomeController;
 import org.appxi.cbeta.explorer.search.SearchHelper;
-import org.appxi.cbeta.explorer.workbench.WorkbenchWorkpartControllerExt;
 import org.appxi.javafx.control.TreeViewEx;
 import org.appxi.javafx.control.TreeViewExt;
 import org.appxi.javafx.desktop.ApplicationEvent;
-import org.appxi.javafx.workbench.views.WorkbenchOpenpartController;
+import org.appxi.javafx.workbench.WorkbenchApplication;
+import org.appxi.javafx.workbench.WorkbenchViewController;
+import org.appxi.javafx.workbench.views.WorkbenchSideViewController;
 import org.appxi.prefs.Preferences;
 import org.appxi.prefs.PreferencesInProperties;
 import org.appxi.prefs.UserPrefs;
@@ -25,17 +26,17 @@ import org.appxi.util.NumberHelper;
 
 import java.util.*;
 
-public class RecentController extends WorkbenchWorkpartControllerExt {
+public class RecentController extends WorkbenchSideViewController {
     private final Map<String, RecentBook> recentBooksMap = new LinkedHashMap<>(128);
     private TreeViewEx<Object> treeView;
 
-    public RecentController() {
-        super("RECENT", "近期阅读");
+    public RecentController(WorkbenchApplication application) {
+        super("RECENT", "近期阅读", application);
     }
 
     @Override
-    public Label getViewpartInfo() {
-        return new Label(this.viewName, new FontAwesomeIconView(FontAwesomeIcon.HISTORY));
+    public Node createToolIconGraphic(Boolean placeInSideViews) {
+        return new MaterialIconView(MaterialIcon.HISTORY);
     }
 
     @Override
@@ -88,25 +89,25 @@ public class RecentController extends WorkbenchWorkpartControllerExt {
 
     private void loadRecentViews() {
         final Preferences recent = createRecentViews(true);
-        WorkbenchOpenpartController selectedController = null, addedController = null;
+        WorkbenchViewController selectedController = null, addedController = null;
         for (String key : recent.getPropertyKeys()) {
             final CbetaBook book = SearchHelper.searchById(key);
             if (null == book)
                 continue;
-            addedController = new BookViewController(book);
+            addedController = new BookViewController(book, getApplication());
             if (recent.getBoolean(key, false))
                 selectedController = addedController;
-            getWorkbenchController().addWorkbenchOpenpartController(addedController, true);
+            getPrimaryViewport().addWorkbenchViewAsMainView(addedController, true);
             addedController.setupInitialize();
         }
         if (null == addedController) {
-            addedController = new WelcomeController();
-            getWorkbenchController().addWorkbenchOpenpartController(addedController, true);
+            addedController = new WelcomeController(getApplication());
+            getPrimaryViewport().addWorkbenchViewAsMainView(addedController, true);
             addedController.setupInitialize();
         }
         if (null == selectedController)
             selectedController = addedController;
-        getWorkbenchViewport().selectOpenpart(selectedController.viewId);
+        getPrimaryViewport().selectMainView(selectedController.viewId);
     }
 
     private void saveRecentBooks() {
@@ -123,9 +124,10 @@ public class RecentController extends WorkbenchWorkpartControllerExt {
 
     private void saveRecentViews() {
         final Preferences recent = createRecentViews(false);
-        getWorkbenchViewport().getOpentools().forEach(tab -> {
-            if (tab.getUserData() instanceof BookViewController controller)
-                recent.setProperty(controller.book.id, tab.isSelected());
+        getPrimaryViewport().getMainViewsTabs().forEach(tab -> {
+            if (tab.getUserData() instanceof BookViewController) {
+                recent.setProperty(((BookViewController) tab.getUserData()).book.id, tab.isSelected());
+            }
         });
         recent.save();
     }
@@ -133,17 +135,21 @@ public class RecentController extends WorkbenchWorkpartControllerExt {
     private TimeAgo.Messages timeAgoMsgs;
 
     @Override
-    public void onViewportSelected(boolean firstTime) {
+    protected void initViewport() {
+    }
+
+    @Override
+    public void showViewport(boolean firstTime) {
         if (firstTime) {
             this.treeView = new TreeViewExt<>((e, treeItem) -> {
-                if (!(treeItem.getValue() instanceof RecentBook rBook))
+                if (!(treeItem.getValue() instanceof RecentBook))
                     return;
-                final CbetaBook book = SearchHelper.searchById(rBook.id);
+                final CbetaBook book = SearchHelper.searchById(((RecentBook) treeItem.getValue()).id);
                 if (null != book)
                     getEventBus().fireEvent(new BookEvent(BookEvent.OPEN, book));
             });
             this.treeView.setRoot(new TreeItem<>("ROOT"));
-            this.viewpartVbox.getChildren().add(this.treeView);
+            this.viewportVBox.getChildren().add(this.treeView);
         }
 
         final TreeItem<Object> treeRoot = this.treeView.getRoot();

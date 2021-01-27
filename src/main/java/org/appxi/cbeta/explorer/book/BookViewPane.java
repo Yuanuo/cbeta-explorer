@@ -1,7 +1,7 @@
 package org.appxi.cbeta.explorer.book;
 
-import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
-import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView;
+import de.jensd.fx.glyphs.materialicons.MaterialIcon;
+import de.jensd.fx.glyphs.materialicons.MaterialIconView;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.scene.Node;
@@ -23,19 +23,19 @@ import java.util.List;
 import java.util.Objects;
 
 public class BookViewPane extends StackPaneEx {
-    protected final SplitPane viewspane;
-    protected final StackPane workview;
+    protected final SplitPane rootViews;
+    protected final StackPane sideViews;
     protected final WebPane webPane;
     protected final FlexibleBar flexibleBar;
 
-    private ToggleButton workviewToggle, moretoolToggle;
+    private ToggleButton sideToolsToggle, moreToolsToggle;
     private Theme currentTheme;
 
     public BookViewPane() {
         super();
 
-        this.workview = new StackPane();
-        this.workview.getStyleClass().add("workview");
+        this.sideViews = new StackPane();
+        this.sideViews.getStyleClass().add("book-view-side");
 
         this.flexibleBar = new FlexibleBar();
         this.flexibleBar.setMaxWidth(Double.NEGATIVE_INFINITY);
@@ -44,29 +44,29 @@ public class BookViewPane extends StackPaneEx {
         this.webPane = new WebPane();
         this.webPane.getChildren().add(this.flexibleBar);
 
-        this.viewspane = new SplitPane(webPane);
-        this.viewspane.getStyleClass().add("viewspane");
-        this.viewspane.setDividerPositions(0.2);
-        VBox.setVgrow(this.viewspane, Priority.ALWAYS);
+        this.rootViews = new SplitPane(webPane);
+        this.rootViews.getStyleClass().add("book-view-root");
+        this.rootViews.setDividerPositions(0.2);
+        VBox.setVgrow(this.rootViews, Priority.ALWAYS);
         //
-        this.getChildren().add(this.viewspane);
-        this.getStyleClass().add("bookview-pane");
+        this.getChildren().add(this.rootViews);
+        this.getStyleClass().add("book-view");
         //
         this.initMoreThings();
     }
 
     protected void initMoreThings() {
         //
-        workviewToggle = new ToggleButton();
-        workviewToggle.getStyleClass().add("workview-toggle");
-        workviewToggle.setGraphic(new FontAwesomeIconView(FontAwesomeIcon.NAVICON));
-        workviewToggle.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
-        workviewToggle.setOnAction(this::handleWorkviewToggleAction);
-        this.flexibleBar.addTool(workviewToggle);
+        sideToolsToggle = new ToggleButton();
+        sideToolsToggle.getStyleClass().add("side-toggle");
+        sideToolsToggle.setGraphic(new MaterialIconView(MaterialIcon.MENU));
+        sideToolsToggle.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+        sideToolsToggle.setOnAction(this::handleSideViewToggleAction);
+        this.flexibleBar.addTool(sideToolsToggle);
         //
         this.addEventHandler(KeyEvent.KEY_RELEASED, event -> {
             if (event.getCode() == KeyCode.ESCAPE)
-                workviewToggle.fire();
+                sideToolsToggle.fire();
         });
         //
 //        this.viewsSwap = new Button("Swap");
@@ -74,25 +74,25 @@ public class BookViewPane extends StackPaneEx {
 //        this.viewsSwap.setOnAction(this::handleViewsSwapAction);
 //        this.viewsSwap.setDisable(true);, this.viewsSwap
         //
-        moretoolToggle = new ToggleButton();
-        moretoolToggle.getStyleClass().add("moretool-toggle");
-        moretoolToggle.setGraphic(new FontAwesomeIconView(FontAwesomeIcon.EXCHANGE));
-        moretoolToggle.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+        moreToolsToggle = new ToggleButton();
+        moreToolsToggle.getStyleClass().add("more-toggle");
+        moreToolsToggle.setGraphic(new MaterialIconView(MaterialIcon.SWAP_HORIZ));
+        moreToolsToggle.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
 
-        this.flexibleBar.addTools(moretoolToggle);
+        this.flexibleBar.addTools(moreToolsToggle);
         updateFontsizeTools();
     }
 
     public void updateThemeTools(ThemeSet themeSet) {
-        final List<Node> moretools = this.flexibleBar.getTools(this.moretoolToggle);
+        final List<Node> moreTools = this.flexibleBar.getTools(this.moreToolsToggle);
         int themeToolsIdx = 0;
-        List<Node> themeTools = (List<Node>) this.moretoolToggle.getProperties().get("THEME_TOOLS");
+        List<Node> themeTools = (List<Node>) this.moreToolsToggle.getProperties().get("THEME_TOOLS");
         if (null == themeTools)
-            this.moretoolToggle.getProperties().put("THEME_TOOLS", themeTools = new ArrayList<>());
+            this.moreToolsToggle.getProperties().put("THEME_TOOLS", themeTools = new ArrayList<>());
 
         if (!themeTools.isEmpty()) {
-            themeToolsIdx = moretools.indexOf(themeTools.get(0));
-            moretools.removeAll(themeTools);
+            themeToolsIdx = moreTools.indexOf(themeTools.get(0));
+            moreTools.removeAll(themeTools);
             themeTools.clear();
         }
 
@@ -107,9 +107,9 @@ public class BookViewPane extends StackPaneEx {
                 if (Objects.equals(this.currentTheme, theme))
                     btn.setSelected(true);
 
-                final FontAwesomeIconView faicon = new FontAwesomeIconView(FontAwesomeIcon.SQUARE);
-                faicon.setFill(Color.valueOf(theme.accentColor));
-                btn.setGraphic(faicon);
+                final MaterialIconView icon = new MaterialIconView(MaterialIcon.LENS);
+                icon.setFill(Color.valueOf(theme.accentColor));
+                btn.setGraphic(icon);
 
                 btn.setOnAction(event -> {
                     final ToggleButton eventBtn = (ToggleButton) event.getSource();
@@ -117,42 +117,42 @@ public class BookViewPane extends StackPaneEx {
                 });
                 themeTools.add(btn);
             }
-            moretools.addAll(themeToolsIdx, themeTools);
+            moreTools.addAll(themeToolsIdx, themeTools);
         }
-        this.flexibleBar.setTools(this.moretoolToggle, moretools.toArray(new Node[0]));
+        this.flexibleBar.setTools(this.moreToolsToggle, moreTools.toArray(new Node[0]));
     }
 
     protected void updateFontsizeTools() {
-        final List<Node> moretools = this.flexibleBar.getTools(this.moretoolToggle);
+        final List<Node> moreTools = this.flexibleBar.getTools(this.moreToolsToggle);
         int fsizeToolsIdx = 0;
-        List<Node> fsizeTools = (List<Node>) this.moretoolToggle.getProperties().get("FSIZE_TOOLS");
+        List<Node> fsizeTools = (List<Node>) this.moreToolsToggle.getProperties().get("FSIZE_TOOLS");
         if (null == fsizeTools)
-            this.moretoolToggle.getProperties().put("FSIZE_TOOLS", fsizeTools = new ArrayList<>());
+            this.moreToolsToggle.getProperties().put("FSIZE_TOOLS", fsizeTools = new ArrayList<>());
 
         if (!fsizeTools.isEmpty()) {
-            fsizeToolsIdx = moretools.indexOf(fsizeTools.get(0));
-            moretools.removeAll(fsizeTools);
+            fsizeToolsIdx = moreTools.indexOf(fsizeTools.get(0));
+            moreTools.removeAll(fsizeTools);
             fsizeTools.clear();
         }
 
-        fsizeTools.add(new Label("FontSize: ", new FontAwesomeIconView(FontAwesomeIcon.FONT)));
+        fsizeTools.add(new Label("FontSize: ", new MaterialIconView(MaterialIcon.TEXT_FIELDS)));
         //
         final Button subBtn = new Button();
         subBtn.setUserData(false);
-        subBtn.setGraphic(new FontAwesomeIconView(FontAwesomeIcon.SUBSCRIPT));
+        subBtn.setGraphic(new MaterialIconView(MaterialIcon.EXPOSURE_NEG_1));
         subBtn.setTooltip(new Tooltip("减小字号"));
         subBtn.setOnAction(this::handleFontSizeAction);
         fsizeTools.add(subBtn);
         //
         final Button supBtn = new Button();
         supBtn.setUserData(true);
-        supBtn.setGraphic(new FontAwesomeIconView(FontAwesomeIcon.SUPERSCRIPT));
+        supBtn.setGraphic(new MaterialIconView(MaterialIcon.EXPOSURE_PLUS_1));
         supBtn.setTooltip(new Tooltip("增大字号"));
         supBtn.setOnAction(this::handleFontSizeAction);
         fsizeTools.add(supBtn);
         //
-        moretools.addAll(fsizeToolsIdx, fsizeTools);
-        this.flexibleBar.setTools(this.moretoolToggle, moretools.toArray(new Node[0]));
+        moreTools.addAll(fsizeToolsIdx, fsizeTools);
+        this.flexibleBar.setTools(this.moreToolsToggle, moreTools.toArray(new Node[0]));
     }
 
     private void handleFontSizeAction(ActionEvent event) {
@@ -160,33 +160,35 @@ public class BookViewPane extends StackPaneEx {
         final boolean supAct = (boolean) btn.getUserData();
     }
 
-    private int lastWorkviewIdx = 0;
-    private double lastViewsDivider = 0.2;
+    private int lastSideViewIdx = 0;
+    private double lastRootViewsDivider = 0.2;
 
-    private void handleWorkviewToggleAction(ActionEvent event) {
+    private void handleSideViewToggleAction(ActionEvent event) {
         final ToggleButton btn = (ToggleButton) event.getSource();
-        final ObservableList<Node> items = this.viewspane.getItems();
-        final int idx = items.indexOf(this.workview);
+        final ObservableList<Node> items = this.rootViews.getItems();
+        final int idx = items.indexOf(this.sideViews);
         if (idx == -1) { // not exists, need show it
-            items.add(lastWorkviewIdx, this.workview);
-            this.viewspane.setDividerPositions(lastViewsDivider);
+            items.add(lastSideViewIdx, this.sideViews);
+            this.rootViews.setDividerPositions(lastRootViewsDivider);
 //            this.viewsSwap.setDisable(false);
         } else { // exists, need hide it
-            lastWorkviewIdx = idx;
-            lastViewsDivider = this.viewspane.getDividerPositions()[0];
-            items.remove(this.workview);
+            lastSideViewIdx = idx;
+            lastRootViewsDivider = this.rootViews.getDividerPositions()[0];
+            items.remove(this.sideViews);
 //            this.viewsSwap.setDisable(true);
         }
     }
 
-    public BookViewPane addWorkview(Node workview) {
-        this.workview.getChildren().add(workview);
+    public BookViewPane addSideView(Node sideView) {
+        this.sideViews.getChildren().add(sideView);
         return this;
     }
 
     public void applyTheme(Theme theme) {
+        if (null == theme || theme.stylesheets.isEmpty())
+            return;
         this.currentTheme = theme;
-        this.webPane.getWebEngine().setUserStyleSheetLocation(theme.stylesheets.get(0));
+        this.webPane.getWebEngine().setUserStyleSheetLocation(theme.stylesheets.iterator().next());
     }
 
 //    protected final Button viewsSwap;

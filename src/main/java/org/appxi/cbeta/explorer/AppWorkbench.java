@@ -4,12 +4,11 @@ import javafx.application.Platform;
 import javafx.scene.web.WebView;
 import org.appxi.cbeta.explorer.event.DataEvent;
 import org.appxi.cbeta.explorer.search.SearchHelper;
-import org.appxi.cbeta.explorer.workbench.WorkbenchRootController;
 import org.appxi.javafx.desktop.ApplicationEvent;
 import org.appxi.javafx.theme.Theme;
 import org.appxi.javafx.theme.ThemeSet;
 import org.appxi.javafx.workbench.WorkbenchApplication;
-import org.appxi.javafx.workbench.WorkbenchController;
+import org.appxi.javafx.workbench.WorkbenchPrimaryController;
 
 import java.net.URL;
 import java.util.ArrayList;
@@ -17,7 +16,6 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class AppWorkbench extends WorkbenchApplication {
-    private WorkbenchRootController rootController;
 
     @Override
     public void init() throws Exception {
@@ -27,24 +25,27 @@ public class AppWorkbench extends WorkbenchApplication {
     }
 
     private void initThemes() {
-        final Theme webLight = Theme.light("web-light", "亮", "#e9e9eb")
-                .addStylesheet(getClass().getResource("/appxi/cbetaExplorer/themes/style-light.css"));
-        final Theme webLight2 = Theme.light("web-light-2", "明亮", "#328291")
-                .addStylesheet(getClass().getResource("/appxi/cbetaExplorer/themes/style-light-2.css"));
-        final Theme webDark = Theme.dark("web-dark", "暗", "#3b3b3b")
-                .addStylesheet(getClass().getResource("/appxi/cbetaExplorer/themes/style-dark.css"));
+        themeProvider.addTheme(ThemeSet.light("light", "Default Light", "#e9e9eb")
+                .addStylesheet(getClass().getResource("/appxi/cbetaExplorer/themes/theme-light-default.css"))
+                .addTheme(Theme.light("web-light", "亮", "#e9e9eb")
+                        .addStylesheet(getClass().getResource("/appxi/cbetaExplorer/themes/theme-light-default-web.css"))
+                ));
 
-        themeProvider.addTheme(ThemeSet.light("light", "亮", "#e9e9eb")
-                .addStylesheet(getClass().getResource("/appxi/cbetaExplorer/themes/theme-light.css"))
-                .addTheme(webLight, webLight2));
+        themeProvider.addTheme(ThemeSet.light("light-2", "Extend Light", "#328291")
+                .addStylesheet(getClass().getResource("/appxi/cbetaExplorer/themes/theme-light-extend.css"))
+                .addTheme(Theme.light("web-light-2", "明亮", "#328291")
+                        .addStylesheet(getClass().getResource("/appxi/cbetaExplorer/themes/theme-light-extend-web.css"))
+                ));
 
-        themeProvider.addTheme(ThemeSet.light("light-2", "明亮", "#328291")
-                .addStylesheet(getClass().getResource("/appxi/cbetaExplorer/themes/theme-light-2.css"))
-                .addTheme(webLight2, webLight));
+        themeProvider.addTheme(ThemeSet.light("light-javafx", "JavaFX Light", "#dddddd")
+                .addStylesheet(getClass().getResource("/appxi/cbetaExplorer/themes/theme-light-javafx.css"))
+        );
 
-        themeProvider.addTheme(ThemeSet.dark("dark", "暗", "#3b3b3b")
-                .addStylesheet(getClass().getResource("/appxi/cbetaExplorer/themes/theme-dark.css"))
-                .addTheme(webDark));
+        themeProvider.addTheme(ThemeSet.dark("dark", "Default Dark", "#3b3b3b")
+                .addStylesheet(getClass().getResource("/appxi/cbetaExplorer/themes/theme-dark-default.css"))
+                .addTheme(Theme.dark("web-dark", "暗", "#3b3b3b")
+                        .addStylesheet(getClass().getResource("/appxi/cbetaExplorer/themes/theme-dark-default-web.css"))
+                ));
     }
 
     @Override
@@ -55,7 +56,7 @@ public class AppWorkbench extends WorkbenchApplication {
             SearchHelper.searchById = id -> CbetaxHelper.books.getDataMap().get(id);
         }).whenComplete((o, err) -> {
             eventBus.fireEvent(new DataEvent(DataEvent.BOOKS_READY));
-            SearchHelper.setupSearchService(this.rootController);
+            SearchHelper.setupSearchService(this);
         });
     }
 
@@ -80,7 +81,7 @@ public class AppWorkbench extends WorkbenchApplication {
     }
 
     @Override
-    protected WorkbenchController createPrimarySceneRootController() {
-        return this.rootController = new WorkbenchRootController();
+    protected WorkbenchPrimaryController createPrimaryController() {
+        return new WorkbenchRootController(this);
     }
 }

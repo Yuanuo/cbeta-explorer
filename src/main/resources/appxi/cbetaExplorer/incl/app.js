@@ -7,7 +7,6 @@ function scrollTop1Element() {
         if (item.offset().top >= scrollTop)
             return item;
     }
-    alert('scrollTop1Element is null, list.length=' + list.length);
     return null;
 }
 

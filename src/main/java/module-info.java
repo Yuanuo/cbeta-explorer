@@ -13,7 +13,7 @@ module appxi.cbetaExplorer {
     requires appxi.timeago;
     requires appxi.hanlp.convert;
     requires org.jsoup;
-    requires de.jensd.fx.fontawesomefx.fontawesome;
+    requires de.jensd.fx.fontawesomefx.materialicons;
 
     exports org.appxi.cbeta.explorer;
     exports org.appxi.cbeta.explorer.bak;

@@ -1,8 +1,7 @@
 package org.appxi.cbeta.explorer.prefs;
 
-import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
-import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView;
-import javafx.geometry.Pos;
+import de.jensd.fx.glyphs.materialicons.MaterialIcon;
+import de.jensd.fx.glyphs.materialicons.MaterialIconView;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
@@ -11,7 +10,8 @@ import org.appxi.cbeta.explorer.event.DataEvent;
 import org.appxi.holder.StringHolder;
 import org.appxi.javafx.control.DialogPaneEx;
 import org.appxi.javafx.theme.Theme;
-import org.appxi.javafx.workbench.views.WorkbenchWorktoolController;
+import org.appxi.javafx.workbench.WorkbenchApplication;
+import org.appxi.javafx.workbench.views.WorkbenchSideToolController;
 import org.appxi.prefs.UserPrefs;
 import org.appxi.util.ext.HanLang;
 
@@ -20,29 +20,18 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-public class PreferencesController extends WorkbenchWorktoolController {
-    public PreferencesController() {
-        super("PREFERENCES", "偏好设置");
+public class PreferencesController extends WorkbenchSideToolController {
+    public PreferencesController(WorkbenchApplication application) {
+        super("PREFERENCES", "偏好设置", application);
     }
 
     @Override
-    public Label getViewpartInfo() {
-        final Label info = new Label(this.viewName, new FontAwesomeIconView(FontAwesomeIcon.SLIDERS));
-        info.setAlignment(Pos.CENTER_RIGHT);
-        return info;
+    public Node createToolIconGraphic(Boolean placeInSideViews) {
+        return new MaterialIconView(MaterialIcon.TUNE);
     }
 
     @Override
-    public Node getViewport() {
-        return null;
-    }
-
-    @Override
-    public void setupInitialize() {
-    }
-
-    @Override
-    public void onViewportSelected(boolean firstTime) {
+    public void showViewport(boolean firstTime) {
         final List<Node> nodes = new ArrayList<>();
 
         buildThemeConfig(nodes);
@@ -76,9 +65,9 @@ public class PreferencesController extends WorkbenchWorktoolController {
             btn.setToggleGroup(themeBtnGroup);
             btn.setUserData(t);
 
-            final FontAwesomeIconView faicon = new FontAwesomeIconView(FontAwesomeIcon.CIRCLE);
-            faicon.setFill(Color.valueOf(t.accentColor));
-            btn.setGraphic(faicon);
+            final MaterialIconView icon = new MaterialIconView(MaterialIcon.LENS, "2em");
+            icon.setFill(Color.valueOf(t.accentColor));
+            btn.setGraphic(icon);
 
             btn.setStyle("-fx-padding: .5em 1em;");
 

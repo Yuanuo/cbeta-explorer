@@ -1,21 +1,22 @@
 package org.appxi.cbeta.explorer.book;
 
-import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
-import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView;
+import de.jensd.fx.glyphs.materialicons.MaterialIcon;
+import de.jensd.fx.glyphs.materialicons.MaterialIconView;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
+import javafx.scene.Node;
 import javafx.scene.control.*;
-import javafx.scene.layout.StackPane;
 import org.appxi.cbeta.explorer.CbetaxHelper;
 import org.appxi.cbeta.explorer.event.BookEvent;
 import org.appxi.cbeta.explorer.event.DataEvent;
 import org.appxi.cbeta.explorer.model.BookTree;
-import org.appxi.cbeta.explorer.workbench.WorkbenchWorkpartControllerExt;
 import org.appxi.javafx.control.SeparatorMenuItemEx;
 import org.appxi.javafx.control.TreeViewExt;
 import org.appxi.javafx.desktop.ApplicationEvent;
 import org.appxi.javafx.helper.TreeHelper;
-import org.appxi.javafx.workbench.views.WorkbenchOpenpartController;
+import org.appxi.javafx.workbench.WorkbenchApplication;
+import org.appxi.javafx.workbench.WorkbenchViewController;
+import org.appxi.javafx.workbench.views.WorkbenchSideViewController;
 import org.appxi.prefs.UserPrefs;
 import org.appxi.tome.cbeta.BookTreeMode;
 import org.appxi.tome.cbeta.CbetaBook;
@@ -23,40 +24,36 @@ import org.appxi.util.DevtoolHelper;
 
 import java.util.Objects;
 
-public class BookListController extends WorkbenchWorkpartControllerExt {
+public class BookListController extends WorkbenchSideViewController {
     private final ToggleGroup treeViewModeGroup = new ToggleGroup();
-    private final TreeViewExt<CbetaBook> treeView;
+    private TreeViewExt<CbetaBook> treeView;
 
-    public BookListController() {
-        super("BOOKS", "典籍");
-
-        this.treeView = new TreeViewExt<>((e, t) -> getEventBus().fireEvent(new BookEvent(BookEvent.OPEN, t.getValue())));
-        this.treeView.setShowRoot(false);
+    public BookListController(WorkbenchApplication application) {
+        super("BOOKS", "典籍", application);
     }
 
     @Override
-    public Label getViewpartInfo() {
-        return new Label(this.viewName, new FontAwesomeIconView(FontAwesomeIcon.MAP));
+    public Node createToolIconGraphic(Boolean placeInSideViews) {
+        return new MaterialIconView(MaterialIcon.LOCAL_LIBRARY);
     }
 
     @Override
-    public StackPane getViewport() {
-        //
+    protected void initViewport() {
         final Button btnSearch = new Button();
         btnSearch.setTooltip(new Tooltip("快速查找书籍（Ctrl+O）"));
-        btnSearch.setGraphic(new FontAwesomeIconView(FontAwesomeIcon.SEARCH));
+        btnSearch.setGraphic(new MaterialIconView(MaterialIcon.SEARCH));
         btnSearch.setOnAction(event -> getEventBus().fireEvent(new DataEvent(DataEvent.SEARCH_OPEN)));
 
         //
         final Button btnLocate = new Button();
-        btnLocate.setTooltip(new Tooltip("选择打开的书籍"));
-        btnLocate.setGraphic(new FontAwesomeIconView(FontAwesomeIcon.SUPPORT));
+        btnLocate.setTooltip(new Tooltip("定位到当前打开的书籍"));
+        btnLocate.setGraphic(new MaterialIconView(MaterialIcon.GPS_FIXED));
         btnLocate.setOnAction(this::handleLocateInTreeViewAction);
 
         //
         final MenuButton btnMore = new MenuButton();
         btnMore.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
-        btnMore.setGraphic(new FontAwesomeIconView(FontAwesomeIcon.ELLIPSIS_H));
+        btnMore.setGraphic(new MaterialIconView(MaterialIcon.MENU));
 
         final RadioMenuItem mCatalog = new RadioMenuItem("部类目录");
         mCatalog.setToggleGroup(treeViewModeGroup);
@@ -77,9 +74,9 @@ public class BookListController extends WorkbenchWorkpartControllerExt {
         //
         this.toolbar.addRight(btnSearch, btnLocate, btnMore);
         //
-        this.viewpartVbox.getChildren().add(this.treeView);
-        //
-        return super.getViewport();
+        this.treeView = new TreeViewExt<>((e, t) -> getEventBus().fireEvent(new BookEvent(BookEvent.OPEN, t.getValue())));
+        this.treeView.setShowRoot(false);
+        this.viewportVBox.getChildren().add(this.treeView);
     }
 
     @Override
@@ -101,11 +98,10 @@ public class BookListController extends WorkbenchWorkpartControllerExt {
     }
 
     private void handleLocateInTreeViewAction(ActionEvent event) {
-        final WorkbenchOpenpartController openpart = getWorkbenchViewport().selectedOpenpart();
-        if (!(openpart instanceof BookViewController controller))
+        final WorkbenchViewController controller = getPrimaryViewport().getSelectedMainViewController();
+        if (!(controller instanceof BookViewController))
             return;
-
-        final TreeItem<CbetaBook> treeItem = TreeHelper.findFirstByValue(treeView.getRoot(), controller.book);
+        final TreeItem<CbetaBook> treeItem = TreeHelper.findFirstByValue(treeView.getRoot(), ((BookViewController) controller).book);
         if (null != treeItem) {
             treeView.getSelectionModel().select(treeItem);
             treeView.scrollToIfNotVisible(treeItem);
@@ -124,11 +120,23 @@ public class BookListController extends WorkbenchWorkpartControllerExt {
         final BookTree bookTree = new BookTree(CbetaxHelper.books, BookTreeMode.valueOf(mode));
         treeViewModeGroup.setUserData(mode);
         UserPrefs.prefs.setProperty("cbeta.nav", mode);
+        if (null == treeViewModeGroup.getSelectedToggle()) {
+            for (Toggle toggle : treeViewModeGroup.getToggles()) {
+                if (mode.equals(toggle.getUserData())) {
+                    toggle.setSelected(true);
+                    break;
+                }
+            }
+        }
 
         //
         final TreeItem<CbetaBook> rootItem = bookTree.getDataTree();
         rootItem.setExpanded(true);
         Platform.runLater(() -> treeView.setRoot(rootItem));
         DevtoolHelper.LOG.info("load booklist views used times: " + (System.currentTimeMillis() - st));
+    }
+
+    @Override
+    public void showViewport(boolean firstTime) {
     }
 }

@@ -1,7 +1,7 @@
 package org.appxi.cbeta.explorer.tool;
 
-import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
-import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView;
+import de.jensd.fx.glyphs.materialicons.MaterialIcon;
+import de.jensd.fx.glyphs.materialicons.MaterialIconView;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
@@ -10,9 +10,10 @@ import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import org.appxi.cbeta.explorer.CbetaxHelper;
-import org.appxi.cbeta.explorer.workbench.WorkbenchWorkpartControllerExt;
 import org.appxi.holder.IntHolder;
 import org.appxi.holder.RawHolder;
+import org.appxi.javafx.workbench.WorkbenchApplication;
+import org.appxi.javafx.workbench.views.WorkbenchSideViewController;
 import org.appxi.tome.cbeta.BookTree;
 import org.appxi.tome.cbeta.BookTreeMode;
 import org.appxi.tome.cbeta.CbetaBook;
@@ -27,15 +28,15 @@ import java.nio.file.Path;
 import java.util.stream.Collectors;
 import java.util.zip.ZipFile;
 
-public class EpubRenameController extends WorkbenchWorkpartControllerExt {
+public class EpubRenameController extends WorkbenchSideViewController {
 
-    public EpubRenameController() {
-        super("EPUB_RENAME", "CBETA EPUB 重构");
+    public EpubRenameController(WorkbenchApplication application) {
+        super("EPUB_RENAME", "CBETA EPUB 重构", application);
     }
 
     @Override
-    public Label getViewpartInfo() {
-        return new Label(this.viewName, new FontAwesomeIconView(FontAwesomeIcon.PENCIL_SQUARE_ALT));
+    public javafx.scene.Node createToolIconGraphic(Boolean placeInSideViews) {
+        return new MaterialIconView(MaterialIcon.DEVELOPER_MODE);
     }
 
     @Override
@@ -43,7 +44,11 @@ public class EpubRenameController extends WorkbenchWorkpartControllerExt {
     }
 
     @Override
-    public void onViewportSelected(boolean firstTime) {
+    protected void initViewport() {
+    }
+
+    @Override
+    public void showViewport(boolean firstTime) {
         if (firstTime) {
             final Label info = new Label("由于CBETA提供的EPUB电子书使用图书ID作为文件名，若是人来查找需要的图书电子档，实在不太方便。\n此工具用于将所有EPUB文件名称规范化并且导出到合适的目录结构中，以解决此问题。\n");
             info.setWrapText(true);
@@ -109,7 +114,7 @@ public class EpubRenameController extends WorkbenchWorkpartControllerExt {
                     targetPathLabel, targetPathHBox,
                     applyBtnHBox);
             innerVBox.setStyle("-fx-padding: 1em .5em;");
-            this.viewpartVbox.getChildren().add(innerVBox);
+            this.viewportVBox.getChildren().add(innerVBox);
         }
     }
 

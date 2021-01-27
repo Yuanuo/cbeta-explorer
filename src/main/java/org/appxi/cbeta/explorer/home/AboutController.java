@@ -1,7 +1,7 @@
 package org.appxi.cbeta.explorer.home;
 
-import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
-import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView;
+import de.jensd.fx.glyphs.materialicons.MaterialIcon;
+import de.jensd.fx.glyphs.materialicons.MaterialIconView;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Alert;
@@ -14,32 +14,22 @@ import javafx.scene.layout.VBox;
 import javafx.scene.web.WebView;
 import org.appxi.cbeta.explorer.AppInfo;
 import org.appxi.javafx.control.DialogPaneEx;
-import org.appxi.javafx.workbench.views.WorkbenchWorktoolController;
+import org.appxi.javafx.workbench.WorkbenchApplication;
+import org.appxi.javafx.workbench.views.WorkbenchSideToolController;
 import org.appxi.prefs.UserPrefs;
 
-public class AboutController extends WorkbenchWorktoolController {
-    public AboutController() {
-        super("ABOUT", "关于");
+public class AboutController extends WorkbenchSideToolController {
+    public AboutController(WorkbenchApplication application) {
+        super("ABOUT", "关于", application);
     }
 
     @Override
-    public Label getViewpartInfo() {
-        final Label info = new Label(this.viewName, new FontAwesomeIconView(FontAwesomeIcon.QUESTION_CIRCLE));
-        info.setAlignment(Pos.CENTER_RIGHT);
-        return info;
+    public Node createToolIconGraphic(Boolean placeInSideViews) {
+        return new MaterialIconView(MaterialIcon.INFO_OUTLINE);
     }
 
     @Override
-    public Node getViewport() {
-        return null;
-    }
-
-    @Override
-    public void setupInitialize() {
-    }
-
-    @Override
-    public void onViewportSelected(boolean firstTime) {
+    public void showViewport(boolean firstTime) {
         final Alert alert = new Alert(Alert.AlertType.NONE);
         alert.setTitle(viewName);
 

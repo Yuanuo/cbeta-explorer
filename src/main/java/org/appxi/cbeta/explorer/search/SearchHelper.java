@@ -1,6 +1,6 @@
 package org.appxi.cbeta.explorer.search;
 
-import org.appxi.javafx.workbench.WorkbenchController;
+import org.appxi.javafx.workbench.WorkbenchApplication;
 import org.appxi.tome.cbeta.CbetaBook;
 
 import java.util.function.Function;
@@ -18,11 +18,11 @@ public abstract class SearchHelper {
     private static SearchEngine searchEngine;
     private static SearchService searchService;
 
-    public static void setupSearchService(WorkbenchController controller) {
+    public static void setupSearchService(WorkbenchApplication application) {
         if (null != searchService)
             return;
-        searchEngine = new SearchEngineMem(controller);
-        searchService = new SearchService(controller, searchEngine);
+        searchEngine = new SearchEngineMem(application);
+        searchService = new SearchService(application, searchEngine);
         searchService.setupInitialize();
         searchEngine.setupInitialize();
     }

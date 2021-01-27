@@ -16,8 +16,8 @@ import org.appxi.cbeta.explorer.event.DataEvent;
 import org.appxi.hanlp.convert.ChineseConvertors;
 import org.appxi.javafx.control.AlignedBar;
 import org.appxi.javafx.control.DialogPaneEx;
-import org.appxi.javafx.control.WorkbenchPane;
-import org.appxi.javafx.workbench.WorkbenchController;
+import org.appxi.javafx.workbench.WorkbenchApplication;
+import org.appxi.javafx.workbench.WorkbenchPane;
 import org.appxi.tome.cbeta.CbetaBook;
 import org.appxi.tome.model.Chapter;
 import org.appxi.util.StringHelper;
@@ -28,23 +28,23 @@ class SearchService {
     private static final int SEARCH_RESULT_LIMIT = 100;
 
     public final SearchEngine searchEngine;
-    public final WorkbenchController workbenchController;
+    public final WorkbenchApplication application;
     public final WorkbenchPane workbenchPane;
 
     private boolean showing;
 
-    public SearchService(WorkbenchController workbenchController, SearchEngine searchEngine) {
-        this.workbenchController = workbenchController;
+    public SearchService(WorkbenchApplication application, SearchEngine searchEngine) {
+        this.application = application;
         this.searchEngine = searchEngine;
-        this.workbenchPane = workbenchController.getViewport();
+        this.workbenchPane = application.getPrimaryViewport();
     }
 
     public void setupInitialize() {
-        workbenchController.getPrimaryScene().getAccelerators().put(
+        application.getPrimaryScene().getAccelerators().put(
                 new KeyCodeCombination(KeyCode.O, KeyCombination.SHORTCUT_DOWN),
                 this::show);
         workbenchPane.addEventHandler(KeyEvent.KEY_PRESSED, this::handleEventToShow);
-        workbenchController.getEventBus().addEventHandler(DataEvent.SEARCH_OPEN, event -> this.show());
+        application.eventBus.addEventHandler(DataEvent.SEARCH_OPEN, event -> this.show());
         ChineseConvertors.toHant("测试");
     }
 
@@ -95,7 +95,7 @@ class SearchService {
     public void show() {
         if (null == dialogPane) {
             dialogPane = new DialogPaneEx();
-            dialogPane.getStyleClass().add("search-pane");
+            dialogPane.getStyleClass().add("search-pane-masking");
             StackPane.setAlignment(dialogPane, Pos.TOP_CENTER);
             dialogPane.setPrefSize(1280, 720);
             dialogPane.setMinSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
@@ -119,12 +119,14 @@ class SearchService {
             searchInput = new TextField();
             searchInput.setPromptText("在此输入");
             searchInput.textProperty().addListener((o, ov, text) -> this.handleSearchingOnSearchInputChanged(text));
+            searchInput.addEventHandler(KeyEvent.KEY_PRESSED, this::handleEventToMoveCaret);
 
             searchResult = new ListView<>();
             VBox.setVgrow(searchResult, Priority.ALWAYS);
             searchResult.setOnMouseReleased(this::handleSearchResultEventToOpen);
             searchResult.setOnKeyReleased(this::handleSearchResultEventToOpen);
-            searchResult.addEventHandler(KeyEvent.KEY_PRESSED, this::handleEventToHide);
+            searchResult.setFocusTraversable(false);
+            searchResult.addEventHandler(KeyEvent.KEY_PRESSED, this::handleEventToMoveCaret);
             searchResult.setCellFactory(v -> new ListCell<>() {
                 @Override
                 protected void updateItem(SearchRecord item, boolean empty) {
@@ -155,6 +157,24 @@ class SearchService {
         workbenchPane.masking.removeEventHandler(MouseEvent.MOUSE_PRESSED, this::handleEventToHide);
     }
 
+    private void handleEventToMoveCaret(KeyEvent event) {
+        if (event.getCode() == KeyCode.UP) {
+            SelectionModel<SearchRecord> model = searchResult.getSelectionModel();
+            int selIdx = model.getSelectedIndex() - 1;
+            if (selIdx < 0)
+                selIdx = searchResult.getItems().size() - 1;
+            model.select(selIdx);
+            event.consume();
+        } else if (event.getCode() == KeyCode.DOWN) {
+            SelectionModel<SearchRecord> model = searchResult.getSelectionModel();
+            int selIdx = model.getSelectedIndex() + 1;
+            if (selIdx >= searchResult.getItems().size())
+                selIdx = 0;
+            model.select(selIdx);
+            event.consume();
+        }
+    }
+
     private void handleSearchResultEventToOpen(Event evt) {
         boolean handled = false;
         if (evt instanceof MouseEvent event) {
@@ -175,10 +195,10 @@ class SearchService {
                 Chapter chapter = new Chapter();
                 chapter.path = tmpArr[0];
                 chapter.start = tmpArr.length == 2 ? tmpArr[1] : null;
-                workbenchController.getEventBus().fireEvent(new ChapterEvent(ChapterEvent.OPEN, book, chapter));
+                application.eventBus.fireEvent(new ChapterEvent(ChapterEvent.OPEN, book, chapter));
             } else {
                 // open as book
-                workbenchController.getEventBus().fireEvent(new BookEvent(BookEvent.OPEN, book));
+                application.eventBus.fireEvent(new BookEvent(BookEvent.OPEN, book));
             }
         }
     }

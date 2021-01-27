@@ -1,0 +1,51 @@
+.root {
+    -fx-font-family: 'Microsoft Yahei';
+    -fx-font-size: 16;
+}
+
+/* *************************************************************** */
+/* *************************************************************** */
+.workbench .side-tools .tool-bar {
+    -fx-background-color: derive(-fx-background, -80%);
+}
+.workbench .side-tools .tool-bar .glyph-icon {
+    -fx-fill: derive(-fx-base, -5%);
+}
+.workbench .side-tools .tool-bar .toggle-button,
+.workbench .side-tools .tool-bar .button {
+    -fx-background-color: transparent;
+}
+.side-vbox{
+    -fx-background-color: -fx-background;
+}
+.headline {
+    -fx-font-weight: bold;
+    -fx-padding: 0.2em 0.1em;
+}
+.aligned-separator .space-fill {
+    -fx-background-color: derive(-fx-base, 50%);
+}
+.masking {
+    -fx-background-color: rgba(50, 50, 50, 0.85);
+}
+.search-pane-masking {
+    -fx-background-color: derive(-fx-background, -20%);
+}
+.search-pane-masking .tool-bar {
+    -fx-background-color: -fx-background;
+}
+.search-pane-masking .text-field {
+    -fx-background-radius: 0;
+    -fx-background-insets: 0 0 1 0;
+}
+.search-pane-masking .list-view {
+    -fx-background-radius: 0;
+    -fx-background-insets: 0;
+}
+.book-view-root .flexible-bar {
+    -fx-padding: 8;
+    -fx-opacity: .25;
+}
+.book-view-root .flexible-bar:hover {
+    -fx-opacity: 1;
+}
