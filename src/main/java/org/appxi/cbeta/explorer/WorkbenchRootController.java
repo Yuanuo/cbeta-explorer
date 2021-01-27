@@ -19,7 +19,7 @@ import org.appxi.tome.model.Chapter;
 import java.util.ArrayList;
 import java.util.List;
 
-public class WorkbenchRootController extends WorkbenchPrimaryController {
+class WorkbenchRootController extends WorkbenchPrimaryController {
 
     public WorkbenchRootController(WorkbenchApplication application) {
         super("ROOT-WORKBENCH", "Workbench", application);
