@@ -5,7 +5,8 @@
 
 	<groupId>org.appxi</groupId>
 	<artifactId>cbeta-explorer</artifactId>
-	<version>21.01.24</version>
+	<version>21.02.00</version>
+	<packaging>jar</packaging>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -16,22 +17,56 @@
 		<dependency>
 			<groupId>org.appxi</groupId>
 			<artifactId>appxi-javafx</artifactId>
-			<version>21.01.24</version>
+			<version>21.02.00</version>
 		</dependency>
 		<dependency>
 			<groupId>org.appxi</groupId>
 			<artifactId>appxi-tome</artifactId>
-			<version>21.01.24</version>
+			<version>21.02.00</version>
 		</dependency>
 		<dependency>
 			<groupId>org.appxi</groupId>
 			<artifactId>appxi-timeago</artifactId>
-			<version>21.01.00</version>
+			<version>21.02.00</version>
 		</dependency>
 		<dependency>
 			<groupId>org.appxi</groupId>
 			<artifactId>appxi-hanlp-convert</artifactId>
-			<version>21.01.24</version>
+			<version>21.02.00</version>
+		</dependency>
+
+		<dependency>
+			<groupId>de.jensd</groupId>
+			<artifactId>fontawesomefx-commons</artifactId>
+			<version>11.0</version>
+			<exclusions>
+				<exclusion>
+					<groupId>*</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>de.jensd</groupId>
+			<artifactId>fontawesomefx-materialicons</artifactId>
+			<version>2.2.0-11</version>
+			<exclusions>
+				<exclusion>
+					<groupId>*</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<version>1.4.200</version>
+		</dependency>
+		<dependency>
+			<groupId>com.j256.ormlite</groupId>
+			<artifactId>ormlite-jdbc</artifactId>
+			<version>5.3</version>
 		</dependency>
 	</dependencies>
 
@@ -40,9 +75,6 @@
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.8.1</version>
-				<configuration>
-					<compilerArgs>--enable-preview</compilerArgs>
-				</configuration>
 			</plugin>
 			<plugin>
 				<artifactId>maven-source-plugin</artifactId>
