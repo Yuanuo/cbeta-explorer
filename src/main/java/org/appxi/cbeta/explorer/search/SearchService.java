@@ -105,7 +105,7 @@ class SearchService {
             //
             final AlignedBar headBox = new AlignedBar();
 
-            final Label headTitle = new Label("快速查找书籍（快捷键：双击Shift 或 Ctrl+O）");
+            final Label headTitle = new Label("快速查找书籍（快捷键：双击Shift 或 Ctrl+O 开启。 ESC 或 点击透明区 退出此界面）");
             headTitle.setStyle("-fx-font-weight: bold;");
             headBox.addLeft(headTitle);
 
