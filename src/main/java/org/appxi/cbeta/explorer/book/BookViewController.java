@@ -3,7 +3,10 @@ package org.appxi.cbeta.explorer.book;
 import javafx.beans.Observable;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
-import javafx.scene.control.*;
+import javafx.scene.control.Label;
+import javafx.scene.control.TitledPane;
+import javafx.scene.control.TreeItem;
+import javafx.scene.control.TreeView;
 import javafx.scene.input.InputEvent;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -16,7 +19,7 @@ import org.appxi.cbeta.explorer.model.ChapterTree;
 import org.appxi.hanlp.convert.ChineseConvertors;
 import org.appxi.holder.RawHolder;
 import org.appxi.javafx.control.TreeViewExt;
-import org.appxi.javafx.control.WebPane;
+import org.appxi.javafx.control.WebViewer;
 import org.appxi.javafx.desktop.ApplicationEvent;
 import org.appxi.javafx.helper.TreeHelper;
 import org.appxi.javafx.theme.Theme;
@@ -41,24 +44,20 @@ public class BookViewController extends WorkbenchMainViewController {
     public final CbetaBook book;
     private final BookDocument bookDocument;
 
-    private BookViewPane bookviewPane;
-    private Accordion sideViews;
+    private BookViewer bookViewer;
     private TitledPane tocsPane, volsPane, infoPane;
     private TreeViewExt<Chapter> tocsTree, volsTree;
-    private WebPane webPane;
-
-    private final Chapter initChapter;
+    private WebViewer webViewer;
 
     public BookViewController(CbetaBook book, WorkbenchApplication application) {
         this(book, null, application);
     }
 
-    public BookViewController(CbetaBook book, Chapter initChapter, WorkbenchApplication application) {
+    public BookViewController(CbetaBook book, Chapter chapter, WorkbenchApplication application) {
         super(book.id, book.title, application);
         this.book = book;
         this.bookDocument = new BookDocumentEx(book);
-
-        this.initChapter = initChapter;
+        this.currentChapter = chapter;
     }
 
     @Override
@@ -76,18 +75,16 @@ public class BookViewController extends WorkbenchMainViewController {
 
         this.infoPane = new TitledPane("信息", new Label("Coming soon..."));
 
-        this.sideViews = new Accordion(this.tocsPane, this.volsPane, this.infoPane);
+        this.bookViewer = new BookViewer();
+        this.bookViewer.accordion.getPanes().setAll(this.tocsPane, this.volsPane, this.infoPane);
 
-        this.bookviewPane = new BookViewPane();
-        this.bookviewPane.addSideView(this.sideViews);
-
-        this.webPane = this.bookviewPane.webPane;
+        this.webViewer = this.bookViewer.webViewer;
         //
-        this.viewport = new BorderPane(this.bookviewPane);
+        this.viewport = new BorderPane(this.bookViewer);
     }
 
     public final TreeItem<Chapter> selectedChapterItem() {
-        final TitledPane expandedPane = this.sideViews.getExpandedPane();
+        final TitledPane expandedPane = this.bookViewer.accordion.getExpandedPane();
         if (expandedPane == this.tocsPane)
             return this.tocsTree.getSelectionModel().getSelectedItem();
         else if (expandedPane == this.volsPane)
@@ -102,12 +99,11 @@ public class BookViewController extends WorkbenchMainViewController {
     }
 
     private void setupTheme(ThemeEvent event) {
-        if (null == this.bookviewPane)
+        if (null == this.bookViewer)
             return;
         final Theme theme = null != event ? event.newTheme : this.getThemeProvider().getTheme();
         final ThemeSet themeSet = (ThemeSet) theme;
-        bookviewPane.applyTheme(themeSet.getTheme(null));
-        bookviewPane.updateThemeTools(themeSet);
+        bookViewer.applyThemeSet(themeSet);
     }
 
     @Override
@@ -135,7 +131,7 @@ public class BookViewController extends WorkbenchMainViewController {
 
             // apply theme
             this.setupTheme(null);
-            this.webPane.getWebEngine().setUserDataDirectory(UserPrefs.confDir().toFile());
+            this.webViewer.getEngine().setUserDataDirectory(UserPrefs.confDir().toFile());
 //            webView.addEventFilter(ScrollEvent.SCROLL, (ScrollEvent e) -> {
 //                double deltaY = e.getDeltaY();
 //                if (e.isControlDown() && deltaY > 0) {
@@ -153,10 +149,10 @@ public class BookViewController extends WorkbenchMainViewController {
             RawHolder<TreeView<Chapter>> targetTree = new RawHolder<>();
             RawHolder<TreeItem<Chapter>> targetTreeItem = new RawHolder<>();
 
-            if (null != this.initChapter && null != initChapter.path) {
+            if (null != this.currentChapter && null != currentChapter.path) {
                 Predicate<TreeItem<Chapter>> findByPath = itm ->
-                        initChapter.path.equals(itm.getValue().path)
-                                && (null == initChapter.start || initChapter.start.equals(itm.getValue().start));
+                        currentChapter.path.equals(itm.getValue().path)
+                                && (null == currentChapter.start || currentChapter.start.equals(itm.getValue().start));
                 detectAvailTarget(targetPane, targetTree, targetTreeItem, findByPath);
             }
             if (null == targetTreeItem.value) {
@@ -178,7 +174,7 @@ public class BookViewController extends WorkbenchMainViewController {
                 targetTreeItem.value = tmpList.isEmpty() ? null : tmpList.get(0);
             }
 
-            this.sideViews.setExpandedPane(targetPane.value);
+            this.bookViewer.accordion.setExpandedPane(targetPane.value);
             targetTreeItem.value.setExpanded(true);
             targetTree.value.getSelectionModel().select(targetTreeItem.value);
             handleChaptersTreeViewEnterOrDoubleClickAction(null, targetTreeItem.value);
@@ -224,7 +220,7 @@ public class BookViewController extends WorkbenchMainViewController {
 
         if (null != currentChapter && chapter.path.equals(currentChapter.path)) {
             currentChapter = chapter;
-            webPane.scrollTo("#" + chapter.start);
+            webViewer.scrollTo("#" + chapter.start);
             return;
         }
 
@@ -242,36 +238,36 @@ public class BookViewController extends WorkbenchMainViewController {
                         "</body>"), HanLang.hant, displayHan),
                 InternalHelper.htmlIncludes
         );
-        this.webPane.setOnLoadSucceedAction(we -> {
+        this.webViewer.setOnLoadSucceedAction(we -> {
             // set an interface object named 'javaConnector' in the web engine's page
-            final JSObject window = webPane.executeScript("window");
+            final JSObject window = webViewer.executeScript("window");
             window.setMember("javaConnector", javaConnector);
             //
             if (null == event) {
                 final String selector = UserPrefs.recents.getString(book.id + ".selector", null);
                 final double percent = UserPrefs.recents.getDouble(book.id + ".percent", 0);
 //                DevtoolHelper.LOG.info("scrollTop1BySelectors... selector=" + selector);
-                webPane.executeScript(StringHelper.concat("scrollTop1BySelectors(\"", selector, "\", ", percent, ")"));
-                webPane.addEventHandler(KeyEvent.KEY_PRESSED, event1 -> {
+                webViewer.executeScript(StringHelper.concat("scrollTop1BySelectors(\"", selector, "\", ", percent, ")"));
+                webViewer.addEventHandler(KeyEvent.KEY_PRESSED, event1 -> {
                     if (event1.isControlDown() && event1.getCode() == KeyCode.F) {
-                        webPane.executeScript("handleOnOpenFinder()");
+                        webViewer.executeScript("handleOnOpenFinder()");
                     }
                 });
             } else {
-                webPane.scrollTo("#" + currentChapter.start);
+                webViewer.scrollTo("#" + currentChapter.start);
             }
-            this.webPane.widthProperty().removeListener(this::handleWebViewBodyResize);
-            this.webPane.widthProperty().addListener(this::handleWebViewBodyResize);
+            this.webViewer.widthProperty().removeListener(this::handleWebViewBodyResize);
+            this.webViewer.widthProperty().addListener(this::handleWebViewBodyResize);
             DevtoolHelper.LOG.info("load htmlDocFile used time: " + (System.currentTimeMillis() - st) + ", " + htmlDoc);
         });
 
-        this.webPane.getWebEngine().load(Path.of(htmlDoc).toUri().toString());
+        this.webViewer.getEngine().load(Path.of(htmlDoc).toUri().toString());
         UserPrefs.recents.setProperty(book.id + ".chapter", currentChapter.id);
         getEventBus().fireEvent(new ChapterEvent(ChapterEvent.OPENED, book, currentChapter));
     }
 
     private void handleWebViewBodyResize(Observable o) {
-        webPane.executeScript("beforeOnResizeBody()");
+        webViewer.executeScript("beforeOnResizeBody()");
         // for debug only
 //      final String markedSelector = webPane.executeScript("markedScrollTop1Selector");
 //      DevtoolHelper.LOG.info("marked... markedSelector=" + markedSelector);
@@ -283,10 +279,10 @@ public class BookViewController extends WorkbenchMainViewController {
 
     public void saveUserExperienceData() {
         try {
-            final double scrollTopPercentage = webPane.getScrollTopPercentage();
+            final double scrollTopPercentage = webViewer.getScrollTopPercentage();
             UserPrefs.recents.setProperty(book.id + ".percent", scrollTopPercentage);
 
-            final String selector = webPane.executeScript("scrollTop1Selector()");
+            final String selector = webViewer.executeScript("scrollTop1Selector()");
             UserPrefs.recents.setProperty(book.id + ".selector", selector);
         } catch (Exception ignore) {
         }

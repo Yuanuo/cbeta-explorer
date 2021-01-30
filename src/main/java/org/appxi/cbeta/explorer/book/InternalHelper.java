@@ -15,7 +15,7 @@ class InternalHelper {
             "jquery.finder.js",
             "app.css",
             "app.js"};
-    static final String[] htmlIncludesPaths = new String[htmlIncludeNames.length];
+    static final String[] htmlIncludes = new String[htmlIncludeNames.length];
 
     static void initHtmlIncludes() {
         FileHelper.extractFiles(
@@ -23,7 +23,7 @@ class InternalHelper {
                 InternalHelper::buildHtmlIncludeTarget,
                 htmlIncludeNames);
         for (int i = 0; i < htmlIncludeNames.length; i++) {
-            htmlIncludesPaths[i] = buildHtmlIncludeTarget(htmlIncludeNames[i]).toUri().toString();
+            htmlIncludes[i] = buildHtmlIncludeTarget(htmlIncludeNames[i]).toUri().toString();
         }
     }
 
