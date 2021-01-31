@@ -6,12 +6,8 @@ import javafx.collections.ObservableList;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.control.*;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
-import org.appxi.holder.IntHolder;
-import org.appxi.holder.NumHolder;
 import org.appxi.javafx.control.AlignedBar;
 import org.appxi.javafx.control.StackPaneEx;
 import org.appxi.javafx.control.WebViewer;
@@ -25,8 +21,6 @@ import java.util.stream.Collectors;
 
 public class BookViewer extends StackPaneEx {
     protected final AlignedBar toolbar;
-    protected final SplitPane rootView;
-    public final Accordion accordion;
     public final WebViewer webViewer;
 
     private Node themeMarker;
@@ -38,53 +32,21 @@ public class BookViewer extends StackPaneEx {
         this.toolbar = new AlignedBar();
         this.initToolbar();
 
-        this.accordion = new Accordion();
-
         this.webViewer = new WebViewer();
-
-        this.rootView = new SplitPane(webViewer);
-        this.rootView.setDividerPositions(0.2);
         //
         final BorderPane borderPane = new BorderPane();
         borderPane.setTop(this.toolbar);
-        borderPane.setCenter(this.rootView);
+        borderPane.setCenter(this.webViewer);
         //
         this.getChildren().add(borderPane);
     }
 
-    private void initToolbar() {
-        initToolbar_SideControl();
+    protected void initToolbar() {
         initToolbar_FontSize();
         //
         themeMarker = new MaterialIconView(MaterialIcon.STYLE);
         themeMarker.getStyleClass().add("label");
         this.toolbar.addRight(new Separator(Orientation.VERTICAL), themeMarker);
-    }
-
-    private void initToolbar_SideControl() {
-        final ToggleButton sideControlBtn = new ToggleButton();
-        sideControlBtn.setGraphic(new MaterialIconView(MaterialIcon.MENU));
-        sideControlBtn.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
-
-        final IntHolder lastSideViewIdx = new IntHolder(0);
-        final NumHolder lastRootViewsDivider = new NumHolder(0.2);
-        sideControlBtn.setOnAction(event -> {
-            final ObservableList<Node> items = this.rootView.getItems();
-            final int idx = items.indexOf(this.accordion);
-            if (idx == -1) {
-                items.add(lastSideViewIdx.value, this.accordion);
-                this.rootView.setDividerPositions(lastRootViewsDivider.value.doubleValue());
-            } else {
-                lastSideViewIdx.value = idx;
-                lastRootViewsDivider.value = this.rootView.getDividerPositions()[0];
-                items.remove(this.accordion);
-            }
-        });
-        this.addEventHandler(KeyEvent.KEY_RELEASED, event -> {
-            if (event.getCode() == KeyCode.ESCAPE)
-                sideControlBtn.fire();
-        });
-        this.toolbar.addLeft(sideControlBtn);
     }
 
     private void initToolbar_FontSize() {

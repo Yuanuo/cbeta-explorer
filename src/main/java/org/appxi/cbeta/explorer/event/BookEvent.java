@@ -13,11 +13,19 @@ public class BookEvent extends Event {
 
     public static final EventType<BookEvent> VIEW = new EventType<>(Event.ANY, "BOOK_VIEW");
 
+    public static final EventType<BookEvent> HIDE = new EventType<>(Event.ANY, "BOOK_HIDE");
+
     public final CbetaBook book;
+    public final Object data;
 
     public BookEvent(EventType<BookEvent> eventType, CbetaBook book) {
+        this(eventType, book, null);
+    }
+
+    public BookEvent(EventType<BookEvent> eventType, CbetaBook book, Object data) {
         super(eventType);
         this.book = book;
+        this.data = data;
     }
 
 }

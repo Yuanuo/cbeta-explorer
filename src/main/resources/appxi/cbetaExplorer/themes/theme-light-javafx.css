@@ -5,6 +5,16 @@
 
 /* *************************************************************** */
 /* *************************************************************** */
+.tab-pane.stretched .tab-header-area .control-buttons-tab {
+    -fx-pref-width: 0;
+    -fx-pref-height: 0;
+    -fx-opacity: 0;
+}
+.tab-pane.stretched .tab-header-area .tab {
+    -fx-padding: .1em 0;
+}
+/* *************************************************************** */
+/* *************************************************************** */
 .workbench .side-tools .tool-bar {
     -fx-background-color: derive(-fx-background, -80%);
 }

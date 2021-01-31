@@ -1,12 +1,9 @@
 package org.appxi.cbeta.explorer.book;
 
 import javafx.beans.Observable;
-import javafx.collections.ObservableList;
 import javafx.scene.Node;
-import javafx.scene.control.Label;
 import javafx.scene.control.TitledPane;
 import javafx.scene.control.TreeItem;
-import javafx.scene.control.TreeView;
 import javafx.scene.input.InputEvent;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -17,11 +14,8 @@ import org.appxi.cbeta.explorer.event.ChapterEvent;
 import org.appxi.cbeta.explorer.event.DataEvent;
 import org.appxi.cbeta.explorer.model.ChapterTree;
 import org.appxi.hanlp.convert.ChineseConvertors;
-import org.appxi.holder.RawHolder;
-import org.appxi.javafx.control.TreeViewExt;
 import org.appxi.javafx.control.WebViewer;
 import org.appxi.javafx.desktop.ApplicationEvent;
-import org.appxi.javafx.helper.TreeHelper;
 import org.appxi.javafx.theme.Theme;
 import org.appxi.javafx.theme.ThemeEvent;
 import org.appxi.javafx.theme.ThemeSet;
@@ -38,15 +32,13 @@ import org.appxi.util.ext.HanLang;
 
 import java.nio.file.Path;
 import java.util.Objects;
-import java.util.function.Predicate;
 
 public class BookViewController extends WorkbenchMainViewController {
     public final CbetaBook book;
     private final BookDocument bookDocument;
 
-    private BookViewer bookViewer;
-    private TitledPane tocsPane, volsPane, infoPane;
-    private TreeViewExt<Chapter> tocsTree, volsTree;
+    private BookViewerEx bookViewer;
+    private BookBasicView bookBasicView;
     private WebViewer webViewer;
 
     public BookViewController(CbetaBook book, WorkbenchApplication application) {
@@ -67,28 +59,22 @@ public class BookViewController extends WorkbenchMainViewController {
 
     @Override
     protected void onViewportInitOnce() {
-        this.tocsTree = new TreeViewExt<>(this::handleChaptersTreeViewEnterOrDoubleClickAction);
-        this.tocsPane = new TitledPane("目次", this.tocsTree);
-
-        this.volsTree = new TreeViewExt<>(this::handleChaptersTreeViewEnterOrDoubleClickAction);
-        this.volsPane = new TitledPane("卷次", this.volsTree);
-
-        this.infoPane = new TitledPane("信息", new Label("Coming soon..."));
-
-        this.bookViewer = new BookViewer();
-        this.bookViewer.accordion.getPanes().setAll(this.tocsPane, this.volsPane, this.infoPane);
-
+        this.bookViewer = new BookViewerEx(this);
+        this.bookBasicView = this.bookViewer.bookBasicView;
         this.webViewer = this.bookViewer.webViewer;
+
+        this.bookBasicView.tocsTree.setEnterOrDoubleClickAction(this::handleChaptersTreeViewEnterOrDoubleClickAction);
+        this.bookBasicView.volsTree.setEnterOrDoubleClickAction(this::handleChaptersTreeViewEnterOrDoubleClickAction);
         //
         this.viewport = new BorderPane(this.bookViewer);
     }
 
     public final TreeItem<Chapter> selectedChapterItem() {
-        final TitledPane expandedPane = this.bookViewer.accordion.getExpandedPane();
-        if (expandedPane == this.tocsPane)
-            return this.tocsTree.getSelectionModel().getSelectedItem();
-        else if (expandedPane == this.volsPane)
-            return this.volsTree.getSelectionModel().getSelectedItem();
+        final TitledPane expandedPane = this.bookBasicView.accordion.getExpandedPane();
+        if (expandedPane == this.bookBasicView.tocsPane)
+            return this.bookBasicView.tocsTree.getSelectionModel().getSelectedItem();
+        else if (expandedPane == this.bookBasicView.volsPane)
+            return this.bookBasicView.volsTree.getSelectionModel().getSelectedItem();
         else
             return null;
     }
@@ -113,18 +99,6 @@ public class BookViewController extends WorkbenchMainViewController {
     }
 
     @Override
-    public void onViewportHide(boolean hideOrElseClose) {
-        saveUserExperienceData();
-        if (!hideOrElseClose) {
-            getEventBus().removeEventHandler(ThemeEvent.CHANGED, this::setupTheme);
-            getEventBus().removeEventHandler(ApplicationEvent.STOPPING, this::handleApplicationEventStopping);
-            getEventBus().removeEventHandler(DataEvent.DISPLAY_HAN, this::handleDisplayHanChanged);
-            setPrimaryTitle(null);
-            getEventBus().fireEvent(new BookEvent(BookEvent.CLOSE, this.book));
-        }
-    }
-
-    @Override
     public void onViewportShow(boolean firstTime) {
         if (firstTime) {
             getEventBus().addEventHandler(ApplicationEvent.STOPPING, this::handleApplicationEventStopping);
@@ -132,71 +106,32 @@ public class BookViewController extends WorkbenchMainViewController {
             // apply theme
             this.setupTheme(null);
             this.webViewer.getEngine().setUserDataDirectory(UserPrefs.confDir().toFile());
-//            webView.addEventFilter(ScrollEvent.SCROLL, (ScrollEvent e) -> {
-//                double deltaY = e.getDeltaY();
-//                if (e.isControlDown() && deltaY > 0) {
-//                    webView.setZoom(webView.getZoom() * 1.1);
-//                    e.consume();
-//                } else if (e.isControlDown() && deltaY < 0) {
-//                    webView.setZoom(webView.getZoom() / 1.1);
-//                    e.consume();
-//                }
-//            });
             // init nav-view
-            ChapterTree.parseBookChaptersToTree(book, this.tocsTree, this.volsTree);
-
-            RawHolder<TitledPane> targetPane = new RawHolder<>();
-            RawHolder<TreeView<Chapter>> targetTree = new RawHolder<>();
-            RawHolder<TreeItem<Chapter>> targetTreeItem = new RawHolder<>();
-
-            if (null != this.currentChapter && null != currentChapter.path) {
-                Predicate<TreeItem<Chapter>> findByPath = itm ->
-                        currentChapter.path.equals(itm.getValue().path)
-                                && (null == currentChapter.start || currentChapter.start.equals(itm.getValue().start));
-                detectAvailTarget(targetPane, targetTree, targetTreeItem, findByPath);
-            }
-            if (null == targetTreeItem.value) {
-                final String lastChapterId = UserPrefs.recents.getString(book.id + ".chapter", null);
-                if (StringHelper.isNotBlank(lastChapterId)) {
-                    Predicate<TreeItem<Chapter>> findById = itm -> Objects.equals(lastChapterId, itm.getValue().id);
-                    detectAvailTarget(targetPane, targetTree, targetTreeItem, findById);
-                }
-            }
-            if (null == targetTreeItem.value) {
-                if (this.tocsTree.getRoot().getChildren().size() > 0) {
-                    targetPane.value = this.tocsPane;
-                    targetTree.value = this.tocsTree;
-                } else {
-                    targetPane.value = this.volsPane;
-                    targetTree.value = this.volsTree;
-                }
-                ObservableList<TreeItem<Chapter>> tmpList = targetTree.value.getRoot().getChildren();
-                targetTreeItem.value = tmpList.isEmpty() ? null : tmpList.get(0);
-            }
-
-            this.bookViewer.accordion.setExpandedPane(targetPane.value);
-            targetTreeItem.value.setExpanded(true);
-            targetTree.value.getSelectionModel().select(targetTreeItem.value);
-            handleChaptersTreeViewEnterOrDoubleClickAction(null, targetTreeItem.value);
+            ChapterTree.parseBookChaptersToTree(book, this.bookBasicView.tocsTree, this.bookBasicView.volsTree);
+            // init default selection in basic view
+            TreeItem<Chapter> treeItem = this.bookBasicView.prepareDefaultSelection(this.book, this.currentChapter);
+            handleChaptersTreeViewEnterOrDoubleClickAction(null, treeItem);
         }
+        // update app title
         setPrimaryTitle(book.title);
-        getEventBus().fireEvent(new BookEvent(BookEvent.VIEW, this.book));
+        //
+        getEventBus().fireEvent(new BookEvent(BookEvent.VIEW, this.book, this.bookViewer.sideViews));
+//        // update book-data-view
+//        //FIXME 是否要同时显示左侧视图？
+//        BookDataController.INSTANCE.setCurrentBookView(this.book);
     }
 
-    private void detectAvailTarget(RawHolder<TitledPane> targetPane,
-                                   RawHolder<TreeView<Chapter>> targetTree,
-                                   RawHolder<TreeItem<Chapter>> targetTreeItem,
-                                   Predicate<TreeItem<Chapter>> findByExpr) {
-        targetTreeItem.value = TreeHelper.findFirst(tocsTree.getRoot(), findByExpr);
-        if (null != targetTreeItem.value) {
-            targetPane.value = this.tocsPane;
-            targetTree.value = this.tocsTree;
+    @Override
+    public void onViewportHide(boolean hideOrElseClose) {
+        saveUserExperienceData();
+        if (hideOrElseClose) {
+            getEventBus().fireEvent(new BookEvent(BookEvent.HIDE, this.book));
         } else {
-            targetTreeItem.value = TreeHelper.findFirst(volsTree.getRoot(), findByExpr);
-            if (null != targetTreeItem.value) {
-                targetPane.value = this.volsPane;
-                targetTree.value = this.volsTree;
-            }
+            getEventBus().removeEventHandler(ThemeEvent.CHANGED, this::setupTheme);
+            getEventBus().removeEventHandler(ApplicationEvent.STOPPING, this::handleApplicationEventStopping);
+            getEventBus().removeEventHandler(DataEvent.DISPLAY_HAN, this::handleDisplayHanChanged);
+            setPrimaryTitle(null);
+            getEventBus().fireEvent(new BookEvent(BookEvent.CLOSE, this.book));
         }
     }
 
