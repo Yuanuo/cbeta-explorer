@@ -185,7 +185,7 @@
     -fx-background-color: derive(-fx-background, -10%);
 }
 .tab-header-area .tab {
-    -fx-background-color: -fx-background;
+    -fx-background-color: derive(-fx-background, 30%);
     -fx-background-insets: 0;
     -fx-background-radius: 0;
     -fx-padding: .25em .8em;
@@ -207,7 +207,7 @@
     -fx-cursor: hand;
 }
 .tab-header-area .tab:selected {
-    -fx-background-color: derive(-fx-background, 30%);
+    -fx-background-color: -fx-background;
     -fx-border-color: derive(-fx-accent, 10%);
 }
 .tab-header-area .tab:selected .tab-label {
@@ -275,4 +275,8 @@
 }
 .book-view-root .flexible-bar:hover {
     -fx-opacity: 1;
+}
+.glyph-icon.label {
+    -fx-font-size: 1.5em !important;
+    -fx-fill: derive(-fx-base, -50%);
 }
