@@ -66,7 +66,7 @@ public class BookViewController extends WorkbenchMainViewController {
     }
 
     @Override
-    protected void initViewport() {
+    protected void onViewportInitOnce() {
         this.tocsTree = new TreeViewExt<>(this::handleChaptersTreeViewEnterOrDoubleClickAction);
         this.tocsPane = new TitledPane("目次", this.tocsTree);
 
@@ -113,7 +113,7 @@ public class BookViewController extends WorkbenchMainViewController {
     }
 
     @Override
-    public void hideViewport(boolean hideOrElseClose) {
+    public void onViewportHide(boolean hideOrElseClose) {
         saveUserExperienceData();
         if (!hideOrElseClose) {
             getEventBus().removeEventHandler(ThemeEvent.CHANGED, this::setupTheme);
@@ -125,7 +125,7 @@ public class BookViewController extends WorkbenchMainViewController {
     }
 
     @Override
-    public void showViewport(boolean firstTime) {
+    public void onViewportShow(boolean firstTime) {
         if (firstTime) {
             getEventBus().addEventHandler(ApplicationEvent.STOPPING, this::handleApplicationEventStopping);
 

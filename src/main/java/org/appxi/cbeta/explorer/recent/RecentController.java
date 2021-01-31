@@ -31,7 +31,7 @@ public class RecentController extends WorkbenchSideViewController {
     private TreeViewEx<Object> treeView;
 
     public RecentController(WorkbenchApplication application) {
-        super("RECENT", "近期阅读", application);
+        super("RECENT", "已读", application);
     }
 
     @Override
@@ -125,8 +125,8 @@ public class RecentController extends WorkbenchSideViewController {
     private void saveRecentViews() {
         final Preferences recent = createRecentViews(false);
         getPrimaryViewport().getMainViewsTabs().forEach(tab -> {
-            if (tab.getUserData() instanceof BookViewController) {
-                recent.setProperty(((BookViewController) tab.getUserData()).book.id, tab.isSelected());
+            if (tab.getUserData() instanceof BookViewController bookView) {
+                recent.setProperty(bookView.book.id, tab.isSelected());
             }
         });
         recent.save();
@@ -135,16 +135,16 @@ public class RecentController extends WorkbenchSideViewController {
     private TimeAgo.Messages timeAgoMsgs;
 
     @Override
-    protected void initViewport() {
+    protected void onViewportInitOnce() {
     }
 
     @Override
-    public void showViewport(boolean firstTime) {
+    public void onViewportShow(boolean firstTime) {
         if (firstTime) {
             this.treeView = new TreeViewExt<>((e, treeItem) -> {
-                if (!(treeItem.getValue() instanceof RecentBook))
+                if (!(treeItem.getValue() instanceof RecentBook rBook))
                     return;
-                final CbetaBook book = SearchHelper.searchById(((RecentBook) treeItem.getValue()).id);
+                final CbetaBook book = SearchHelper.searchById(rBook.id);
                 if (null != book)
                     getEventBus().fireEvent(new BookEvent(BookEvent.OPEN, book));
             });

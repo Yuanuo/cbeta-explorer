@@ -21,7 +21,7 @@ public class WelcomeController extends WorkbenchMainViewController {
     }
 
     @Override
-    protected void initViewport() {
+    protected void onViewportInitOnce() {
         final Label label = new Label();
         label.setStyle("-fx-font-size: 2em; -fx-opacity: .5;");
         label.setText("双击Shift ／ Ctrl+O 检索【书名／章节／作者／译者／...】");
@@ -31,6 +31,6 @@ public class WelcomeController extends WorkbenchMainViewController {
     }
 
     @Override
-    public void showViewport(boolean firstTime) {
+    public void onViewportShow(boolean firstTime) {
     }
 }

@@ -29,7 +29,7 @@ public class AboutController extends WorkbenchSideToolController {
     }
 
     @Override
-    public void showViewport(boolean firstTime) {
+    public void onViewportShow(boolean firstTime) {
         final Alert alert = new Alert(Alert.AlertType.NONE);
         alert.setTitle(viewName);
 

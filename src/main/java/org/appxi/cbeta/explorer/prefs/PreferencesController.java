@@ -22,7 +22,7 @@ import java.util.Objects;
 
 public class PreferencesController extends WorkbenchSideToolController {
     public PreferencesController(WorkbenchApplication application) {
-        super("PREFERENCES", "偏好设置", application);
+        super("PREFERENCES", "设置", application);
     }
 
     @Override
@@ -31,7 +31,7 @@ public class PreferencesController extends WorkbenchSideToolController {
     }
 
     @Override
-    public void showViewport(boolean firstTime) {
+    public void onViewportShow(boolean firstTime) {
         final List<Node> nodes = new ArrayList<>();
 
         buildThemeConfig(nodes);
