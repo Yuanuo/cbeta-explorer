@@ -4,10 +4,12 @@ import de.jensd.fx.glyphs.materialicons.MaterialIcon;
 import de.jensd.fx.glyphs.materialicons.MaterialIconView;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
+import javafx.event.Event;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import org.appxi.cbeta.explorer.CbetaxHelper;
 import org.appxi.cbeta.explorer.event.BookEvent;
+import org.appxi.cbeta.explorer.event.ChapterEvent;
 import org.appxi.cbeta.explorer.event.DataEvent;
 import org.appxi.cbeta.explorer.model.BookTree;
 import org.appxi.javafx.control.SeparatorMenuItemEx;
@@ -20,6 +22,7 @@ import org.appxi.javafx.workbench.views.WorkbenchSideViewController;
 import org.appxi.prefs.UserPrefs;
 import org.appxi.tome.cbeta.BookTreeMode;
 import org.appxi.tome.cbeta.CbetaBook;
+import org.appxi.tome.model.Chapter;
 import org.appxi.util.DevtoolHelper;
 
 import java.util.Objects;
@@ -38,7 +41,7 @@ public class BookListController extends WorkbenchSideViewController {
     }
 
     @Override
-    protected void initViewport() {
+    protected void onViewportInitOnce() {
         final Button btnSearch = new Button();
         btnSearch.setTooltip(new Tooltip("快速查找书籍（Ctrl+O）"));
         btnSearch.setGraphic(new MaterialIconView(MaterialIcon.SEARCH));
@@ -48,7 +51,7 @@ public class BookListController extends WorkbenchSideViewController {
         final Button btnLocate = new Button();
         btnLocate.setTooltip(new Tooltip("定位到当前打开的书籍"));
         btnLocate.setGraphic(new MaterialIconView(MaterialIcon.GPS_FIXED));
-        btnLocate.setOnAction(this::handleLocateInTreeViewAction);
+        btnLocate.setOnAction(event -> handleLocateInTreeViewAction(null));
 
         //
         final MenuButton btnMore = new MenuButton();
@@ -92,16 +95,41 @@ public class BookListController extends WorkbenchSideViewController {
         if (null != navToggle)
             navToggle.setSelected(true);
 
+        getEventBus().addEventHandler(BookEvent.OPEN, event -> handleOpenBookOrChapter(event, event.book, null));
+        getEventBus().addEventHandler(ChapterEvent.OPEN, event -> handleOpenBookOrChapter(event, event.book, event.chapter));
         getEventBus().addEventHandler(ApplicationEvent.STARTED, event -> InternalHelper.initHtmlIncludes());
         //
         getEventBus().addEventHandler(DataEvent.BOOKS_READY, event -> handleTreeViewModeAction(null));
     }
 
-    private void handleLocateInTreeViewAction(ActionEvent event) {
-        final WorkbenchViewController controller = getPrimaryViewport().getSelectedMainViewController();
-        if (!(controller instanceof BookViewController))
+    private void handleOpenBookOrChapter(Event event, CbetaBook book, Chapter chapter) {
+        final BookViewController viewController = (BookViewController) getPrimaryViewport().findMainViewController(book.id);
+        if (null != viewController) {
+            getPrimaryViewport().selectMainView(viewController.viewId);
+            event.consume();
+            Platform.runLater(() -> {
+                viewController.openChapter(null, chapter);
+                // FIXME 是否需要每次打开书籍后同时在左侧目录树中定位？
+//                handleLocateInTreeViewAction(viewController);
+            });
             return;
-        final TreeItem<CbetaBook> treeItem = TreeHelper.findFirstByValue(treeView.getRoot(), ((BookViewController) controller).book);
+        }
+        Platform.runLater(() -> {
+            final BookViewController controller = new BookViewController(book, chapter, getApplication());
+            getPrimaryViewport().addWorkbenchViewAsMainView(controller, false);
+            controller.setupInitialize();
+            getPrimaryViewport().selectMainView(controller.viewId);
+            // FIXME 是否需要每次打开书籍后同时在左侧目录树中定位？
+//            handleLocateInTreeViewAction(controller);
+        });
+    }
+
+    private void handleLocateInTreeViewAction(WorkbenchViewController controller) {
+        if (null == controller)
+            controller = getPrimaryViewport().getSelectedMainViewController();
+        if (!(controller instanceof BookViewController bookView))
+            return;
+        final TreeItem<CbetaBook> treeItem = TreeHelper.findFirstByValue(treeView.getRoot(), bookView.book);
         if (null != treeItem) {
             treeView.getSelectionModel().select(treeItem);
             treeView.scrollToIfNotVisible(treeItem);
@@ -137,6 +165,6 @@ public class BookListController extends WorkbenchSideViewController {
     }
 
     @Override
-    public void showViewport(boolean firstTime) {
+    public void onViewportShow(boolean firstTime) {
     }
 }
