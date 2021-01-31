@@ -29,7 +29,7 @@ public class BookViewer extends StackPaneEx {
     public final Accordion accordion;
     public final WebViewer webViewer;
 
-    private Label themeLabel;
+    private Node themeMarker;
 
     public BookViewer() {
         super();
@@ -56,8 +56,9 @@ public class BookViewer extends StackPaneEx {
         initToolbar_SideControl();
         initToolbar_FontSize();
         //
-        themeLabel = new Label("样式:");
-        this.toolbar.addRight(new Separator(Orientation.VERTICAL), themeLabel);
+        themeMarker = new MaterialIconView(MaterialIcon.STYLE);
+        themeMarker.getStyleClass().add("label");
+        this.toolbar.addRight(new Separator(Orientation.VERTICAL), themeMarker);
     }
 
     private void initToolbar_SideControl() {
@@ -97,7 +98,8 @@ public class BookViewer extends StackPaneEx {
                 webViewer.getViewer().setFontScale(webViewer.getViewer().getFontScale() - 0.1);
             }
         };
-        Label fSizeLabel = new Label("字号:");
+        MaterialIconView fSizeIcon = new MaterialIconView(MaterialIcon.TEXT_FIELDS);
+        fSizeIcon.getStyleClass().add("label");
 
         Button fSizeSubBtn = new Button(null, new MaterialIconView(MaterialIcon.ZOOM_OUT));
         fSizeSubBtn.setTooltip(new Tooltip("减小字号"));
@@ -106,19 +108,19 @@ public class BookViewer extends StackPaneEx {
         Button fSizeSupBtn = new Button(null, new MaterialIconView(MaterialIcon.ZOOM_IN));
         fSizeSupBtn.setTooltip(new Tooltip("增大字号"));
         fSizeSupBtn.setOnAction(event -> fSizeAction.accept(true));
-        this.toolbar.addRight(fSizeLabel, fSizeSubBtn, fSizeSupBtn);
+        this.toolbar.addRight(fSizeIcon, fSizeSubBtn, fSizeSupBtn);
     }
 
     public void applyThemeSet(ThemeSet themeSet) {
         ObservableList<Node> toolbarItems = this.toolbar.getAlignedItems();
-        int themeToolsIdx = toolbarItems.indexOf(this.themeLabel) + 1;
+        int themeToolsIdx = toolbarItems.indexOf(this.themeMarker) + 1;
 
         // clean old
         for (int i = themeToolsIdx; i < toolbarItems.size(); i++) {
-            if (toolbarItems.get(i).getProperties().containsKey(themeLabel))
+            if (toolbarItems.get(i).getProperties().containsKey(themeMarker))
                 toolbarItems.remove(i--);
         }
-        this.themeLabel.setUserData(null);
+        this.themeMarker.setUserData(null);
         //
         final ToggleGroup themeToolsGroup = new ToggleGroup();
         final List<RadioButton> themeToolsList = themeSet.themes.stream().map(theme -> {
@@ -126,7 +128,7 @@ public class BookViewer extends StackPaneEx {
             themeTool.setToggleGroup(themeToolsGroup);
             themeTool.setUserData(theme);
             themeTool.setTooltip(new Tooltip(theme.title));
-            themeTool.getProperties().put(this.themeLabel, true);
+            themeTool.getProperties().put(this.themeMarker, true);
 
             final MaterialIconView icon = new MaterialIconView(MaterialIcon.LENS);
             icon.setFill(Color.valueOf(theme.accentColor));
@@ -134,9 +136,9 @@ public class BookViewer extends StackPaneEx {
 
             themeTool.setOnAction(event -> {
                 final Theme tgtTheme = (Theme) ((ToggleButton) event.getSource()).getUserData();
-                if (null == tgtTheme || Objects.equals(tgtTheme, themeLabel.getUserData()) || tgtTheme.stylesheets.isEmpty())
+                if (null == tgtTheme || Objects.equals(tgtTheme, themeMarker.getUserData()) || tgtTheme.stylesheets.isEmpty())
                     return;
-                this.themeLabel.setUserData(tgtTheme);
+                this.themeMarker.setUserData(tgtTheme);
                 // TODO 支持使用多个css文件
                 this.webViewer.getEngine().setUserStyleSheetLocation(tgtTheme.stylesheets.iterator().next());
             });
