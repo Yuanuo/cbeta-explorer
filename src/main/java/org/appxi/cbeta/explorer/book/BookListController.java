@@ -3,7 +3,7 @@ package org.appxi.cbeta.explorer.book;
 import de.jensd.fx.glyphs.materialicons.MaterialIcon;
 import de.jensd.fx.glyphs.materialicons.MaterialIconView;
 import javafx.application.Platform;
-import javafx.event.ActionEvent;
+import javafx.collections.ObservableList;
 import javafx.event.Event;
 import javafx.scene.Node;
 import javafx.scene.control.*;
@@ -25,7 +25,7 @@ import org.appxi.tome.cbeta.CbetaBook;
 import org.appxi.tome.model.Chapter;
 import org.appxi.util.DevtoolHelper;
 
-import java.util.Objects;
+import java.util.List;
 
 public class BookListController extends WorkbenchSideViewController {
     private final ToggleGroup treeViewModeGroup = new ToggleGroup();
@@ -61,17 +61,14 @@ public class BookListController extends WorkbenchSideViewController {
         final RadioMenuItem mCatalog = new RadioMenuItem("部类目录");
         mCatalog.setToggleGroup(treeViewModeGroup);
         mCatalog.setUserData("catalog");
-        mCatalog.setOnAction(this::handleTreeViewModeAction);
 
         final RadioMenuItem mSimple = new RadioMenuItem("简易目录");
         mSimple.setToggleGroup(treeViewModeGroup);
         mSimple.setUserData("simple");
-        mSimple.setOnAction(this::handleTreeViewModeAction);
 
         final RadioMenuItem mAdvance = new RadioMenuItem("进阶目录");
         mAdvance.setToggleGroup(treeViewModeGroup);
         mAdvance.setUserData("advance");
-        mAdvance.setOnAction(this::handleTreeViewModeAction);
         //
         btnMore.getItems().addAll(new SeparatorMenuItemEx("目录模式"), mCatalog, mSimple, mAdvance);
         //
@@ -84,22 +81,28 @@ public class BookListController extends WorkbenchSideViewController {
 
     @Override
     public void setupInitialize() {
-        final String navMode = UserPrefs.prefs.getString("cbeta.nav", "catalog");
-        Toggle navToggle = null;
-        for (Toggle toggle : treeViewModeGroup.getToggles()) {
-            if (Objects.equals(navMode, toggle.getUserData())) {
-                navToggle = toggle;
-                break;
-            }
-        }
-        if (null != navToggle)
-            navToggle.setSelected(true);
-
         getEventBus().addEventHandler(BookEvent.OPEN, event -> handleOpenBookOrChapter(event, event.book, null));
         getEventBus().addEventHandler(ChapterEvent.OPEN, event -> handleOpenBookOrChapter(event, event.book, event.chapter));
         getEventBus().addEventHandler(ApplicationEvent.STARTED, event -> InternalHelper.initHtmlIncludes());
         //
-        getEventBus().addEventHandler(DataEvent.BOOKS_READY, event -> handleTreeViewModeAction(null));
+        treeViewModeGroup.selectedToggleProperty().addListener((o, ov, nv) -> {
+            if (null == nv) return;
+            final String mode = (String) nv.getUserData();
+            final long st = System.currentTimeMillis();
+            final BookTree bookTree = new BookTree(CbetaxHelper.books, BookTreeMode.valueOf(mode));
+            UserPrefs.prefs.setProperty("cbeta.nav", mode);
+            //
+            final TreeItem<CbetaBook> rootItem = bookTree.getDataTree();
+            rootItem.setExpanded(true);
+            Platform.runLater(() -> treeView.setRoot(rootItem));
+            DevtoolHelper.LOG.info("load booklist views used times: " + (System.currentTimeMillis() - st));
+        });
+        getEventBus().addEventHandler(DataEvent.BOOKS_READY, event -> {
+            final String navMode = UserPrefs.prefs.getString("cbeta.nav", "catalog");
+            final ObservableList<Toggle> toggles = treeViewModeGroup.getToggles();
+            final List<Toggle> filtered = toggles.filtered(v -> navMode.equals(v.getUserData()));
+            treeViewModeGroup.selectToggle(!filtered.isEmpty() ? filtered.get(0) : toggles.get(0));
+        });
     }
 
     private void handleOpenBookOrChapter(Event event, CbetaBook book, Chapter chapter) {
@@ -134,34 +137,6 @@ public class BookListController extends WorkbenchSideViewController {
             treeView.getSelectionModel().select(treeItem);
             treeView.scrollToIfNotVisible(treeItem);
         }
-    }
-
-    private void handleTreeViewModeAction(ActionEvent event) {
-        final String mode = null != event
-                ? String.valueOf(((RadioMenuItem) event.getSource()).getUserData())
-                : UserPrefs.prefs.getString("cbeta.nav", "catalog");
-
-        if (Objects.equals(mode, treeViewModeGroup.getUserData()))
-            return;
-
-        final long st = System.currentTimeMillis();
-        final BookTree bookTree = new BookTree(CbetaxHelper.books, BookTreeMode.valueOf(mode));
-        treeViewModeGroup.setUserData(mode);
-        UserPrefs.prefs.setProperty("cbeta.nav", mode);
-        if (null == treeViewModeGroup.getSelectedToggle()) {
-            for (Toggle toggle : treeViewModeGroup.getToggles()) {
-                if (mode.equals(toggle.getUserData())) {
-                    toggle.setSelected(true);
-                    break;
-                }
-            }
-        }
-
-        //
-        final TreeItem<CbetaBook> rootItem = bookTree.getDataTree();
-        rootItem.setExpanded(true);
-        Platform.runLater(() -> treeView.setRoot(rootItem));
-        DevtoolHelper.LOG.info("load booklist views used times: " + (System.currentTimeMillis() - st));
     }
 
     @Override

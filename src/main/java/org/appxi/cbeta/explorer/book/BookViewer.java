@@ -123,6 +123,15 @@ public class BookViewer extends StackPaneEx {
         this.themeMarker.setUserData(null);
         //
         final ToggleGroup themeToolsGroup = new ToggleGroup();
+        themeToolsGroup.selectedToggleProperty().addListener((o, ov, nv) -> {
+            if (null == nv) return;
+            final Theme theme = (Theme) nv.getUserData();
+            if (null == theme || Objects.equals(theme, themeMarker.getUserData()) || theme.stylesheets.isEmpty())
+                return;
+            this.themeMarker.setUserData(theme);
+            // TODO 支持使用多个css文件
+            this.webViewer.getEngine().setUserStyleSheetLocation(theme.stylesheets.iterator().next());
+        });
         final List<RadioButton> themeToolsList = themeSet.themes.stream().map(theme -> {
             final RadioButton themeTool = new RadioButton();
             themeTool.setToggleGroup(themeToolsGroup);
@@ -134,14 +143,6 @@ public class BookViewer extends StackPaneEx {
             icon.setFill(Color.valueOf(theme.accentColor));
             themeTool.setGraphic(icon);
 
-            themeTool.setOnAction(event -> {
-                final Theme tgtTheme = (Theme) ((ToggleButton) event.getSource()).getUserData();
-                if (null == tgtTheme || Objects.equals(tgtTheme, themeMarker.getUserData()) || tgtTheme.stylesheets.isEmpty())
-                    return;
-                this.themeMarker.setUserData(tgtTheme);
-                // TODO 支持使用多个css文件
-                this.webViewer.getEngine().setUserStyleSheetLocation(tgtTheme.stylesheets.iterator().next());
-            });
             return themeTool;
         }).collect(Collectors.toList());
         toolbarItems.addAll(themeToolsIdx, themeToolsList);
