@@ -2,16 +2,23 @@ package org.appxi.cbeta.explorer.book;
 
 import de.jensd.fx.glyphs.materialicons.MaterialIcon;
 import de.jensd.fx.glyphs.materialicons.MaterialIconView;
+import javafx.event.EventHandler;
 import javafx.scene.Node;
 import org.appxi.cbeta.explorer.event.BookEvent;
 import org.appxi.javafx.workbench.WorkbenchApplication;
+import org.appxi.javafx.workbench.WorkbenchViewController;
 import org.appxi.javafx.workbench.views.WorkbenchSideViewController;
 
 public class BookDataController extends WorkbenchSideViewController {
-    static final String VIEW_ID = "BOOK-DATA";
+    private static BookDataController INSTANCE;
 
     public BookDataController(WorkbenchApplication application) {
-        super(VIEW_ID, "在读", application);
+        super("BOOK-DATA", "在读", application);
+        INSTANCE = this;
+    }
+
+    public static BookDataController getInstance() {
+        return INSTANCE;
     }
 
     @Override
@@ -29,18 +36,21 @@ public class BookDataController extends WorkbenchSideViewController {
     public void setupInitialize() {
         getEventBus().addEventHandler(BookEvent.VIEW, event -> {
             bookViews = null;// always reset
-            if (event.data instanceof Node view) {
+            final WorkbenchViewController mainView = getPrimaryViewport().getSelectedMainViewController();
+            if (mainView instanceof BookViewController bookView) {
                 if (null != this.viewportVBox)
-                    this.viewportVBox.getChildren().setAll(view);
-                else bookViews = view;
+                    this.viewportVBox.getChildren().setAll(bookView.getBookViewer().sideViews);
+                else bookViews = bookView.getBookViewer().sideViews;
                 //FIXME 程序启动后的第一次在此默认显示此视图？
             }
         });
-        getEventBus().addEventHandler(BookEvent.HIDE, event -> {
+        final EventHandler<BookEvent> handleOnBookViewHideOrClose = event -> {
             if (null != this.viewportVBox) {
                 this.viewportVBox.getChildren().clear();
             }
-        });
+        };
+        getEventBus().addEventHandler(BookEvent.HIDE, handleOnBookViewHideOrClose);
+        getEventBus().addEventHandler(BookEvent.CLOSE, handleOnBookViewHideOrClose);
     }
 
     @Override
