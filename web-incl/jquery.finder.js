@@ -128,7 +128,7 @@ const finder = {
     currentResult: 0,
 
     findTerm: (term) => {
-        if (javaConnector) term = javaConnector.convertInput(term);
+        if (dataApi) term = dataApi.convertToDisplayHan(term);
         // highlight results
         $(finder.content).unhighlight();
         $(finder.content).highlight(term);
