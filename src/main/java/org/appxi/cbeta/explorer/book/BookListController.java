@@ -14,7 +14,6 @@ import org.appxi.cbeta.explorer.event.DataEvent;
 import org.appxi.cbeta.explorer.model.BookTree;
 import org.appxi.javafx.control.SeparatorMenuItemEx;
 import org.appxi.javafx.control.TreeViewExt;
-import org.appxi.javafx.desktop.ApplicationEvent;
 import org.appxi.javafx.helper.TreeHelper;
 import org.appxi.javafx.workbench.WorkbenchApplication;
 import org.appxi.javafx.workbench.WorkbenchViewController;
@@ -83,7 +82,6 @@ public class BookListController extends WorkbenchSideViewController {
     public void setupInitialize() {
         getEventBus().addEventHandler(BookEvent.OPEN, event -> handleOpenBookOrChapter(event, event.book, null));
         getEventBus().addEventHandler(ChapterEvent.OPEN, event -> handleOpenBookOrChapter(event, event.book, event.chapter));
-        getEventBus().addEventHandler(ApplicationEvent.STARTED, event -> InternalHelper.initHtmlIncludes());
         //
         treeViewModeGroup.selectedToggleProperty().addListener((o, ov, nv) -> {
             if (null == nv) return;
