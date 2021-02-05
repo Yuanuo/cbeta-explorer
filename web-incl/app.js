@@ -32,7 +32,7 @@ function getScrollTop1Selector(ele = null) {
     return ele.cssSelector();
 }
 
-function getScrollTopAnchorInfo(outMapOrElseStr = true) {
+function getScrollTop1AnchorInfo(outMapOrElseStr = true) {
     const $ele = getScrollTop1Element();
     if (!$ele) return;
     const selector = getScrollTop1Selector($ele);
@@ -91,25 +91,7 @@ function handleOnResizeBody() {
 $(document).ready(function () {
     documentLoaded = true;
     document.body.onresize = handleOnResizeBody;
-    $('body > article[data-finder-content]').eq(0).mouseup(handleOnSelectionChanged);
 });
-
-let lastSelectedIsEmpty;
-
-function handleOnSelectionChanged() {
-    const validSelection = getValidSelection();
-    if (!validSelection) return;
-    const selected = validSelection.toString().trim();
-    const selectedIsEmpty = selected.length <= 0;
-    if (lastSelectedIsEmpty && selectedIsEmpty)
-        return;
-    lastSelectedIsEmpty = selectedIsEmpty;
-    if (selectedIsEmpty) {
-        if (dataApi) dataApi.onSelectionChanged(null);
-    } else {
-        if (dataApi) dataApi.onSelectionChanged(selected);
-    }
-}
 
 function getValidSelection() {
     const selection = window.getSelection();
@@ -124,6 +106,13 @@ function getValidSelection() {
 function getValidSelectionInfo() {
     const validSelection = getValidSelection();
     if (!validSelection) return null;
+}
+
+function getValidSelectionText() {
+    const validSelection = getValidSelection();
+    if (!validSelection) return null;
+    const selected = validSelection.toString().trim();
+    const selectedIsEmpty = selected.length <= 0;
 }
 
 /* ************************************************************************************************************************************* */
@@ -151,6 +140,20 @@ function handleOnFirstLetterIndent() {
     article.toggleClass(markOn);
 }
 
+let tippyInstances;
+
+function destroyTippyInstances() {
+    if (!tippyInstances) return;
+    if (tippyInstances.destroy) {
+        tippyInstances.destroy();
+        return;
+    }
+    if (tippyInstances.length)
+        for (let i = 0; i < tippyInstances.length; i++) {
+            tippyInstances[i].destroy()
+        }
+}
+
 function handleOnEditMark(type) {
     const article = $('body > article');
     const markOn0 = 'edit-orig-inline-on';
@@ -160,35 +163,34 @@ function handleOnEditMark(type) {
     const markOn4 = 'edit-mod-inline-on';
     // clean
     if (type === -1) {
+        destroyTippyInstances();
         article.removeClass([markOn0, markOn1, markOn2, markOn3, markOn4]);
         return;
     }
     //
     let markOn;
-    switch (type) {
-        case 0:
-            markOn = markOn0;
-            break;
-        case 1:
-            markOn = markOn1;
-            break;
-        case 2:
-            markOn = markOn2;
-            break;
-        case 3:
-            markOn = markOn3;
-            break;
-        case 4:
-            markOn = markOn4;
-            break;
-    }
+    if (type === 0) markOn = markOn0;
+    else if (type === 1) markOn = markOn1;
+    else if (type === 2) markOn = markOn2;
+    else if (type === 3) markOn = markOn3;
+    else if (type === 4) markOn = markOn4;
     if (!markOn) return; // unhandled
     if (article.hasClass(markOn)) return; // same as current
     // reset
+    destroyTippyInstances();
     article.removeClass([markOn0, markOn1, markOn2, markOn3, markOn4]);
     article.addClass(markOn);
-    // do some fix is required at first time
+
+    if (type === 1) {
+        tippyInstances = tippy('.' + markOn + ' span.note.mod', {
+            allowHTML: true,
+            animation: false,
+            placement: 'top',
+            content: (mod) => mod.getAttribute('data-t')
+        });
+    }
     if (type === 2 || type === 3) {
+        // do some fix is required at first time
         if (!article.prop("edit-mark-lem-fixed")) {
             article.find("span.app > .lem").each(function () {
                 const lem = $(this);
@@ -203,88 +205,46 @@ function handleOnEditMark(type) {
                         tips[tips.length] = lem.attr("wit") + "：" + tmp.text();
                         app.find(" > span.rdg").each(function () {
                             const rdg = $(this);
-                            tips[tips.length] = rdg.attr("wit") + "：" + (!rdg.attr("data-t") ? "〔－〕" : rdg.attr("data-t"));
+                            tips[tips.length] = rdg.attr("wit").replaceAll('】 【', '】<br>【') + "："
+                                + (!rdg.attr("data-t") ? "〔－〕" : rdg.attr("data-t"));
                         });
-                        tmp.attr("data-t", tips.join("；"));
+                        tmp.attr("data-t", tips.join("<hr>"));
                     } else {
                         tmp.addClass("tmp");
                         const appMod = app.prev();
-                        if (appMod) tmp.attr("data-t", appMod.attr("data-t").replace("】，", "】；"));
+                        if (appMod) tmp.attr("data-t", appMod.attr("data-t").replaceAll("】，", "】<hr>"));
                         else tmp.attr("data-t", "UNKNOWN");
                     }
                 }
             });
             article.prop("edit-mark-lem-fixed", true);
         }
-        if (type === 3 && !article.prop(markOn3)) {
-            article.popover({
-                html: true,
-                content: function () {
-                    return "<span>" + $(this).attr('data-t').replaceAll("；", "<br>") + "</span>";
-                },
-                selector: '.' + markOn3 + ' span.app > .lem > .tmp',
-                trigger: 'hover',
-                placement: 'bottom',
-                customClass: 'edit-mod-popover'
+        if (type === 2) {
+            tippyInstances = tippy('.' + markOn + ' span.app > .lem > .tmp', {
+                allowHTML: true,
+                animation: false,
+                placement: 'top',
+                content: (tmp) => tmp.getAttribute('data-t')
             });
-            article.prop(markOn3, true);
+        } else if (type === 3) {
+            tippyInstances = tippy('.' + markOn + ' span.app > .lem > .tmp', {
+                allowHTML: true,
+                animation: false,
+                placement: 'top',
+                content: function (tmp) {
+                    const lem = $(tmp).parent();
+                    const app = lem.parent();
+                    const mod = app.prev('.note.mod');
+                    const orig = mod && mod.length > 0 ? mod.prev('.note.orig') : null;
+                    const txt = orig && orig.length > 0 ? ('【原】：' + orig.attr('data-t') + '<hr>') : '';
+                    return txt + tmp.getAttribute('data-t');
+                }
+            });
         }
     }
 }
 
-function handleOnBookmark() {
-    const info = getScrollTopAnchorInfo(false);
-    if (!info) return;
-    if (dataApi) dataApi.onBookmarkChanged(info.anchor.indexOf(".bookmark") === -1, info);
-    else console.warn(info);
-}
-
-function handleOnFavorite() {
-    const info = getScrollTopAnchorInfo();
-    if (!info) return;
-    const data = JSON.stringify(info);
-    if (dataApi) dataApi.onFavoriteChanged(info.anchor.indexOf(".favorite") === -1, data);
-    else console.warn(data);
-}
-
 function handleOnSearchInPage() {
-    if (!documentLoaded) return;
-    let finder = $("#finder");
-    if (finder.is("[active]")) return;
+    if ($("#finder").is("[active]")) return;
     $("body [data-finder-activator]:first").click();
 }
-
-/* ************************************************************************************************************************************* */
-
-
-// Mouse up event handler function
-function handlerFunctionDemo(event) {
-    // // If there is already a share dialog, remove it
-    // if (document.contains(document.getElementById("share-snippet"))) {
-    //     document.getElementById("share-snippet").remove();
-    // }
-
-    const selection = window.getSelection();
-    const selectedText = selection.toString().trim();
-    // Check if any text was selected
-    if (selectedText.length > 0) {
-        // // Get selected text and encode it
-        // const selection = encodeURIComponent(window.getSelection().toString()).replace(/[!'()*]/g, escape);
-        // // Find out how much (if any) user has scrolled
-        // const scrollTop = (window.pageYOffset !== undefined)
-        //     ? window.pageYOffset : (document.documentElement || document.body.parentNode || document.body).scrollTop;
-        // // Get cursor position
-        // const posX = event.clientX - 110;
-        // const posY = event.clientY + 20 + scrollTop;
-        //
-        // // Create Twitter share URL
-        // const shareUrl = 'http://twitter.com/share?text='+selection+'&url=https://awik.io';
-        // // Append HTML to the body, create the "Tweet Selection" dialog
-        // document.body.insertAdjacentHTML('beforeend',
-        //     '<div id="share-snippet" style="position: absolute; top: '+posY+'px; left: '+posX+'px;"></div>');
-    }
-}
-
-/* ************************************************************************************************************************************* */
-/* ************************************************************************************************************************************* */
-/* ************************************************************************************************************************************* */

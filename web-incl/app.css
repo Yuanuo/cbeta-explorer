@@ -224,6 +224,7 @@ article {
     content: "\A" attr(id) " : ";
     white-space: pre;
     margin-left: -4rem;
+    color: var(--text-color);
     font-size: 88%;
     font-family: Helvetica;
     display: inline-block;
@@ -249,25 +250,11 @@ article {
     color: #20b771;
 }
 
-
 .edit-mod-sharp-on span.note.mod:before {
     content: "[#]";
     font-size: 75%;
     font-weight: 600;
     color: #20b771;
-}
-.edit-mod-color-on span.lem > .tmp:hover:after,
-.edit-mod-sharp-on span.note.mod:hover:after {
-    content: attr(data-t);
-    font-size: 80%;
-    color: #20b771;
-    padding: 3px 6px;
-    position: absolute;
-    border-radius: 3px;
-    box-shadow: 0px 0px 4px #222;
-    background: #4d595f;
-    margin-top: 2rem;
-    margin-left: -5rem;
 }
 
 .edit-mod-color-on span.lem > .tmp,

@@ -10,15 +10,15 @@ import org.appxi.javafx.workbench.WorkbenchViewController;
 import org.appxi.javafx.workbench.views.WorkbenchSideViewController;
 
 public class BookDataController extends WorkbenchSideViewController {
-    private static BookDataController INSTANCE;
+    private static BookDataController instance;
 
     public BookDataController(WorkbenchApplication application) {
         super("BOOK-DATA", "在读", application);
-        INSTANCE = this;
+        instance = this;
     }
 
     public static BookDataController getInstance() {
-        return INSTANCE;
+        return instance;
     }
 
     @Override
@@ -39,8 +39,8 @@ public class BookDataController extends WorkbenchSideViewController {
             final WorkbenchViewController mainView = getPrimaryViewport().getSelectedMainViewController();
             if (mainView instanceof BookViewController bookView) {
                 if (null != this.viewportVBox)
-                    this.viewportVBox.getChildren().setAll(bookView.getBookViewer().sideViews);
-                else bookViews = bookView.getBookViewer().sideViews;
+                    this.viewportVBox.getChildren().setAll(bookView.sideViews);
+                else bookViews = bookView.sideViews;
                 //FIXME 程序启动后的第一次在此默认显示此视图？
             }
         });
