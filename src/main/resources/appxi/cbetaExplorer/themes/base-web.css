@@ -1,6 +1,6 @@
 :root {
     --text-size: 1.3rem;
-    --font-family: "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", STXihei, Arial, "Helvetica Neue", Helvetica, sans-serif;
+    --font-family: "PingFang SC", "Hiragino Sans GB", "Heiti SC", "Microsoft YaHei", "WenQuanYi Micro Hei", STXihei, Arial, "Helvetica Neue", Helvetica, sans-serif;
 
     -webkit-font-smoothing: subpixel-antialiased;
     -moz-osx-font-smoothing: grayscale;
