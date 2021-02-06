@@ -1,0 +1,226 @@
+* {
+    -fx-font-family: "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", STXihei, Arial, "Helvetica Neue", Helvetica, sans-serif;
+    -fx-font-size: 16px;
+    -fx-font-smoothing-type: gray;
+
+    -fx-background-radius: 1;
+    -fx-focus-traversable: false;
+}
+
+/* ****************************************************************************************************************** */
+.radio,
+.radio .dot {
+    -fx-background-radius: 1000;
+}
+
+.button,
+.toggle-button,
+.menu-button,
+.combo-box {
+    -fx-background-color: transparent;
+    -fx-border-width: 1;
+}
+
+.button,
+.toggle-button,
+.menu-button {
+    -fx-padding: .275em .8em;
+}
+
+.tool-bar .button,
+.tool-bar .toggle-button,
+.tool-bar .menu-button {
+    -fx-padding: .2em .4em;
+    -fx-border-width: 0;
+}
+
+.tool-bar .menu-button > .label,
+.tool-bar .menu-button > .arrow-button,
+.tool-bar .menu-button > .arrow-button > .arrow {
+    -fx-padding: 0;
+}
+
+.tool-bar .glyph-icon {
+    -fx-font-size: 1.35em !important;
+    -fx-fill: -fx-mid-text-color;
+}
+
+.tool-bar {
+    /*-fx-padding: .5em;*/
+}
+
+.text-area .content {
+    -fx-background-insets: 0;
+    -fx-background-radius: 0;
+}
+
+.context-menu,
+.context-menu .custom-menu-item {
+    -fx-background-insets: 1;
+    -fx-background-radius: 0;
+    -fx-padding: 1;
+    -fx-spacing: 0;
+}
+
+
+.split-pane {
+    -fx-padding: 0;
+    -fx-border-width: 0;
+}
+
+.split-pane-divider {
+    -fx-pref-width: .4em;
+}
+
+.scroll-pane {
+    -fx-border-color: -fx-control-inner-background;
+}
+
+.virtual-flow .corner,
+.scroll-bar {
+    -fx-background-color: transparent;
+    -fx-opacity: 0.5;
+}
+
+.scroll-bar:hover,
+.scroll-bar:pressed {
+    -fx-opacity: 1;
+}
+
+.scroll-bar:vertical {
+    -fx-pref-width: .75em;
+    -fx-background-radius: 0;
+}
+
+.scroll-bar:horizontal {
+    -fx-pref-height: .75em;
+    -fx-background-radius: 0;
+}
+
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button {
+    -fx-pref-width: 0;
+    -fx-pref-height: 0;
+    -fx-opacity: 0;
+}
+
+.scroll-bar .thumb,
+.web-view .scroll-bar .thumb {
+    -fx-background-insets: 0;
+    -fx-background-radius: 0;
+}
+
+
+.tree-view,
+.list-view {
+    -fx-padding: 0;
+    -fx-background-insets: 0;
+    -fx-background-color: -fx-background;
+}
+
+.tree-view .tree-cell:filled,
+.list-view .list-cell:filled {
+    -fx-border-width: 0 0 .05em 0;
+    -fx-border-style: dashed;
+}
+
+
+.tab-header-area {
+    -fx-padding: 0;
+    -fx-border-width: 0 0 1 0;
+    -fx-border-color: transparent;
+}
+
+.tab-header-area .tab-header-background {
+    -fx-background-radius: 0;
+    -fx-border-width: 0 0 1 0;
+}
+
+.tab-header-area .tab {
+    -fx-background-insets: 0;
+    -fx-background-radius: 0;
+    -fx-padding: .25em .8em;
+    -fx-border-width: 0 0 2 0;
+    -fx-border-color: transparent;
+}
+
+.tab-header-area .tab .focus-indicator {
+    -fx-border-width: 0;
+}
+
+.tab-header-area .tab .tab-label {
+    -fx-padding: 0 .6em 0 0;
+    -fx-opacity: .8;
+}
+
+.tab-header-area .tab .tab-close-button {
+    -fx-shape: "M19,6.41L17.59,5 12,10.59 6.41,5 5,6.41 10.59,12 5,17.59 6.41,19 12,13.41 17.59,19 19,17.59 13.41,12z";
+    -fx-scale-shape: false;
+    -fx-cursor: hand;
+}
+
+.tab-header-area .tab:selected {
+    -fx-background-color: -fx-background;
+}
+
+.tab-header-area .tab .tab-close-button:hover,
+.tab-header-area .tab:selected .tab-close-button:hover {
+    -fx-background-color: -fx-accent;
+}
+
+.tab-header-area .control-buttons-tab {
+    -fx-padding: .65em .15em;
+}
+
+.tab-header-area .control-buttons-tab .container {
+    -fx-padding: 0;
+}
+
+.tab-header-area .control-buttons-tab .container .tab-down-button {
+    -fx-background-color: transparent;
+}
+
+.tab-pane.stretched .tab-header-area .control-buttons-tab {
+    -fx-pref-width: 0;
+    -fx-pref-height: 0;
+    -fx-opacity: 0;
+}
+
+.tab-pane.stretched .tab-header-area .tab {
+    -fx-padding: .1em 0;
+}
+
+.accordion .title {
+    -fx-background-color: -fx-background;
+}
+
+.accordion .title,
+.accordion .content {
+    -fx-background-radius: 0;
+    -fx-border-width: 1 0 0 0;
+}
+
+.accordion .first-titled-pane .title {
+    -fx-border-width: 0 0 1 0;
+}
+
+/* ****************************************************************************************************************** */
+.side-vbox {
+    -fx-background-color: -fx-background;
+}
+
+.headline {
+    -fx-font-weight: bold;
+    -fx-padding: 0.2em 0.1em;
+}
+
+.search-pane-masking .tool-bar {
+    -fx-border-width: 0;
+}
+
+.search-pane-masking .text-field {
+    -fx-background-radius: 0;
+    -fx-background-insets: 0 0 1 0;
+}
+
+/* ****************************************************************************************************************** */

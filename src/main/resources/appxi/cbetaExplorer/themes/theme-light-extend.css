@@ -1,3 +1,5 @@
+@import url(base-layout.css);
+
 * {
     /***************************************************************************
      *                                                                         *
@@ -9,7 +11,6 @@
      * -fx-base directly, the sections in this file will typically use -fx-color.
      */
     -fx-base: #e3ebed;
-    /*#d8d4cf*/
 
     /* A very light grey used for the background of windows.  See also
      * -fx-text-background-color, which should be used as the -fx-text-fill
@@ -52,234 +53,149 @@
      */
     /*-fx-focus-color: #3d619b;*/
     -fx-focus-color: #84c6cd;
-
-
-    -fx-font-family: 'Microsoft Yahei';
-    -fx-font-size: 16;
-    /*-fx-background-radius: 1;*/
-}
-/* *************************************************************** */
-/* *************************************************************** */
-*.selected *.radio {
-    -fx-background-color : -fx-accent;
 }
 
-
+/* ****************************************************************************************************************** */
 .button,
 .toggle-button,
-.menu-button {
-    -fx-background-color: transparent;
+.menu-button,
+.combo-box {
+    -fx-border-color: derive(-fx-base, -20%);
 }
+
 .button:hover,
 .toggle-button:hover,
-.menu-button:hover {
+.menu-button:hover,
+.combo-box:hover {
     -fx-background-color: derive(-fx-base, -20%);
 }
-.button .glyph-icon,
-.toggle-button .glyph-icon,
-.menu-button .glyph-icon {
-    -fx-font-size: 1.4em !important;
-    -fx-fill: derive(-fx-base, -60%);
+
+.tool-bar .toggle-button:selected {
+    -fx-background-color: derive(-fx-base, -30%);
+    -fx-text-fill: derive(-fx-light-text-color, 85%);
 }
-.tool-bar .button,
-.tool-bar .toggle-button,
-.tool-bar .menu-button {
-    -fx-padding: 3;
-}
-.tool-bar .menu-button .label,
-.tool-bar .menu-button > .arrow-button,
-.tool-bar .menu-button > .arrow-button > .arrow {
-    -fx-padding: 0;
+
+.tool-bar .toggle-button:selected .glyph-icon {
+    -fx-fill: derive(-fx-light-text-color, 85%);
 }
 
 
 .tool-bar {
-    -fx-background-color: derive(-fx-background, -5%);
-}
-.scroll-pane {
-    -fx-border-color: -fx-control-inner-background;
-}
-.text-area .content {
-    -fx-background-insets: 0;
-    -fx-background-radius: 0;
+    -fx-background-color: -fx-background;
+    -fx-border-color: lightgray;
 }
 
-
-.split-pane {
-    -fx-padding: 0;
-    -fx-border-width: 0;
-}
 .split-pane-divider {
-    -fx-background-color: derive(-fx-background, -15%);
-    -fx-pref-width: .4em;
+    -fx-background-color: derive(-fx-background, 20%);
+    -fx-border-width: 0 1 0 1;
+    -fx-border-color: lightgray;
 }
 
 
-.virtual-flow .corner,
-.scroll-bar {
-    -fx-background-color: transparent;
-    -fx-opacity: 0.35;
-}
-.scroll-bar:hover {
-    -fx-opacity: 1;
-}
-.scroll-bar:vertical {
-    -fx-pref-width: .75em;
-}
-.scroll-bar:horizontal {
-    -fx-pref-height: .75em;
-}
-.scroll-bar .increment-button,
-.scroll-bar .decrement-button {
-    -fx-pref-width: 0;
-    -fx-pref-height: 0;
-    -fx-opacity: 0;
-}
-.scroll-bar .thumb,
-.web-view .scroll-bar .thumb {
-    -fx-background-insets: 0;
-    -fx-background-radius: 0;
+.scroll-bar .thumb {
     -fx-background-color: derive(-fx-base, -20%);
 }
 .web-view .scroll-bar .thumb {
-    -fx-background-color: derive(-fx-base, -120%);
+    -fx-background-color: derive(-fx-base, -60%);
 }
 
 
-.tree-view,
-.list-view {
-    -fx-padding: 0;
-    -fx-background-insets: 0;
-    -fx-background-color: -fx-background;
-}
 .tree-view .tree-cell:filled,
 .list-view .list-cell:filled {
     -fx-border-color: derive(-fx-background, -10%);
-    -fx-border-width: 0 0 .05em 0;
-    -fx-border-style: dashed;
+    -fx-text-fill: -fx-mid-text-color;
 }
+
 .tree-view .tree-cell:filled:selected,
-.list-view .list-cell:filled:selected  {
-    -fx-background-color: derive(-fx-base, -10%);
-}
-.tree-view .tree-cell:filled:hover,
-.list-view .list-cell:filled:hover {
+.list-view .list-cell:filled:selected {
     -fx-background-color: derive(-fx-base, -5%);
 }
 
+.tree-view .tree-cell:filled:hover,
+.list-view .list-cell:filled:hover {
+    -fx-background-color: derive(-fx-base, -10%);
+}
 
-.tab-header-area {
-    -fx-padding: 0;
-    -fx-border-color: transparent;
-    -fx-background-insets: 0;
-}
+
 .tab-header-area .tab-header-background {
-    -fx-border-width: 0 0 1 0;
-    -fx-border-color: derive(-fx-background, -10%);
-    -fx-background-radius: 0;
-    -fx-background-color: derive(-fx-background, -10%);
+    -fx-border-color: lightgray;
+    -fx-background-color: derive(-fx-background, 20%);
 }
+
 .tab-header-area .tab {
     -fx-background-color: derive(-fx-background, 30%);
-    -fx-background-insets: 0;
-    -fx-background-radius: 0;
-    -fx-padding: .25em .8em;
-    -fx-border-width: 0 0 2 0;
-    -fx-border-color: transparent;
 }
-.tab-header-area .tab .focus-indicator {
-    -fx-border-width: 0;
-    -fx-border-color: transparent;
-}
-.tab-header-area .tab .tab-label {
-    -fx-padding: 0 8 0 0;
-    -fx-text-fill: derive(-fx-mid-text-color, 60%);
-}
+
 .tab-header-area .tab .tab-close-button {
-    -fx-shape: "M19,6.41L17.59,5 12,10.59 6.41,5 5,6.41 10.59,12 5,17.59 6.41,19 12,13.41 17.59,19 19,17.59 13.41,12z";
-    -fx-scale-shape: false;
     -fx-background-color: derive(-fx-background, -40%);
-    -fx-cursor: hand;
 }
+
 .tab-header-area .tab:selected {
-    -fx-background-color: -fx-background;
-    -fx-border-color: derive(-fx-accent, 10%);
+    -fx-background-color: derive(-fx-background, -10%);
+    -fx-border-color: derive(-fx-accent, -10%);
 }
+
 .tab-header-area .tab:selected .tab-label {
     -fx-text-fill: derive(-fx-mid-text-color, -60%);
 }
+
 .tab-header-area .tab:hover {
-    -fx-background-color: derive(-fx-background, -10%);
+    -fx-background-color: derive(-fx-background, -20%);
 }
-.tab-header-area .tab .tab-close-button:hover,
-.tab-header-area .tab:selected .tab-close-button:hover {
-    -fx-background-color: -fx-accent;
-}
-.tab-pane.stretched .tab-header-area .control-buttons-tab {
-    -fx-pref-width: 0;
-    -fx-pref-height: 0;
-    -fx-opacity: 0;
-}
-.tab-pane.stretched .tab-header-area .tab {
-    -fx-padding: .1em 0;
+
+.tab-header-area .control-buttons-tab .container .tab-down-button:hover {
+    -fx-background-color: derive(-fx-background, -20%);
 }
 
 
-.accordion {
-    -fx-background-color: -fx-background;
+.accordion .title:hover {
+    -fx-background-color: derive(-fx-background, -20%);
 }
+
 .accordion .title,
 .accordion .content {
-    -fx-border-width: 1 0 0 0;
-    -fx-border-color: derive(-fx-background, -20%);
-    -fx-background-color: derive(-fx-background, -10%);
+    /*-fx-border-color: derive(-fx-background, -20%);*/
 }
-.accordion .first-titled-pane .title {
-    -fx-border-width: 0 0 1 0;
-}
+
 .accordion .title .arrow {
-    -fx-background-color: -fx-mid-text-color;
+    /*-fx-background-color: -fx-mid-text-color;*/
 }
-/* *************************************************************** */
-/* *************************************************************** */
-.workbench .side-tools .tool-bar {
-    -fx-background-color: derive(-fx-background, -80%);
-}
-.workbench .side-tools .tool-bar .glyph-icon {
-    -fx-fill: derive(-fx-base, -5%);
-}
-.workbench .side-tools .tool-bar .toggle-button,
-.workbench .side-tools .tool-bar .button {
+
+/* ****************************************************************************************************************** */
+.side-tools .context-menu .custom-menu-item {
     -fx-background-color: transparent;
 }
-.side-vbox{
-    -fx-background-color: -fx-background;
+
+.side-tools .context-menu,
+.side-tools .tool-bar {
+    -fx-border-width: 0 1 0 0;
+    -fx-background-color: derive(-fx-background, -80%);
 }
+
+.side-tools .tool-bar .glyph-icon {
+    -fx-fill: derive(-fx-base, -5%);
+}
+
+.side-views .tool-bar {
+    -fx-border-width: 0 0 1 0;
+}
+
+.main-views .tool-bar {
+    -fx-border-width: 0 0 1 0;
+}
+
 .headline {
-    -fx-font-weight: bold;
-    -fx-padding: 0.2em 0.1em;
+    -fx-opacity: .85;
 }
+
 .aligned-separator .space-fill {
-    -fx-background-color: derive(-fx-base, 50%);
+    /*-fx-background-color: derive(-fx-base, 50%);*/
 }
+
 .masking {
     -fx-background-color: rgba(50, 50, 50, 0.85);
 }
+
 .search-pane-masking {
     -fx-background-color: derive(-fx-background, -20%);
-}
-.search-pane-masking .text-field {
-    -fx-background-radius: 0;
-    -fx-background-insets: 0 0 1 0;
-}
-.book-view-root .flexible-bar {
-    -fx-padding: 8;
-    -fx-opacity: .25;
-}
-.book-view-root .flexible-bar:hover {
-    -fx-opacity: 1;
-}
-.glyph-icon.label {
-    -fx-font-size: 1.5em !important;
-    -fx-fill: derive(-fx-base, -50%);
 }

@@ -1,61 +1,145 @@
-.root {
-    -fx-font-family: 'Microsoft Yahei';
-    -fx-font-size: 16;
+@import url(base-layout.css);
+/* ****************************************************************************************************************** */
+.button,
+.toggle-button,
+.menu-button,
+.combo-box {
+    -fx-border-color: derive(-fx-base, -20%);
 }
 
-/* *************************************************************** */
-/* *************************************************************** */
-.tab-pane.stretched .tab-header-area .control-buttons-tab {
-    -fx-pref-width: 0;
-    -fx-pref-height: 0;
-    -fx-opacity: 0;
+.button:hover,
+.toggle-button:hover,
+.menu-button:hover,
+.combo-box:hover {
+    -fx-background-color: derive(-fx-base, -20%);
 }
-.tab-pane.stretched .tab-header-area .tab {
-    -fx-padding: .1em 0;
+
+.tool-bar .toggle-button:selected {
+    -fx-background-color: derive(-fx-base, -30%);
+    -fx-text-fill: derive(-fx-light-text-color, -5%);
 }
-/* *************************************************************** */
-/* *************************************************************** */
-.workbench .side-tools .tool-bar {
-    -fx-background-color: derive(-fx-background, -80%);
+
+.tool-bar .toggle-button:selected .glyph-icon {
+    -fx-fill: derive(-fx-light-text-color, -5%);
 }
-.workbench .side-tools .tool-bar .glyph-icon {
-    -fx-fill: derive(-fx-base, -5%);
+
+
+.tool-bar {
+    -fx-background-color: -fx-background;
+    -fx-border-color: lightgray;
 }
-.workbench .side-tools .tool-bar .toggle-button,
-.workbench .side-tools .tool-bar .button {
+
+.split-pane-divider {
+    -fx-background-color: derive(-fx-background, 20%);
+    -fx-border-width: 0 1 0 1;
+    -fx-border-color: lightgray;
+}
+
+
+.scroll-bar .thumb {
+    -fx-background-color: derive(-fx-base, -20%);
+}
+.web-view .scroll-bar .thumb {
+    -fx-background-color: derive(-fx-base, -60%);
+}
+
+
+.tree-view .tree-cell:filled,
+.list-view .list-cell:filled {
+    -fx-border-color: derive(-fx-background, -10%);
+    -fx-text-fill: -fx-mid-text-color;
+}
+
+.tree-view .tree-cell:filled:selected,
+.list-view .list-cell:filled:selected {
+    -fx-background-color: derive(-fx-base, -5%);
+}
+
+.tree-view .tree-cell:filled:hover,
+.list-view .list-cell:filled:hover {
+    -fx-background-color: derive(-fx-base, -10%);
+}
+
+
+.tab-header-area .tab-header-background {
+    -fx-border-color: lightgray;
+    -fx-background-color: derive(-fx-background, 20%);
+}
+
+.tab-header-area .tab {
+    -fx-background-color: derive(-fx-background, 30%);
+}
+
+.tab-header-area .tab .tab-close-button {
+    -fx-background-color: derive(-fx-background, -40%);
+}
+
+.tab-header-area .tab:selected {
+    -fx-background-color: derive(-fx-background, -10%);
+    -fx-border-color: derive(-fx-accent, -10%);
+}
+
+.tab-header-area .tab:selected .tab-label {
+    -fx-text-fill: derive(-fx-mid-text-color, -60%);
+}
+
+.tab-header-area .tab:hover {
+    -fx-background-color: derive(-fx-background, -20%);
+}
+
+.tab-header-area .control-buttons-tab .container .tab-down-button:hover {
+    -fx-background-color: derive(-fx-background, -20%);
+}
+
+
+.accordion .title:hover {
+    -fx-background-color: derive(-fx-background, -20%);
+}
+
+.accordion .title,
+.accordion .content {
+    /*-fx-border-color: derive(-fx-background, -20%);*/
+}
+
+.accordion .title .arrow {
+    /*-fx-background-color: -fx-mid-text-color;*/
+}
+
+/* ****************************************************************************************************************** */
+.side-tools .context-menu .custom-menu-item {
     -fx-background-color: transparent;
 }
-.side-vbox{
-    -fx-background-color: -fx-background;
+
+.side-tools .context-menu,
+.side-tools .tool-bar {
+    -fx-border-width: 0 1 0 0;
+    -fx-background-color: derive(-fx-background, -5%);
 }
+
+.side-tools .tool-bar .glyph-icon {
+    -fx-fill: derive(-fx-base, -60%);
+}
+
+.side-views .tool-bar {
+    -fx-border-width: 0 0 1 0;
+}
+
+.main-views .tool-bar {
+    -fx-border-width: 0 0 1 0;
+}
+
 .headline {
-    -fx-font-weight: bold;
-    -fx-padding: 0.2em 0.1em;
+    -fx-opacity: .85;
 }
+
 .aligned-separator .space-fill {
-    -fx-background-color: derive(-fx-base, 50%);
+    /*-fx-background-color: derive(-fx-base, 50%);*/
 }
+
 .masking {
     -fx-background-color: rgba(50, 50, 50, 0.85);
 }
+
 .search-pane-masking {
     -fx-background-color: derive(-fx-background, -20%);
-}
-.search-pane-masking .tool-bar {
-    -fx-background-color: -fx-background;
-}
-.search-pane-masking .text-field {
-    -fx-background-radius: 0;
-    -fx-background-insets: 0 0 1 0;
-}
-.search-pane-masking .list-view {
-    -fx-background-radius: 0;
-    -fx-background-insets: 0;
-}
-.book-view-root .flexible-bar {
-    -fx-padding: 8;
-    -fx-opacity: .25;
-}
-.book-view-root .flexible-bar:hover {
-    -fx-opacity: 1;
 }

@@ -1,17 +1,37 @@
+:root {
+    --text-color: #bbb;
+}
+
 body {
     background-color: #3b3b3b;
-    color: rgb(187, 187, 187);
 }
 
-span.app {
+.finder {
+    background-color: #666;
+    box-shadow: 0 2px 8px 2px #333;
 }
 
-span.app::after {
-    /* content: '[*]';
-    font-size: small;
-    color: red;
-    vertical-align: super; */
+.finder-input {
+    border-bottom: 1px solid darkgray;
 }
 
-/*   *************************************************************************************************************    */
-/*   *************************************************************************************************************    */
+.finder-input.not-found {
+    color: #e7353f;
+}
+
+.highlight {
+    background: #d2d23b;
+    color: #333;
+}
+
+.highlight.active {
+    background: #ffd71b;
+}
+
+.tippy-box {
+    background: #666 !important;
+}
+
+.tippy-arrow::before {
+    color: #666 !important;
+}

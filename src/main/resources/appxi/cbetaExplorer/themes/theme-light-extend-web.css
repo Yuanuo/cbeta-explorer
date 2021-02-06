@@ -1,14 +1,27 @@
+:root {
+    --text-color: #333;
+}
+
 body {
     background-color: #e3ebed;
-    color: #333333;
 }
 
-span.app {
+.finder {
+    background-color: #dceaef;
 }
 
-span.app::after {
-    /* content: '[*]';
-    font-size: small;
-    color: red;
-    vertical-align: super; */
+.finder-input {
+    border-bottom: 1px solid darkgray;
+}
+
+.finder-input.not-found {
+    color: #e7353f;
+}
+
+.highlight {
+    background: #ff8;
+}
+
+.highlight.active {
+    background: #ffd71b;
 }

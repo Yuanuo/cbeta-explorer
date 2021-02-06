@@ -1,0 +1,206 @@
+:root {
+    --text-size: 1.3rem;
+    --font-family: "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", STXihei, Arial, "Helvetica Neue", Helvetica, sans-serif;
+
+    -webkit-font-smoothing: subpixel-antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+    box-sizing: border-box;
+    font-family: var(--font-family);
+    -webkit-font-smoothing: subpixel-antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+    font-family: var(--font-family);
+    font-size: var(--text-size);
+    color: var(--text-color);
+    line-height: 2.4rem;
+    letter-spacing: .1rem;
+    margin: 0;
+}
+/*   *************************************************************************************************************    */
+.cb-docNumber {
+    opacity: .75;
+}
+
+.cb-juan {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+}
+
+.cb-juan.open {
+    text-align: center;
+}
+
+.cb-juan .cb-jhead {
+    font-size: calc(var(--text-size) * 1.4);
+    font-weight: bold;
+}
+
+.cb-juan.close {
+    text-align: left;
+}
+
+.cb-juan.close div:nth-child(1)::after {
+    content: '（圆满）';
+}
+
+.byline {
+    text-align: right;
+}
+
+.cb-mulu {
+    font-weight: bold;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+}
+
+.cb-mulu.level-1 {
+    font-size: calc(var(--text-size) * 1.2);
+}
+
+.cb-mulu.level-2 {
+    font-size: calc(var(--text-size) * 1.02);
+}
+
+div.p,
+p {
+    padding-bottom: 1rem;
+}
+
+/*   *************************************************************************************************************    */
+.finder {
+    position: fixed;
+    top: 0;
+    right: 1.2rem;
+    z-index: 999;
+    display: none;
+    height: 50px;
+    box-shadow: 0 2px 8px 2px #939393;
+    padding: 5px;
+    transition: top 0.15s ease-out;
+    border-radius: 1px;
+}
+
+.finder.active {
+    display: flex;
+}
+
+.finder-input {
+    flex-grow: 2;
+    width: auto;
+    min-width: 15rem;
+    height: 40px;
+    border: none;
+    padding: 0 .5rem;
+    outline: none !important;
+    background-color: transparent;
+    font-size: var(--text-size);
+}
+
+.btn-finder {
+    width: 2rem;
+}
+
+.finder-input,
+.btn-finder:not(:last-child) {
+    margin-right: 5px;
+}
+
+.btn-finder-prev i::before {
+    content: '\25B2';
+}
+
+.btn-finder-next i::before {
+    content: '\25BC';
+}
+
+.btn-finder-close i::before {
+    content: '\2716';
+}
+
+.finder-count {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    white-space: nowrap;
+    margin-right: .5rem;
+    color: var(--text-color);
+    opacity: .7;
+}
+
+.btn-finder,
+.finder-count {
+    flex-shrink: 0;
+    flex-grow: 0;
+}
+
+.tippy-box {
+    font-size: 90% !important;
+    padding: .3rem;
+}
+/*   *************************************************************************************************************    */
+article {
+    padding: 3rem;
+}
+
+.wrap-lines-on {
+    margin-left: 6rem;
+}
+
+.wrap-lines-on div {
+    display: inline;
+}
+
+.wrap-lines-on p[id]:before {
+    content: "\A" attr(id) " : ";
+    white-space: pre;
+    margin-left: -4rem;
+    color: var(--text-color);
+    font-size: 88%;
+    font-family: Helvetica;
+    display: inline-block;
+    opacity: .5;
+}
+
+.wrap-lines-on span.lb:before {
+    content: "\A" attr(id) " : ";
+    white-space: pre;
+    color: var(--text-color);
+    font-family: Helvetica;
+    font-weight: normal;
+    opacity: .5;
+}
+
+.first-letter-indent-on .first-letter-indent {
+    text-indent: calc(-1.1 * var(--text-size));
+}
+
+/*   *************************************************************************************************************    */
+.edit-orig-inline-on span.note.orig:before {
+    content: attr(data-t);
+    font-size: 75%;
+    color: #20b771;
+}
+
+.edit-mod-sharp-on span.note.mod:before {
+    content: "[#]";
+    font-size: 75%;
+    font-weight: 600;
+    color: #20b771;
+}
+
+.edit-mod-color-on span.lem > .tmp,
+.edit-mod-popover-on span.lem > .tmp {
+    color: #20b771;
+    padding: 0 .25rem;
+}
+
+.edit-mod-inline-on span.note.mod:before {
+    content: attr(data-t);
+    font-size: 75%;
+    color: #20b771;
+}
