@@ -5,7 +5,7 @@
 
 	<groupId>org.appxi</groupId>
 	<artifactId>cbeta-explorer</artifactId>
-	<version>21.02.00</version>
+	<version>21.02.08</version>
 	<packaging>jar</packaging>
 
 	<properties>
@@ -16,13 +16,30 @@
 	<dependencies>
 		<dependency>
 			<groupId>org.appxi</groupId>
+			<artifactId>appxi-shared</artifactId>
+			<version>21.02.08</version>
+		</dependency>
+		<dependency>
+			<groupId>org.appxi</groupId>
 			<artifactId>appxi-javafx</artifactId>
-			<version>21.02.00</version>
+			<version>21.02.08</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.appxi</groupId>
+					<artifactId>appxi-shared</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.appxi</groupId>
 			<artifactId>appxi-tome</artifactId>
-			<version>21.02.00</version>
+			<version>21.02.08</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.appxi</groupId>
+					<artifactId>appxi-shared</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.appxi</groupId>
@@ -33,6 +50,12 @@
 			<groupId>org.appxi</groupId>
 			<artifactId>appxi-hanlp-convert</artifactId>
 			<version>21.02.00</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.appxi</groupId>
+					<artifactId>appxi-shared</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
 		<dependency>
