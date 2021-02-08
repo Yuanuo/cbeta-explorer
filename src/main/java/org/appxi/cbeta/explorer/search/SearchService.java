@@ -14,7 +14,7 @@ import org.appxi.cbeta.explorer.event.BookEvent;
 import org.appxi.cbeta.explorer.event.ChapterEvent;
 import org.appxi.cbeta.explorer.event.DataEvent;
 import org.appxi.hanlp.convert.ChineseConvertors;
-import org.appxi.javafx.control.AlignedBar;
+import org.appxi.javafx.control.ToolBarEx;
 import org.appxi.javafx.control.DialogPaneEx;
 import org.appxi.javafx.workbench.WorkbenchApplication;
 import org.appxi.javafx.workbench.WorkbenchPane;
@@ -103,7 +103,7 @@ class SearchService {
             dialogPane.addEventHandler(KeyEvent.KEY_PRESSED, this::handleEventToHide);
 
             //
-            final AlignedBar headBox = new AlignedBar();
+            final ToolBarEx headBox = new ToolBarEx();
 
             final Label headTitle = new Label("快速查找书籍（快捷键：双击Shift 或 Ctrl+O 开启。 ESC 或 点击透明区 退出此界面）");
             headTitle.setStyle("-fx-font-weight: bold;");
@@ -194,7 +194,7 @@ class SearchService {
                 String[] tmpArr = record.chapter().split("#", 2);
                 Chapter chapter = new Chapter();
                 chapter.path = tmpArr[0];
-                chapter.start = tmpArr.length == 2 ? tmpArr[1] : null;
+                chapter.start = tmpArr.length == 2 ? "#".concat(tmpArr[1]) : null;
                 application.eventBus.fireEvent(new ChapterEvent(ChapterEvent.OPEN, book, chapter));
             } else {
                 // open as book
