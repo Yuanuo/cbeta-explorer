@@ -1,21 +1,26 @@
 package org.appxi.cbeta.explorer.book;
 
+import de.jensd.fx.glyphs.materialicons.MaterialIcon;
+import de.jensd.fx.glyphs.materialicons.MaterialIconView;
 import javafx.beans.Observable;
+import javafx.collections.ObservableList;
+import javafx.geometry.Orientation;
 import javafx.scene.Node;
-import javafx.scene.control.ContextMenu;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.TreeItem;
+import javafx.scene.control.*;
 import javafx.scene.input.InputEvent;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import netscape.javascript.JSObject;
 import org.appxi.cbeta.explorer.event.BookEvent;
 import org.appxi.cbeta.explorer.event.ChapterEvent;
 import org.appxi.cbeta.explorer.event.DataEvent;
-import org.appxi.cbeta.explorer.model.ChapterTree;
 import org.appxi.hanlp.convert.ChineseConvertors;
+import org.appxi.javafx.control.TabPaneExt;
+import org.appxi.javafx.control.ToolBarEx;
+import org.appxi.javafx.control.WebViewer;
 import org.appxi.javafx.desktop.ApplicationEvent;
 import org.appxi.javafx.theme.Theme;
 import org.appxi.javafx.theme.ThemeEvent;
@@ -31,19 +36,28 @@ import org.appxi.util.DevtoolHelper;
 import org.appxi.util.StringHelper;
 import org.appxi.util.ext.HanLang;
 
+import java.io.BufferedInputStream;
+import java.net.URL;
+import java.net.URLConnection;
 import java.nio.file.Path;
+import java.util.Base64;
+import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class BookViewController extends WorkbenchMainViewController {
     public final CbetaBook book;
     private final BookDocument bookDocument;
 
-    private BookViewer bookViewer;
-    private BookBasicView bookBasicView;
-    private WebViewerEx webViewer;
+    TabPane sideViews;
 
-    ContextMenu webContextMenu;
-    double lastMouseScreenX, lastMouseScreenY;
+    InternalBookBasic bookBasic;
+    InternalBookmarks bookmarks;
+    InternalFavorites favorites;
+
+    WebViewer webViewer;
+    ToolBarEx toolbar;
 
     public BookViewController(CbetaBook book, WorkbenchApplication application) {
         this(book, null, application);
@@ -56,10 +70,6 @@ public class BookViewController extends WorkbenchMainViewController {
         this.currentChapter = chapter;
     }
 
-    public final BookViewer getBookViewer() {
-        return bookViewer;
-    }
-
     @Override
     public Node createToolIconGraphic(Boolean placeInSideViews) {
         return null;
@@ -67,37 +77,238 @@ public class BookViewController extends WorkbenchMainViewController {
 
     @Override
     protected void onViewportInitOnce() {
-        this.bookViewer = new BookViewer(this);
-        this.bookBasicView = this.bookViewer.bookBasicView;
-        this.webViewer = this.bookViewer.webViewer;
-
-        this.bookBasicView.tocsTree.setEnterOrDoubleClickAction(this::handleChaptersTreeViewEnterOrDoubleClickAction);
-        this.bookBasicView.volsTree.setEnterOrDoubleClickAction(this::handleChaptersTreeViewEnterOrDoubleClickAction);
+        this.toolbar = new ToolBarEx();
+        this.initToolbar();
+        this.viewport.setTop(this.toolbar);
         //
-        this.viewport = new BorderPane(this.bookViewer);
+        this.webViewer = new WebViewer();
+        this.viewport.setCenter(this.webViewer);
+        //
+        this.sideViews = new TabPaneExt();
+        this.sideViews.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
+        VBox.setVgrow(this.sideViews, Priority.ALWAYS);
+        //
+        this.bookBasic = new InternalBookBasic(this);
+        this.bookmarks = new InternalBookmarks(this);
+        this.favorites = new InternalFavorites(this);
+        //
+        final Tab tab1 = new Tab("基本", this.bookBasic.getViewport());
+        final Tab tab2 = new Tab("书签", this.bookmarks.getViewport());
+        final Tab tab3 = new Tab("收藏", this.favorites.getViewport());
+        //
+        this.sideViews.getTabs().setAll(tab1, tab2, tab3);
     }
 
-//    public final TreeItem<Chapter> selectedChapterItem() {
-//        final TitledPane expandedPane = this.bookBasicView.accordion.getExpandedPane();
-//        if (expandedPane == this.bookBasicView.tocsPane)
-//            return this.bookBasicView.tocsTree.getSelectionModel().getSelectedItem();
-//        else if (expandedPane == this.bookBasicView.volsPane)
-//            return this.bookBasicView.volsTree.getSelectionModel().getSelectedItem();
-//        else
-//            return null;
-//    }
-//
-//    public final Chapter selectedChapter() {
-//        final TreeItem<Chapter> treeItem = selectedChapterItem();
-//        return null != treeItem ? treeItem.getValue() : null;
-//    }
+    protected void initToolbar() {
+        addTool_SideControl();
+        this.toolbar.addRight(new Separator(Orientation.VERTICAL));
+        addTool_FontSize();
+//        this.toolbar.addRight(new Separator(Orientation.VERTICAL));
+//        addTool_Themes();
+        this.toolbar.addRight(new Separator(Orientation.VERTICAL));
+        addTool_WrapLines();
+        addTool_FirstLetterIndent();
+        this.toolbar.addRight(new Separator(Orientation.VERTICAL));
+        addTool_EditorMark();
+        //
+        this.toolbar.addRight(new Separator(Orientation.VERTICAL));
+        addTool_Bookmark();
+        addTool_Favorite();
+        addTool_SearchInPage();
+    }
+
+    private void addTool_SideControl() {
+        final Button button = new Button();
+        button.setGraphic(new MaterialIconView(MaterialIcon.IMPORT_CONTACTS));
+        button.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+        button.setTooltip(new Tooltip("显示本书相关数据（目录、书签等）"));
+        button.setOnAction(event -> this.getPrimaryViewport().selectSideTool(BookDataPlaceController.getInstance().viewId));
+        this.toolbar.addLeft(button);
+    }
+
+    private void addTool_FontSize() {
+        //TODO 是否使用全局默认值，并可保存为默认？
+        final Consumer<Boolean> fSizeAction = state -> {
+            if (null == state) {// reset ?
+                webViewer.getViewer().setFontScale(1.0);
+            } else if (state) { //
+                webViewer.getViewer().setFontScale(webViewer.getViewer().getFontScale() + 0.1);
+            } else {
+                webViewer.getViewer().setFontScale(webViewer.getViewer().getFontScale() - 0.1);
+            }
+        };
+
+        Button fSizeSubBtn = new Button(null, new MaterialIconView(MaterialIcon.ZOOM_OUT));
+        fSizeSubBtn.setTooltip(new Tooltip("减小字号"));
+        fSizeSubBtn.setOnAction(event -> fSizeAction.accept(false));
+
+        Button fSizeSupBtn = new Button(null, new MaterialIconView(MaterialIcon.ZOOM_IN));
+        fSizeSupBtn.setTooltip(new Tooltip("增大字号"));
+        fSizeSupBtn.setOnAction(event -> fSizeAction.accept(true));
+        this.toolbar.addRight(fSizeSubBtn, fSizeSupBtn);
+    }
+
+    private void addTool_Themes() {
+        final Node themeMarker = new MaterialIconView(MaterialIcon.PALETTE);
+        themeMarker.setId("web-theme-marker");
+        themeMarker.getStyleClass().add("label");
+        this.toolbar.addRight(themeMarker);
+    }
+
+    private void addTool_WrapLines() {
+        final ToggleButton button = new ToggleButton();
+        button.setGraphic(new MaterialIconView(MaterialIcon.WRAP_TEXT));
+        button.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+        button.setTooltip(new Tooltip("折行显示"));
+        button.setOnAction(event -> webViewer.executeScript("handleOnWrapLines()"));
+        this.toolbar.addRight(button);
+    }
+
+    private void addTool_FirstLetterIndent() {
+        final ToggleButton button = new ToggleButton();
+        button.setGraphic(new MaterialIconView(MaterialIcon.FORMAT_INDENT_INCREASE));
+        button.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+        button.setTooltip(new Tooltip("首行标点对齐"));
+        button.setOnAction(event -> webViewer.executeScript("handleOnFirstLetterIndent()"));
+        this.toolbar.addRight(button);
+    }
+
+    private void addTool_EditorMark() {
+        final ToggleGroup marksGroup = new ToggleGroup();
+
+        final ToggleButton markOrigInline = new ToggleButton("原编注");
+        markOrigInline.setTooltip(new Tooltip("在编注点直接嵌入原编注内容"));
+        markOrigInline.setUserData(0);
+
+        final ToggleButton markModSharp = new ToggleButton("标记");
+        markModSharp.setTooltip(new Tooltip("在编注点插入#号并划动鼠标查看CBETA编注内容"));
+        markModSharp.setUserData(1);
+
+        final ToggleButton markModColor = new ToggleButton("着色");
+        markModColor.setTooltip(new Tooltip("在编注点着色被改变的文字并划动鼠标查看CBETA编注内容"));
+        markModColor.setUserData(2);
+
+        final ToggleButton markModPopover = new ToggleButton("着色+原编注");
+        markModPopover.setTooltip(new Tooltip("在编注点着色被改变的文字并划动鼠标查看原编注+CBETA编注内容"));
+        markModPopover.setUserData(3);
+
+        final ToggleButton markModInline = new ToggleButton("CB编注");
+        markModInline.setTooltip(new Tooltip("在编注点直接嵌入CBETA编注内容"));
+        markModInline.setUserData(4);
+
+        marksGroup.getToggles().setAll(markOrigInline, markModInline, markModSharp, markModColor, markModPopover);
+        marksGroup.selectedToggleProperty().addListener((o, ov, nv) ->
+                webViewer.executeScript("handleOnEditMark(" + (null == nv ? -1 : nv.getUserData()) + ")"));
+
+        this.toolbar.addRight(markOrigInline, markModInline, markModSharp, markModColor, markModPopover);
+    }
+
+
+    private void addTool_Bookmark() {
+        final Button button = new Button();
+        button.setGraphic(new MaterialIconView(MaterialIcon.BOOKMARK_BORDER));
+        button.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+        button.setTooltip(new Tooltip("添加书签"));
+        button.setOnAction(event -> bookmarks.handleOnAddAction());
+        this.toolbar.addRight(button);
+    }
+
+    private void addTool_Favorite() {
+        final Button button = new Button();
+        button.setGraphic(new MaterialIconView(MaterialIcon.STAR_BORDER));
+        button.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+        button.setTooltip(new Tooltip("添加收藏"));
+        button.setOnAction(event -> favorites.handleOnAddAction());
+        this.toolbar.addRight(button);
+    }
+
+    private void addTool_SearchInPage() {
+        final Button button = new Button();
+        button.setGraphic(new MaterialIconView(MaterialIcon.SEARCH));
+        button.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+        button.setTooltip(new Tooltip("查找"));
+        button.setOnAction(event -> webViewer.executeScript("handleOnSearchInPage()"));
+        this.toolbar.addRight(button);
+    }
+
+
+    /* //////////////////////////////////////////////////////////////////// */
+    private void applyWebTheme(Theme webTheme) {
+        if (null == this.webViewer)
+            return;
+
+        byte[] allBytes = new byte[0];
+        if (null != webTheme && !webTheme.stylesheets.isEmpty()) {
+            for (String webStyle : webTheme.stylesheets) {
+                try {
+                    URLConnection conn = new URL(webStyle).openConnection();
+                    conn.connect();
+
+                    BufferedInputStream in = new BufferedInputStream(conn.getInputStream());
+                    int pos = allBytes.length;
+                    byte[] tmpBytes = new byte[pos + in.available()];
+                    System.arraycopy(allBytes, 0, tmpBytes, 0, pos);
+                    allBytes = tmpBytes;
+                    in.read(allBytes, pos, in.available());
+                } catch (Exception ignore) {
+                    ignore.printStackTrace();
+                }
+            }
+        }
+        String cssData = "data:text/css;charset=utf-8;base64," + Base64.getMimeEncoder().encodeToString(allBytes);
+        this.webViewer.getEngine().setUserStyleSheetLocation(cssData);
+    }
 
     private void handleThemeChanged(ThemeEvent event) {
-        if (null == this.bookViewer)
+        if (null == this.webViewer)
             return;
         final Theme theme = null != event ? event.newTheme : this.getThemeProvider().getTheme();
         final ThemeSet themeSet = (ThemeSet) theme;
-        bookViewer.applyThemeSet(themeSet);
+
+        if (null == themeSet)
+            return;
+
+        final Node themeMarker = this.toolbar.lookup("#web-theme-marker");
+        if (null == themeMarker) {
+            applyWebTheme(themeSet.themes.isEmpty() ? null : themeSet.themes.iterator().next());
+            return;
+        }
+        ObservableList<Node> toolbarItems = this.toolbar.getAlignedItems();
+        int themeToolsIdx = toolbarItems.indexOf(themeMarker) + 1;
+
+        // clean old
+        for (int i = themeToolsIdx; i < toolbarItems.size(); i++) {
+            if (toolbarItems.get(i).getProperties().containsKey(themeMarker))
+                toolbarItems.remove(i--);
+        }
+        themeMarker.setUserData(null);
+        //
+        final ToggleGroup themeToolsGroup = new ToggleGroup();
+        themeToolsGroup.selectedToggleProperty().addListener((o, ov, nv) -> {
+            if (null == nv) return;
+            final Theme webTheme = (Theme) nv.getUserData();
+            if (Objects.equals(webTheme, themeMarker.getUserData()))
+                return;
+            themeMarker.setUserData(webTheme);
+            this.applyWebTheme(webTheme);
+        });
+        final List<RadioButton> themeToolsList = themeSet.themes.stream().map(v -> {
+            final RadioButton themeTool = new RadioButton();
+            themeTool.setToggleGroup(themeToolsGroup);
+            themeTool.setUserData(v);
+            themeTool.setTooltip(new Tooltip(v.title));
+            themeTool.getProperties().put(themeMarker, true);
+
+            final MaterialIconView icon = new MaterialIconView(MaterialIcon.LENS);
+            icon.setFill(Color.valueOf(v.accentColor));
+            themeTool.setGraphic(icon);
+
+            return themeTool;
+        }).collect(Collectors.toList());
+        toolbarItems.addAll(themeToolsIdx, themeToolsList);
+
+        if (!themeToolsList.isEmpty())
+            themeToolsList.get(0).fire();
     }
 
     @Override
@@ -114,17 +325,9 @@ public class BookViewController extends WorkbenchMainViewController {
             // apply theme
             this.handleThemeChanged(null);
             this.webViewer.getEngine().setUserDataDirectory(UserPrefs.confDir().toFile());
-            // init nav-view
-            ChapterTree.parseBookChaptersToTree(book, this.bookBasicView.tocsTree, this.bookBasicView.volsTree);
-            // init default selection in basic view
-            TreeItem<Chapter> treeItem = this.bookBasicView.prepareDefaultSelection(this.book, this.currentChapter);
-            handleChaptersTreeViewEnterOrDoubleClickAction(null, treeItem);
-            //
-            this.webViewer.getViewer().addEventHandler(MouseEvent.MOUSE_RELEASED, event -> {
-                lastMouseScreenX = event.getScreenX();
-                lastMouseScreenY = event.getScreenY();
-            });
-            this.webViewer.setContextMenu(this.webContextMenu = new ContextMenu());
+            // init tree
+            this.bookBasic.onViewportInit();
+            this.handleChaptersTreeViewEnterOrDoubleClickAction(null, bookBasic.defaultTreeItem);
         }
         // update app title
         setPrimaryTitle(book.title);
@@ -154,10 +357,10 @@ public class BookViewController extends WorkbenchMainViewController {
         openChapter(null, temp);
     }
 
-    private Chapter currentChapter;
-    private HanLang displayHan;
+    Chapter currentChapter;
+    HanLang displayHan;
 
-    private void handleChaptersTreeViewEnterOrDoubleClickAction(final InputEvent event, final TreeItem<Chapter> treeItem) {
+    void handleChaptersTreeViewEnterOrDoubleClickAction(final InputEvent event, final TreeItem<Chapter> treeItem) {
         if (null == treeItem || null != event && !treeItem.isLeaf()) return;
         openChapter(event, treeItem.getValue());
     }
@@ -167,7 +370,9 @@ public class BookViewController extends WorkbenchMainViewController {
 
         if (null != currentChapter && chapter.path.equals(currentChapter.path)) {
             currentChapter = chapter;
-            webViewer.scrollTo("#" + chapter.start);
+            if (null != chapter.start) {
+                webViewer.executeScript("setScrollTop1BySelectors(\"".concat(chapter.start.toString()).concat("\")"));
+            }
             return;
         }
 
@@ -194,19 +399,21 @@ public class BookViewController extends WorkbenchMainViewController {
             if (null == event) {
                 final String selector = UserPrefs.recents.getString(book.id + ".selector", null);
                 final double percent = UserPrefs.recents.getDouble(book.id + ".percent", 0);
-//                DevtoolHelper.LOG.info("setScrollTop1BySelectors... selector=" + selector);
                 webViewer.executeScript(StringHelper.concat("setScrollTop1BySelectors(\"", selector, "\", ", percent, ")"));
                 webViewer.addEventHandler(KeyEvent.KEY_PRESSED, event1 -> {
                     if (event1.isControlDown() && event1.getCode() == KeyCode.F) {
-                        webViewer.executeScript("handleOnOpenFinder()");
+                        webViewer.executeScript("handleOnSearchInPage()");
                     }
                 });
-            } else {
-                webViewer.scrollTo("#" + currentChapter.start);
+            } else if (null != chapter.start) {
+                webViewer.executeScript("setScrollTop1BySelectors(\"".concat(currentChapter.start.toString()).concat("\")"));
             }
             this.webViewer.widthProperty().removeListener(this::handleWebViewBodyResize);
             this.webViewer.widthProperty().addListener(this::handleWebViewBodyResize);
             DevtoolHelper.LOG.info("load htmlDocFile used time: " + (System.currentTimeMillis() - st) + ", " + htmlDoc);
+            //
+            this.bookmarks.onViewportInit();
+            this.favorites.onViewportInit();
         });
 
         this.webViewer.getEngine().load(Path.of(htmlDoc).toUri().toString());
@@ -216,9 +423,6 @@ public class BookViewController extends WorkbenchMainViewController {
 
     private void handleWebViewBodyResize(Observable o) {
         webViewer.executeScript("beforeOnResizeBody()");
-        // for debug only
-//      final String markedSelector = webPane.executeScript("markedScrollTop1Selector");
-//      DevtoolHelper.LOG.info("marked... markedSelector=" + markedSelector);
     }
 
     private void handleApplicationEventStopping(ApplicationEvent event) {
@@ -230,11 +434,10 @@ public class BookViewController extends WorkbenchMainViewController {
             final double scrollTopPercentage = webViewer.getScrollTopPercentage();
             UserPrefs.recents.setProperty(book.id + ".percent", scrollTopPercentage);
 
-            final String selector = webViewer.executeScript("scrollTop1Selector()");
+            final String selector = webViewer.executeScript("getScrollTop1Selector()");
             UserPrefs.recents.setProperty(book.id + ".selector", selector);
         } catch (Exception ignore) {
         }
-//        DevtoolHelper.LOG.info("save... selector=" + selector + ", atPercentage = " + scrollTopPercentage);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -251,24 +454,6 @@ public class BookViewController extends WorkbenchMainViewController {
         public String convertToDisplayHan(String input) {
             return ChineseConvertors.convert(input, null, displayHan);
         }
-
-        public void onSelectionChanged(String text) {
-            if (null == text) {
-                return;
-            }
-            // build contextMenu
-            webContextMenu.getItems().setAll(new MenuItem("Copy"), new MenuItem("Bookmark"), new MenuItem("Favorite"));
-            webContextMenu.show(webViewer, lastMouseScreenX, lastMouseScreenY);
-            System.out.println("Selection\t" + text);
-        }
-
-        public void onBookmarkChanged(boolean addOrElseRemove, String data) {
-            System.out.println("Bookmark-data\t" + data);
-        }
-
-        public void onFavoriteChanged(boolean addOrElseRemove, String data) {
-            System.out.println("Favorite-data\t" + data);
-        }
     }
 
     private static class WebIncl {
@@ -278,12 +463,14 @@ public class BookViewController extends WorkbenchMainViewController {
                 "jquery.isinviewport.js",
                 "jquery.highlight.js",
                 "jquery.scrollto.js",
+                "popper.min.js",
+                "tippy-bundle.umd.min.js",
                 "rangy-core.js",
-                "rangy-classapplier.js",
-                "rangy-textrange.js",
-                "rangy-highlighter.js",
-                "rangy-selectionsaverestore.js",
                 "rangy-serializer.js",
+//                "rangy-classapplier.js",
+//                "rangy-textrange.js",
+//                "rangy-highlighter.js",
+//                "rangy-selectionsaverestore.js",
                 "app.css",
                 "app.js",
                 "jquery.finder.js"

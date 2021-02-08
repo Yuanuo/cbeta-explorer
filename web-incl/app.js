@@ -1,3 +1,15 @@
+jQuery.fn.cssSelectorEx = function () {
+    if (this.is("[id]"))
+        return this.tagName() + '#' + this.attr('id');
+    else if (this.is("span.note"))
+        return "span." + this.attr("class").replaceAll("  ", " ").replaceAll(" ", ".") + "[data-n='" + (this.attr('data-n')) + "']";
+    else if (this.is("[data-n]"))
+        return this.tagName() + "." + this.attr("class").replaceAll("  ", " ").replaceAll(" ", ".") + "[data-n='" + (this.attr('data-n')) + "']";
+    else if (this.is("span.lb"))
+        return "span.lb[data-n='" + (this.attr('data-n')) + "']:first";
+    return this.cssSelector();
+};
+
 function getScrollTopNElements(num = 10) {
     const list = $("body > article *:in-viewport");
     const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
@@ -18,24 +30,15 @@ function getScrollTop1Element() {
     return list.length > 0 ? list[0] : null;
 }
 
-function getScrollTop1Selector(ele = null) {
-    ele = ele || getScrollTop1Element();
-    if (!ele) return null;
-    if (ele.is("[id]"))
-        return ele.tagName() + '#' + ele.attr('id');
-    else if (ele.is("span.note"))
-        return "span." + ele.attr("class").replaceAll("  ", " ").replaceAll(" ", ".") + "[data-n='" + (ele.attr('data-n')) + "']";
-    else if (ele.is("[data-n]"))
-        return ele.tagName() + "." + ele.attr("class").replaceAll("  ", " ").replaceAll(" ", ".") + "[data-n='" + (ele.attr('data-n')) + "']";
-    else if (ele.is("span.lb"))
-        return "span.lb[data-n='" + (ele.attr('data-n')) + "']:first";
-    return ele.cssSelector();
+function getScrollTop1Selector($ele = null) {
+    $ele = $ele || getScrollTop1Element();
+    return $ele.cssSelectorEx();
 }
 
 function getScrollTop1AnchorInfo(outMapOrElseStr = true) {
     const $ele = getScrollTop1Element();
     if (!$ele) return;
-    const selector = getScrollTop1Selector($ele);
+    const selector = $ele.cssSelectorEx();
     if (!selector) return; // cannot restore
     const ele = $ele[0];
     let text = "";
@@ -50,14 +53,16 @@ function getScrollTop1AnchorInfo(outMapOrElseStr = true) {
     if (!handled || text.length === 0) return;
     const map = {
         "anchor": selector,
-        "text": text
+        "text": text,
+        "rangyPos": rangy.serializePosition(ele, 0, document)
     };
     return outMapOrElseStr ? map : JSON.stringify(map);
 }
 
 function setScrollTop1BySelectors(selector, percent = 0) {
     let scrollTop = 0;
-    const target = selector && $(selector);
+    let target = selector && $(selector);
+    if (selector && !target) target = $('#' + selector);
     if (target && target.length > 0)
         scrollTop = target.offset().top;
     else scrollTop = percent * document.body.scrollHeight;
@@ -91,6 +96,7 @@ function handleOnResizeBody() {
 $(document).ready(function () {
     documentLoaded = true;
     document.body.onresize = handleOnResizeBody;
+    if (rangy) rangy.init();
 });
 
 function getValidSelection() {
@@ -103,16 +109,29 @@ function getValidSelection() {
     return null;
 }
 
-function getValidSelectionInfo() {
-    const validSelection = getValidSelection();
-    if (!validSelection) return null;
-}
-
 function getValidSelectionText() {
     const validSelection = getValidSelection();
     if (!validSelection) return null;
     const selected = validSelection.toString().trim();
-    const selectedIsEmpty = selected.length <= 0;
+    return selected.length < 1 ? null : selected;
+}
+
+function getValidSelectionAnchorInfo(outMapOrElseStr = true) {
+    const validSelection = getValidSelection();
+    if (!validSelection) return null;
+    const selected = validSelection.toString().trim();
+    if (selected.length < 1) return null;
+    const parentEle = validSelection.anchorNode.nodeType === 3
+        ? $(validSelection.anchorNode.parentElement) : $(validSelection.anchorNode);
+    let selector = parentEle.cssSelectorEx();
+    if (!selector) selector = parentEle.parent().cssSelectorEx();
+    if (!selector) return null;
+    const map = {
+        "anchor": selector,
+        "text": selected,
+        "rangy": rangy.serializeSelection()
+    };
+    return outMapOrElseStr ? map : JSON.stringify(map);
 }
 
 /* ************************************************************************************************************************************* */
@@ -131,7 +150,7 @@ function handleOnFirstLetterIndent() {
     if (!article.prop(markOn)) {
         article.find('p').each(function () {
             const para = $(this);
-            if (para.text().trimLeft().match(/^[““『]/)) {
+            if (para.text().trimLeft().match(/^[“「『]/)) {
                 para.addClass('first-letter-indent');
             }
         });
@@ -248,3 +267,19 @@ function handleOnSearchInPage() {
     if ($("#finder").is("[active]")) return;
     $("body [data-finder-activator]:first").click();
 }
+
+/* ************************************************************************************************************************************* */
+
+function getBookmarkAnchorInfo() {
+    const map = getScrollTop1AnchorInfo();
+    if (!map) return null;
+    return JSON.stringify(map);
+}
+
+function getFavoriteAnchorInfo() {
+    let map = getValidSelectionAnchorInfo();
+    if (!map) map = getScrollTop1AnchorInfo();
+    if (!map) return null;
+    return JSON.stringify(map);
+}
+

@@ -9,15 +9,15 @@ import org.appxi.javafx.workbench.WorkbenchApplication;
 import org.appxi.javafx.workbench.WorkbenchViewController;
 import org.appxi.javafx.workbench.views.WorkbenchSideViewController;
 
-public class BookDataController extends WorkbenchSideViewController {
-    private static BookDataController instance;
+public class BookDataPlaceController extends WorkbenchSideViewController {
+    private static BookDataPlaceController instance;
 
-    public BookDataController(WorkbenchApplication application) {
+    public BookDataPlaceController(WorkbenchApplication application) {
         super("BOOK-DATA", "在读", application);
-        instance = this;
+        instance = null == instance ? this : instance;
     }
 
-    public static BookDataController getInstance() {
+    public static BookDataPlaceController getInstance() {
         return instance;
     }
 
@@ -30,23 +30,27 @@ public class BookDataController extends WorkbenchSideViewController {
     protected void onViewportInitOnce() {
     }
 
-    Node bookViews;
+    private BookViewController bookView;
 
     @Override
     public void setupInitialize() {
         getEventBus().addEventHandler(BookEvent.VIEW, event -> {
-            bookViews = null;// always reset
+            bookView = null;// always reset
             final WorkbenchViewController mainView = getPrimaryViewport().getSelectedMainViewController();
             if (mainView instanceof BookViewController bookView) {
-                if (null != this.viewportVBox)
+                if (null != this.viewportVBox) {
+                    this.setViewTitle(bookView.viewName);
                     this.viewportVBox.getChildren().setAll(bookView.sideViews);
-                else bookViews = bookView.sideViews;
+                } else this.bookView = bookView;
                 //FIXME 程序启动后的第一次在此默认显示此视图？
+            } else {
+                setViewTitle(null);
             }
         });
         final EventHandler<BookEvent> handleOnBookViewHideOrClose = event -> {
             if (null != this.viewportVBox) {
                 this.viewportVBox.getChildren().clear();
+                setViewTitle(null);
             }
         };
         getEventBus().addEventHandler(BookEvent.HIDE, handleOnBookViewHideOrClose);
@@ -55,9 +59,10 @@ public class BookDataController extends WorkbenchSideViewController {
 
     @Override
     public void onViewportShow(boolean firstTime) {
-        if (null != bookViews) {
-            this.viewportVBox.getChildren().setAll(bookViews);
-            bookViews = null;
+        if (null != bookView) {
+            this.setViewTitle(bookView.viewName);
+            this.viewportVBox.getChildren().setAll(bookView.sideViews);
+            bookView = null;
         }
     }
 }

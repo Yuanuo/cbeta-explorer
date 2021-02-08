@@ -13,6 +13,10 @@ jQuery.fn.cssSelector = function () {
                 break;
             }
             name = name.toLowerCase();
+            if ($node.is("[id]")) {
+                path = name + '#' + $node.attr('id') + (path ? ' > ' + path : '');
+                break;
+            }
             const parent = $node.parent();
             const sameTagSiblings = parent.children(name);
 

@@ -4,6 +4,7 @@ import javafx.collections.ObservableList;
 import javafx.scene.control.*;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import org.appxi.cbeta.explorer.model.ChapterTree;
 import org.appxi.holder.RawHolder;
 import org.appxi.javafx.control.TreeViewExt;
 import org.appxi.javafx.helper.TreeHelper;
@@ -15,19 +16,40 @@ import org.appxi.util.StringHelper;
 import java.util.Objects;
 import java.util.function.Predicate;
 
-public class BookBasicView extends VBox {
-    public final Accordion accordion;
-    public final TitledPane tocsPane, volsPane, infoPane;
-    public final TreeViewExt<Chapter> tocsTree, volsTree;
+class InternalBookBasic extends InternalView {
+    Accordion accordion;
+    TitledPane tocsPane, volsPane, infoPane;
+    TreeViewExt<Chapter> tocsTree, volsTree;
 
-    public BookBasicView() {
+    TreeItem<Chapter> defaultTreeItem;
+
+    public InternalBookBasic(BookViewController bookView) {
+        super(bookView);
+    }
+
+    @Override
+    protected void onViewportInitOnce() {
         this.tocsPane = new TitledPane("目次", this.tocsTree = new TreeViewExt<>());
         this.volsPane = new TitledPane("卷次", this.volsTree = new TreeViewExt<>());
         this.infoPane = new TitledPane("信息", new Label("Coming soon..."));
         this.accordion = new Accordion(this.tocsPane, this.volsPane, this.infoPane);
         VBox.setVgrow(this.accordion, Priority.ALWAYS);
 
-        this.getChildren().setAll(this.accordion);
+        this.viewport.setCenter(this.accordion);
+
+        //
+        this.tocsTree.setEnterOrDoubleClickAction(this.bookView::handleChaptersTreeViewEnterOrDoubleClickAction);
+        this.volsTree.setEnterOrDoubleClickAction(this.bookView::handleChaptersTreeViewEnterOrDoubleClickAction);
+    }
+
+    @Override
+    public void onViewportInit(boolean firstTime) {
+        if (firstTime) {
+            // init nav-view
+            ChapterTree.parseBookChaptersToTree(bookView.book, this.tocsTree, this.volsTree);
+            // init default selection in basic view
+            defaultTreeItem = this.prepareDefaultSelection(bookView.book, bookView.currentChapter);
+        }
     }
 
     public TreeItem<Chapter> prepareDefaultSelection(CbetaBook book, Chapter chapter) {
