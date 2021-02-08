@@ -1,8 +1,7 @@
 * {
     -fx-font-smoothing-type: gray;
-
+    -fx-font-size: 16px;
     -fx-background-radius: 1;
-    -fx-focus-traversable: false;
 }
 
 /* ****************************************************************************************************************** */
@@ -64,6 +63,7 @@
 .split-pane {
     -fx-padding: 0;
     -fx-border-width: 0;
+    -fx-background-color: -fx-background;
 }
 
 .split-pane-divider {
@@ -207,13 +207,10 @@
     -fx-background-color: -fx-background;
 }
 
-.headline {
+.title-bar {
     -fx-font-weight: bold;
-    -fx-padding: 0.2em 0.1em;
-}
-
-.search-pane-masking .tool-bar {
-    -fx-border-width: 0;
+    -fx-padding: 0.58em 0.75em;
+    -fx-text-overrun: ellipsis;
 }
 
 .search-pane-masking .text-field {

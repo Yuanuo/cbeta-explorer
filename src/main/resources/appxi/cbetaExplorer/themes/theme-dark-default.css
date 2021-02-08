@@ -85,7 +85,6 @@
 
 .tool-bar {
     -fx-background-color: -fx-background;
-    -fx-border-color: #555555;
 }
 
 .split-pane-divider {
@@ -117,12 +116,12 @@
 
 .tree-view .tree-cell:filled:selected,
 .list-view .list-cell:filled:selected {
-    -fx-background-color: derive(-fx-base, 20%);
+    -fx-background-color: derive(-fx-base, 30%);
 }
 
 .tree-view .tree-cell:filled:hover,
 .list-view .list-cell:filled:hover {
-    -fx-background-color: derive(-fx-base, 30%);
+    -fx-background-color: derive(-fx-base, 20%);
 }
 
 
@@ -176,20 +175,18 @@
 }
 
 .side-tools .context-menu,
-.side-tools .tool-bar {
+.side-tools {
     -fx-border-width: 0;
     -fx-background-color: derive(-fx-background, -50%);
 }
 
-.side-tools .tool-bar .glyph-icon {
+.side-tools .glyph-icon {
     -fx-fill: derive(-fx-base, 60%);
 }
 
-.side-views .tool-bar {
-    -fx-border-width: 0 0 1 0;
-}
-
+.side-views .head-bar,
 .main-views .tool-bar {
+    -fx-border-color: #555555;
     -fx-border-width: 0 0 1 0;
 }
 

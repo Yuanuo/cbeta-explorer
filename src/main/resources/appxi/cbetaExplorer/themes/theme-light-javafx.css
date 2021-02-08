@@ -26,7 +26,6 @@
 
 .tool-bar {
     -fx-background-color: -fx-background;
-    -fx-border-color: lightgray;
 }
 
 .split-pane-divider {
@@ -111,24 +110,22 @@
 }
 
 .side-tools .context-menu,
-.side-tools .tool-bar {
+.side-tools {
     -fx-border-width: 0 1 0 0;
     -fx-background-color: derive(-fx-background, -5%);
 }
 
-.side-tools .tool-bar .glyph-icon {
+.side-tools .glyph-icon {
     -fx-fill: derive(-fx-base, -60%);
 }
 
-.side-views .tool-bar {
-    -fx-border-width: 0 0 1 0;
-}
-
+.side-views .head-bar,
 .main-views .tool-bar {
+    -fx-border-color: lightgray;
     -fx-border-width: 0 0 1 0;
 }
 
-.headline {
+.title-bar {
     -fx-opacity: .85;
 }
 
