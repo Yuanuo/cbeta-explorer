@@ -14,6 +14,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.web.WebView;
 import org.appxi.cbeta.explorer.AppInfo;
 import org.appxi.javafx.control.DialogPaneEx;
+import org.appxi.javafx.helper.FxHelper;
 import org.appxi.javafx.workbench.WorkbenchApplication;
 import org.appxi.javafx.workbench.views.WorkbenchSideToolController;
 import org.appxi.prefs.UserPrefs;
@@ -79,6 +80,6 @@ public class AboutController extends WorkbenchSideToolController {
         pane.setContent(new VBox(headBox, descBox, info));
         alert.setDialogPane(pane);
 
-        showAlertWithThemeAndWaitForNothing(alert);
+        FxHelper.withTheme(getApplication(), alert).show();
     }
 }

@@ -6,6 +6,7 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.FlowPane;
 import org.appxi.javafx.control.DialogPaneEx;
+import org.appxi.javafx.helper.FxHelper;
 import org.appxi.javafx.workbench.WorkbenchApplication;
 import org.appxi.javafx.workbench.views.WorkbenchSideToolController;
 
@@ -41,6 +42,6 @@ public class MaterialIconsController extends WorkbenchSideToolController {
         final Alert alert = new Alert(Alert.AlertType.NONE);
         alert.setTitle(MaterialIcon.values().length + " Icons");
         alert.setDialogPane(dialogPane);
-        showAlertWithThemeAndWaitForNothing(alert);
+        FxHelper.withTheme(getApplication(), alert).show();
     }
 }
