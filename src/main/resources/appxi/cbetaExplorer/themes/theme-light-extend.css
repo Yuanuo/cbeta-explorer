@@ -196,3 +196,7 @@
 .search-pane-masking {
     -fx-background-color: derive(-fx-background, -20%);
 }
+
+.toast-pane {
+    -fx-background-color: rgba(208, 208, 208, 0.95);
+}

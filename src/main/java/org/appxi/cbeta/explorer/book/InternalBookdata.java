@@ -5,13 +5,13 @@ import javafx.beans.binding.Bindings;
 import javafx.scene.control.*;
 import javafx.scene.input.InputEvent;
 import javafx.scene.layout.VBox;
-import org.appxi.cbeta.explorer.AppHelper;
 import org.appxi.cbeta.explorer.dao.Bookdata;
 import org.appxi.cbeta.explorer.dao.BookdataType;
 import org.appxi.cbeta.explorer.dao.DaoService;
 import org.appxi.cbeta.explorer.event.ChapterEvent;
 import org.appxi.javafx.control.ListViewEx;
 import org.appxi.javafx.helper.FxHelper;
+import org.appxi.javafx.helper.ToastHelper;
 import org.appxi.tome.model.Chapter;
 import org.appxi.util.DateHelper;
 import org.appxi.util.StringHelper;
@@ -52,9 +52,9 @@ abstract class InternalBookdata extends InternalView {
                         () -> getWidth() - getPadding().getLeft() - getPadding().getRight() - 1,
                         widthProperty(), paddingProperty()));
                 setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
-                setStyle(getStyle().concat(";-fx-padding: .8em"));
+                setStyle(getStyle().concat("-fx-padding: .8em"));
 
-                timeLabel.setStyle(timeLabel.getStyle().concat(";-fx-font-size: 95%;-fx-opacity: .85;"));
+                timeLabel.setStyle(timeLabel.getStyle().concat(";-fx-font-size: 80%;-fx-opacity: .65;"));
             }
 
             @Override
@@ -133,8 +133,7 @@ abstract class InternalBookdata extends InternalView {
                 if (ButtonType.YES == FxHelper.withTheme(bookView.getApplication(), alert).showAndWait().orElse(null)) {
                     DaoService.getBookdataDao().delete(data);
                     this.listView.getItems().remove(data);
-                    AppHelper.toast().owner(bookView.getPrimaryStage())
-                            .text("已删除".concat(dataType.title).concat("！")).showInformation();
+                    ToastHelper.toast(bookView.getApplication(), "已删除".concat(dataType.title).concat("！"));
                     // TODO update html?
                 }
                 return;
@@ -167,8 +166,7 @@ abstract class InternalBookdata extends InternalView {
                 //
                 DaoService.getBookdataDao().create(data);
                 this.listView.getItems().add(data);
-                AppHelper.toast().owner(bookView.getPrimaryStage())
-                        .text("已添加".concat(dataType.title).concat("！")).showInformation();
+                ToastHelper.toast(bookView.getApplication(), "已添加".concat(dataType.title).concat("！"));
             }
         } catch (Exception e) {
             FxHelper.alertError(bookView.getApplication(), e);

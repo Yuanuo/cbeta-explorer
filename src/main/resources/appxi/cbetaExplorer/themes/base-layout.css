@@ -1,6 +1,5 @@
 * {
     -fx-font-smoothing-type: gray;
-    -fx-font-size: 16px;
     -fx-background-radius: 1;
 }
 
@@ -218,4 +217,8 @@
     -fx-background-insets: 0 0 1 0;
 }
 
+.toast-pane {
+    -fx-background-radius: 3;
+    -fx-font-size: 200% !important;
+}
 /* ****************************************************************************************************************** */

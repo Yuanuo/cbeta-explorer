@@ -20,6 +20,9 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class AppWorkbench extends WorkbenchApplication {
+    public AppWorkbench() {
+        AppHelper.primaryApp = AppHelper.primaryApp == null ? this : AppHelper.primaryApp;
+    }
 
     @Override
     public void init() throws Exception {
