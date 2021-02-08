@@ -40,6 +40,11 @@ public class BookListController extends WorkbenchSideViewController {
     }
 
     @Override
+    protected boolean isToolbarEnable() {
+        return true;
+    }
+
+    @Override
     protected void onViewportInitOnce() {
         final Button btnSearch = new Button();
         btnSearch.setTooltip(new Tooltip("快速查找书籍（Ctrl+O）"));
@@ -99,7 +104,8 @@ public class BookListController extends WorkbenchSideViewController {
             final String navMode = UserPrefs.prefs.getString("cbeta.nav", "catalog");
             final ObservableList<Toggle> toggles = treeViewModeGroup.getToggles();
             final List<Toggle> filtered = toggles.filtered(v -> navMode.equals(v.getUserData()));
-            treeViewModeGroup.selectToggle(!filtered.isEmpty() ? filtered.get(0) : toggles.get(0));
+            if (!toggles.isEmpty())
+                treeViewModeGroup.selectToggle(!filtered.isEmpty() ? filtered.get(0) : toggles.get(0));
         });
     }
 

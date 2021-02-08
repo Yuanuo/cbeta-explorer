@@ -9,6 +9,7 @@ import javafx.scene.paint.Color;
 import org.appxi.cbeta.explorer.event.DataEvent;
 import org.appxi.holder.StringHolder;
 import org.appxi.javafx.control.DialogPaneEx;
+import org.appxi.javafx.helper.FxHelper;
 import org.appxi.javafx.theme.Theme;
 import org.appxi.javafx.workbench.WorkbenchApplication;
 import org.appxi.javafx.workbench.views.WorkbenchSideToolController;
@@ -49,7 +50,7 @@ public class PreferencesController extends WorkbenchSideToolController {
         final Alert alert = new Alert(Alert.AlertType.NONE);
         alert.setTitle(viewName);
         alert.setDialogPane(dialogPane);
-        showAlertWithThemeAndWaitForNothing(alert);
+        FxHelper.withTheme(getApplication(), alert).show();
     }
 
     private void buildThemeConfig(List<Node> nodes) {

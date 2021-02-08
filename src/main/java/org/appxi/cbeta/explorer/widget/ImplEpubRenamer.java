@@ -11,6 +11,7 @@ import javafx.stage.FileChooser;
 import org.appxi.cbeta.explorer.CbetaxHelper;
 import org.appxi.holder.IntHolder;
 import org.appxi.holder.RawHolder;
+import org.appxi.javafx.helper.FxHelper;
 import org.appxi.javafx.workbench.WorkbenchViewController;
 import org.appxi.tome.cbeta.BookTree;
 import org.appxi.tome.cbeta.BookTreeMode;
@@ -89,7 +90,7 @@ class ImplEpubRenamer extends Widget {
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setHeaderText(null);
             alert.setContentText(result);
-            this.controller.showAlertWithThemeAndWaitForNothing(alert);
+            FxHelper.withTheme(this.controller.getApplication(), alert).show();
         });
         HBox applyBtnHBox = new HBox(applyBtn);
         applyBtnHBox.setAlignment(Pos.CENTER);
