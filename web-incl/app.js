@@ -143,6 +143,13 @@ function handleOnWrapLines() {
     setScrollTop1BySelectors(markPos);
 }
 
+function handleOnWrapPages() {
+    const markPos = getScrollTop1Selector();
+    const article = $('body > article');
+    article.toggleClass('wrap-pages-on');
+    setScrollTop1BySelectors(markPos);
+}
+
 function handleOnFirstLetterIndent() {
     const article = $('body > article');
     const markOn = 'first-letter-indent-on';

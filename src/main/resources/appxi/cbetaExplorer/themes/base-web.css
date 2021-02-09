@@ -46,10 +46,12 @@ body {
 
 .cb-juan.close div:nth-child(1)::after {
     content: '（圆满）';
+    font-size: 80%;
 }
 
 .byline {
     text-align: right;
+    font-style: italic;
 }
 
 .cb-mulu {
@@ -57,13 +59,26 @@ body {
     padding-top: 1rem;
     padding-bottom: 1rem;
 }
-
-.cb-mulu.level-1 {
+.cb-mulu[leveln^='1-'] {
     font-size: calc(var(--text-size) * 1.2);
 }
-
-.cb-mulu.level-2 {
+.cb-mulu[leveln^='2-'] {
     font-size: calc(var(--text-size) * 1.02);
+}
+
+.head {
+    font-weight: bold;
+}
+
+.place-inline {
+    font-size: 70%;
+    font-weight: normal;
+}
+.place-inline::before {
+    content: '（';
+}
+.place-inline::after {
+    content: '）';
 }
 
 div.p,
@@ -71,6 +86,12 @@ p {
     padding-bottom: 1rem;
 }
 
+p.lg {
+    text-align:center;
+}
+p.lg .l {
+    display: block;
+}
 /*   *************************************************************************************************************    */
 .finder {
     position: fixed;
@@ -147,27 +168,30 @@ article {
     padding: 3rem;
 }
 
-.wrap-lines-on {
+.wrap-lines-on,
+.wrap-pages-on {
     margin-left: 6rem;
 }
-
-.wrap-lines-on div {
+.wrap-lines-on div,
+.wrap-lines-on p,
+.wrap-lines-on .lg .l,
+.wrap-pages-on div,
+.wrap-pages-on p,
+.wrap-pages-on .lg .l {
     display: inline;
 }
-
-.wrap-lines-on p[id]:before {
+.wrap-pages-on span.lb:before,
+.wrap-lines-on span.lb:before {
     content: "\A" attr(id) " : ";
     white-space: pre;
-    margin-left: -4rem;
     color: var(--text-color);
-    font-size: 88%;
     font-family: Helvetica;
-    display: inline-block;
+    font-weight: normal;
     opacity: .5;
 }
 
-.wrap-lines-on span.lb:before {
-    content: "\A" attr(id) " : ";
+.wrap-pages-on span.pb:before {
+    content: "\A\A\A" attr(id) "\A\A";
     white-space: pre;
     color: var(--text-color);
     font-family: Helvetica;

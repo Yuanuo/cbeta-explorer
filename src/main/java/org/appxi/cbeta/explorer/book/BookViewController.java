@@ -107,6 +107,7 @@ public class BookViewController extends WorkbenchMainViewController {
 //        addTool_Themes();
         this.toolbar.addRight(new Separator(Orientation.VERTICAL));
         addTool_WrapLines();
+        addTool_WrapPages();
         addTool_FirstLetterIndent();
         this.toolbar.addRight(new Separator(Orientation.VERTICAL));
         addTool_EditorMark();
@@ -161,6 +162,15 @@ public class BookViewController extends WorkbenchMainViewController {
         button.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
         button.setTooltip(new Tooltip("折行显示"));
         button.setOnAction(event -> webViewer.executeScript("handleOnWrapLines()"));
+        this.toolbar.addRight(button);
+    }
+
+    private void addTool_WrapPages() {
+        final ToggleButton button = new ToggleButton();
+        button.setGraphic(new MaterialIconView(MaterialIcon.VIEW_DAY));
+        button.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+        button.setTooltip(new Tooltip("折页显示"));
+        button.setOnAction(event -> webViewer.executeScript("handleOnWrapPages()"));
         this.toolbar.addRight(button);
     }
 
