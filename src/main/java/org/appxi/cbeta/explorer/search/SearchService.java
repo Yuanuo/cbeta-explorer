@@ -14,8 +14,8 @@ import org.appxi.cbeta.explorer.event.BookEvent;
 import org.appxi.cbeta.explorer.event.ChapterEvent;
 import org.appxi.cbeta.explorer.event.DataEvent;
 import org.appxi.hanlp.convert.ChineseConvertors;
-import org.appxi.javafx.control.ToolBarEx;
 import org.appxi.javafx.control.DialogPaneEx;
+import org.appxi.javafx.control.ToolBarEx;
 import org.appxi.javafx.workbench.WorkbenchApplication;
 import org.appxi.javafx.workbench.WorkbenchPane;
 import org.appxi.tome.cbeta.CbetaBook;
@@ -124,9 +124,7 @@ class SearchService {
             searchResult = new ListView<>();
             VBox.setVgrow(searchResult, Priority.ALWAYS);
             searchResult.setOnMouseReleased(this::handleSearchResultEventToOpen);
-            searchResult.setOnKeyReleased(this::handleSearchResultEventToOpen);
             searchResult.setFocusTraversable(false);
-            searchResult.addEventHandler(KeyEvent.KEY_PRESSED, this::handleEventToMoveCaret);
             searchResult.setCellFactory(v -> new ListCell<>() {
                 @Override
                 protected void updateItem(SearchRecord item, boolean empty) {
@@ -172,6 +170,8 @@ class SearchService {
                 selIdx = 0;
             model.select(selIdx);
             event.consume();
+        } else if (event.getCode() == KeyCode.ENTER) {
+            handleSearchResultEventToOpen(event);
         }
     }
 
