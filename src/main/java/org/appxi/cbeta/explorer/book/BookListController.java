@@ -101,6 +101,8 @@ public class BookListController extends WorkbenchSideViewController {
             DevtoolHelper.LOG.info("load booklist views used times: " + (System.currentTimeMillis() - st));
         });
         getEventBus().addEventHandler(DataEvent.BOOKS_READY, event -> {
+            if (null == this.treeView)
+                this.getViewport();
             final String navMode = UserPrefs.prefs.getString("cbeta.nav", "catalog");
             final ObservableList<Toggle> toggles = treeViewModeGroup.getToggles();
             final List<Toggle> filtered = toggles.filtered(v -> navMode.equals(v.getUserData()));
