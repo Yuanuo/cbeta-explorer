@@ -100,14 +100,10 @@ public class RecentController extends WorkbenchSideViewController {
             getPrimaryViewport().addWorkbenchViewAsMainView(addedController, true);
             addedController.setupInitialize();
         }
-        if (null == addedController) {
-            addedController = new WelcomeController(getApplication());
-            getPrimaryViewport().addWorkbenchViewAsMainView(addedController, true);
-            addedController.setupInitialize();
-        }
         if (null == selectedController)
             selectedController = addedController;
-        getPrimaryViewport().selectMainView(selectedController.viewId);
+        if (null != selectedController)
+            getPrimaryViewport().selectMainView(selectedController.viewId);
     }
 
     private void saveRecentBooks() {

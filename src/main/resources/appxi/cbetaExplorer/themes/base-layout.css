@@ -212,6 +212,12 @@
     -fx-text-overrun: ellipsis;
 }
 
+.main-views {
+    -fx-background-image: url('app-hint.png');
+    -fx-background-position: center;
+    -fx-background-repeat: no-repeat;
+}
+
 .search-pane-masking .text-field {
     -fx-background-radius: 0;
     -fx-background-insets: 0 0 1 0;
