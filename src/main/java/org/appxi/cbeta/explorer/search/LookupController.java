@@ -3,6 +3,7 @@ package org.appxi.cbeta.explorer.search;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.input.*;
 import javafx.scene.layout.Priority;
@@ -11,53 +12,61 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.appxi.cbeta.explorer.CbetaxHelper;
 import org.appxi.cbeta.explorer.event.BookEvent;
-import org.appxi.cbeta.explorer.event.ChapterEvent;
-import org.appxi.cbeta.explorer.event.DataEvent;
+import org.appxi.cbeta.explorer.event.SearchEvent;
+import org.appxi.cbeta.explorer.event.StatusEvent;
+import org.appxi.cbeta.explorer.model.BookList;
 import org.appxi.hanlp.convert.ChineseConvertors;
 import org.appxi.javafx.control.DialogPaneEx;
+import org.appxi.javafx.control.ListViewExt;
+import org.appxi.javafx.control.MaskingPane;
 import org.appxi.javafx.control.ToolBarEx;
 import org.appxi.javafx.workbench.WorkbenchApplication;
-import org.appxi.javafx.workbench.WorkbenchPane;
+import org.appxi.javafx.workbench.views.WorkbenchSideToolController;
 import org.appxi.tome.cbeta.CbetaBook;
 import org.appxi.tome.model.Chapter;
 import org.appxi.util.StringHelper;
 
+import java.util.Collection;
 import java.util.Objects;
 
-class SearchService {
-    private static final int SEARCH_RESULT_LIMIT = 100;
+public class LookupController extends WorkbenchSideToolController {
+    private static final int RESULT_LIMIT = 100;
 
-    public final SearchEngine searchEngine;
-    public final WorkbenchApplication application;
-    public final WorkbenchPane workbenchPane;
+    private LookupProvider lookupProvider;
 
-    private boolean showing;
-
-    public SearchService(WorkbenchApplication application, SearchEngine searchEngine) {
-        this.application = application;
-        this.searchEngine = searchEngine;
-        this.workbenchPane = application.getPrimaryViewport();
+    public LookupController(WorkbenchApplication application) {
+        super("LOOKUP", "快速查找", application);
     }
 
+    @Override
+    public Node createToolIconGraphic(Boolean placeInSideViews) {
+        return null;
+    }
+
+    @Override
     public void setupInitialize() {
-        application.getPrimaryScene().getAccelerators().put(
-                new KeyCodeCombination(KeyCode.O, KeyCombination.SHORTCUT_DOWN),
-                this::show);
-        workbenchPane.addEventHandler(KeyEvent.KEY_PRESSED, this::handleEventToShow);
-        application.eventBus.addEventHandler(DataEvent.SEARCH_OPEN, event -> this.show());
-        ChineseConvertors.toHant("测试");
+        getPrimaryScene().getAccelerators().put(new KeyCodeCombination(KeyCode.G, KeyCombination.SHORTCUT_DOWN),
+                () -> this.onViewportShow(false));
+        getPrimaryScene().addEventHandler(KeyEvent.KEY_PRESSED, this::handleEventToShow);
+        getEventBus().addEventHandler(SearchEvent.LOOKUP, event -> {
+            this.onViewportShow(false);
+            if (null != event.text)
+                searchInput.setText(event.text.strip());
+        });
+        this.lookupProvider = new LookupInMemory();
+        getEventBus().addEventHandler(StatusEvent.BOOKS_READY, event -> ((LookupInMemory) lookupProvider).setupInitialize());
     }
 
-    private long previousShiftPressedTime;
+    private long lastShiftKeyPressedTime;
 
     public final void handleEventToShow(Event evt) {
         boolean handled = false;
         if (evt instanceof KeyEvent event) {
-            handled = event.isControlDown() && event.getCode() == KeyCode.O;
+            handled = event.isShortcutDown() && event.getCode() == KeyCode.O;
             if (!handled && event.getCode() == KeyCode.SHIFT) {
-                final long currentShiftPressedTime = System.currentTimeMillis();
-                handled = currentShiftPressedTime - previousShiftPressedTime <= 400;
-                previousShiftPressedTime = currentShiftPressedTime;
+                final long currShiftKeyPressedTime = System.currentTimeMillis();
+                handled = currShiftKeyPressedTime - lastShiftKeyPressedTime <= 400;
+                lastShiftKeyPressedTime = currShiftKeyPressedTime;
             }
         } else if (evt instanceof MouseEvent event) {
             handled = event.getButton() == MouseButton.PRIMARY;
@@ -65,7 +74,7 @@ class SearchService {
             handled = true;
         }
         if (handled) {
-            show();
+            onViewportShow(false);
             evt.consume();
         }
     }
@@ -87,15 +96,27 @@ class SearchService {
         }
     }
 
+    private void hide() {
+        showing = false;
+        getPrimaryViewport().getChildren().removeAll(masking, dialogPane);
+    }
+
+    private boolean showing;
+    private MaskingPane masking;
     private DialogPaneEx dialogPane;
     private Label searchInfo;
     private TextField searchInput;
-    private ListView<SearchRecord> searchResult;
+    private ListViewExt<LookupItem> searchResult;
 
-    public void show() {
+    @Override
+    public void onViewportShow(boolean firstTime) {
         if (null == dialogPane) {
+            masking = new MaskingPane();
+            masking.addEventHandler(KeyEvent.KEY_PRESSED, this::handleEventToHide);
+            masking.addEventHandler(MouseEvent.MOUSE_PRESSED, this::handleEventToHide);
+
             dialogPane = new DialogPaneEx();
-            dialogPane.getStyleClass().add("search-pane-masking");
+            dialogPane.getStyleClass().add("lookup-view");
             StackPane.setAlignment(dialogPane, Pos.TOP_CENTER);
             dialogPane.setPrefSize(1280, 720);
             dialogPane.setMinSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
@@ -105,7 +126,7 @@ class SearchService {
             //
             final ToolBarEx headBox = new ToolBarEx();
 
-            final Label headTitle = new Label("快速查找书籍（快捷键：双击Shift 或 Ctrl+O 开启。 ESC 或 点击透明区 退出此界面）");
+            final Label headTitle = new Label("快速查找书籍（快捷键：双击Shift 或 Ctrl+G 开启。 ESC 或 点击透明区 退出此界面）");
             headTitle.setStyle("-fx-font-weight: bold;");
             headBox.addLeft(headTitle);
 
@@ -118,16 +139,15 @@ class SearchService {
             //
             searchInput = new TextField();
             searchInput.setPromptText("在此输入");
-            searchInput.textProperty().addListener((o, ov, text) -> this.handleSearchingOnSearchInputChanged(text));
+            searchInput.textProperty().addListener((o, ov, text) -> this.handleInputChangedToSearching(text));
             searchInput.addEventHandler(KeyEvent.KEY_PRESSED, this::handleEventToMoveCaret);
 
-            searchResult = new ListView<>();
+            searchResult = new ListViewExt<>(this::handleEnterOrDoubleClickActionOnSearchResultList);
             VBox.setVgrow(searchResult, Priority.ALWAYS);
-            searchResult.setOnMouseReleased(this::handleSearchResultEventToOpen);
             searchResult.setFocusTraversable(false);
             searchResult.setCellFactory(v -> new ListCell<>() {
                 @Override
-                protected void updateItem(SearchRecord item, boolean empty) {
+                protected void updateItem(LookupItem item, boolean empty) {
                     super.updateItem(item, empty);
                     if (empty) {
                         this.setText(null);
@@ -141,72 +161,55 @@ class SearchService {
         }
         if (!showing) {
             showing = true;
-            workbenchPane.showMasking(dialogPane);
-            workbenchPane.masking.addEventHandler(KeyEvent.KEY_PRESSED, this::handleEventToHide);
-            workbenchPane.masking.addEventHandler(MouseEvent.MOUSE_PRESSED, this::handleEventToHide);
+            getPrimaryViewport().getChildren().addAll(masking, dialogPane);
         }
         searchInput.requestFocus();
     }
 
-    public void hide() {
-        showing = false;
-        workbenchPane.hideMasking(dialogPane);
-        workbenchPane.masking.removeEventHandler(KeyEvent.KEY_PRESSED, this::handleEventToHide);
-        workbenchPane.masking.removeEventHandler(MouseEvent.MOUSE_PRESSED, this::handleEventToHide);
-    }
-
     private void handleEventToMoveCaret(KeyEvent event) {
         if (event.getCode() == KeyCode.UP) {
-            SelectionModel<SearchRecord> model = searchResult.getSelectionModel();
+            SelectionModel<LookupItem> model = searchResult.getSelectionModel();
             int selIdx = model.getSelectedIndex() - 1;
             if (selIdx < 0)
                 selIdx = searchResult.getItems().size() - 1;
             model.select(selIdx);
+            searchResult.scrollToIfNotVisible(selIdx);
             event.consume();
         } else if (event.getCode() == KeyCode.DOWN) {
-            SelectionModel<SearchRecord> model = searchResult.getSelectionModel();
+            SelectionModel<LookupItem> model = searchResult.getSelectionModel();
             int selIdx = model.getSelectedIndex() + 1;
             if (selIdx >= searchResult.getItems().size())
                 selIdx = 0;
             model.select(selIdx);
+            searchResult.scrollToIfNotVisible(selIdx);
             event.consume();
         } else if (event.getCode() == KeyCode.ENTER) {
-            handleSearchResultEventToOpen(event);
+            event.consume();
+            handleEnterOrDoubleClickActionOnSearchResultList(event, searchResult.getSelectionModel().getSelectedItem());
         }
     }
 
-    private void handleSearchResultEventToOpen(Event evt) {
-        boolean handled = false;
-        if (evt instanceof MouseEvent event) {
-            handled = event.getButton() == MouseButton.PRIMARY && event.getClickCount() > 1;
-        } else if (evt instanceof KeyEvent event) {
-            handled = event.getCode() == KeyCode.ENTER;
-        }
-        if (!handled) return;
-
-        final SearchRecord record = searchResult.getSelectionModel().getSelectedItem();
-        if (null != record) {
-            hide();
-            evt.consume();
-            CbetaBook book = SearchHelper.searchById(record.bookId());
-            if (null != record.chapter()) {
-                // open as chapter
-                String[] tmpArr = record.chapter().split("#", 2);
-                Chapter chapter = new Chapter();
-                chapter.path = tmpArr[0];
-                chapter.start = tmpArr.length == 2 ? "#".concat(tmpArr[1]) : null;
-                application.eventBus.fireEvent(new ChapterEvent(ChapterEvent.OPEN, book, chapter));
-            } else {
-                // open as book
-                application.eventBus.fireEvent(new BookEvent(BookEvent.OPEN, book));
+    private void handleEnterOrDoubleClickActionOnSearchResultList(InputEvent event, LookupItem item) {
+        hide();
+        CbetaBook book = BookList.getById(item.bookId());
+        Chapter chapter = null;
+        if (null != item.chapter()) {
+            // open as chapter
+            String[] tmpArr = item.chapter().split("#", 2);
+            chapter = new Chapter();
+            chapter.path = tmpArr[0];
+            if (tmpArr.length == 2) {
+                chapter.start = "#".concat(tmpArr[1]);
+                chapter.attr("position.selector", chapter.start);
             }
         }
+        getEventBus().fireEvent(new BookEvent(BookEvent.OPEN, book, chapter));
     }
 
     private boolean searching, limitReached;
     private String searchingText;
 
-    private void handleSearchingOnSearchInputChanged(String input) {
+    private void handleInputChangedToSearching(String input) {
         final String inputText = CbetaxHelper.stripUnexpected(input).replaceAll("[,，]$", "");
         if (Objects.equals(this.searchingText, inputText))
             return;
@@ -218,17 +221,19 @@ class SearchService {
             return;
         }
 
-        String searchText = ChineseConvertors.toHant(inputText);
+        String searchText = ChineseConvertors.hans2HantTW(inputText);
         String[] searchWords = searchText.split("[,，]");
         if (searchWords.length == 1)
             searchWords = null;
         searching = true;
-        searchEngine.search(searchText, searchWords, (idx, record) -> {
-            limitReached = idx > SEARCH_RESULT_LIMIT;
-            searchResult.getItems().add(record);
-            updateSearchInfo();
-            return !searching || limitReached;
-        });
+//        lookupProvider.search(searchText, searchWords, (idx, record) -> {
+//            limitReached = idx > RESULT_LIMIT;
+//            searchResult.getItems().add(record);
+//            updateSearchInfo();
+//            return !searching || limitReached;
+//        });
+        Collection<LookupItem> matches = lookupProvider.search(searchText, searchWords, RESULT_LIMIT);
+        searchResult.getItems().setAll(matches);
         updateSearchInfo();
         searching = false;
     }
@@ -241,6 +246,6 @@ class SearchService {
         }
         int matches = searchResult.getItems().size();
         searchInfo.setText(matches < 1 ? "未找到匹配项"
-                : StringHelper.concat("找到 ", Math.min(matches, SEARCH_RESULT_LIMIT), matches > SEARCH_RESULT_LIMIT ? "+" : "", " 项"));
+                : StringHelper.concat("找到 ", Math.min(matches, RESULT_LIMIT), matches > RESULT_LIMIT ? "+" : "", " 项"));
     }
 }

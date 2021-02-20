@@ -6,6 +6,10 @@ public class AppLauncher {
 
     public static void main(String[] args) {
         System.setProperty("javafx.preloader", "org.appxi.cbeta.explorer.AppPreloader");
-        Application.launch(AppWorkbench.class, args);
+        try {
+            Application.launch(AppWorkbench.class, args);
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
     }
 }

@@ -218,9 +218,15 @@
     -fx-background-repeat: no-repeat;
 }
 
-.search-pane-masking .text-field {
+.lookup-view .text-field {
     -fx-background-radius: 0;
     -fx-background-insets: 0 0 1 0;
+}
+
+.search-view .pagination .page-information {
+    -fx-opacity: 0;
+    -fx-pref-width: 0;
+    -fx-pref-height: 0;
 }
 
 .toast-pane {

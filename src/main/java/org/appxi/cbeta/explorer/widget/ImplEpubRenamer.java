@@ -8,7 +8,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
-import org.appxi.cbeta.explorer.CbetaxHelper;
+import org.appxi.cbeta.explorer.model.BookList;
 import org.appxi.holder.IntHolder;
 import org.appxi.holder.RawHolder;
 import org.appxi.javafx.helper.FxHelper;
@@ -115,7 +115,7 @@ class ImplEpubRenamer extends Widget {
         if (!Files.isWritable(target))
             return "输出目录不正确";
         BookTreeMode mode = BookTreeMode.valueOf(bookTreeMode);
-        final BookTree.WithMap bookTree = new BookTree.WithMap(CbetaxHelper.books, mode);
+        final BookTree.WithMap bookTree = new BookTree.WithMap(BookList.books, mode);
         bookTree.getDataTree();
 
         IntHolder totalNum = new IntHolder(0);

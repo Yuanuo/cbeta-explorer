@@ -7,13 +7,15 @@ import javafx.collections.ObservableList;
 import javafx.event.Event;
 import javafx.scene.Node;
 import javafx.scene.control.*;
-import org.appxi.cbeta.explorer.CbetaxHelper;
 import org.appxi.cbeta.explorer.event.BookEvent;
-import org.appxi.cbeta.explorer.event.ChapterEvent;
-import org.appxi.cbeta.explorer.event.DataEvent;
+import org.appxi.cbeta.explorer.event.SearchEvent;
+import org.appxi.cbeta.explorer.event.StatusEvent;
+import org.appxi.cbeta.explorer.model.BookList;
 import org.appxi.cbeta.explorer.model.BookTree;
 import org.appxi.javafx.control.SeparatorMenuItemEx;
 import org.appxi.javafx.control.TreeViewExt;
+import org.appxi.javafx.desktop.ApplicationEvent;
+import org.appxi.javafx.helper.FxHelper;
 import org.appxi.javafx.helper.TreeHelper;
 import org.appxi.javafx.workbench.WorkbenchApplication;
 import org.appxi.javafx.workbench.WorkbenchViewController;
@@ -25,6 +27,7 @@ import org.appxi.tome.model.Chapter;
 import org.appxi.util.DevtoolHelper;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class BookListController extends WorkbenchSideViewController {
     private final ToggleGroup treeViewModeGroup = new ToggleGroup();
@@ -47,9 +50,9 @@ public class BookListController extends WorkbenchSideViewController {
     @Override
     protected void onViewportInitOnce() {
         final Button btnSearch = new Button();
-        btnSearch.setTooltip(new Tooltip("快速查找书籍（Ctrl+O）"));
+        btnSearch.setTooltip(new Tooltip("快速查找书籍（Ctrl+G）"));
         btnSearch.setGraphic(new MaterialIconView(MaterialIcon.SEARCH));
-        btnSearch.setOnAction(event -> getEventBus().fireEvent(new DataEvent(DataEvent.SEARCH_OPEN)));
+        btnSearch.setOnAction(event -> getEventBus().fireEvent(new SearchEvent(SearchEvent.LOOKUP, null)));
 
         //
         final Button btnLocate = new Button();
@@ -85,14 +88,13 @@ public class BookListController extends WorkbenchSideViewController {
 
     @Override
     public void setupInitialize() {
-        getEventBus().addEventHandler(BookEvent.OPEN, event -> handleOpenBookOrChapter(event, event.book, null));
-        getEventBus().addEventHandler(ChapterEvent.OPEN, event -> handleOpenBookOrChapter(event, event.book, event.chapter));
+        getEventBus().addEventHandler(BookEvent.OPEN, event -> handleEventToOpenBook(event, event.book, event.chapter));
         //
         treeViewModeGroup.selectedToggleProperty().addListener((o, ov, nv) -> {
             if (null == nv) return;
             final String mode = (String) nv.getUserData();
             final long st = System.currentTimeMillis();
-            final BookTree bookTree = new BookTree(CbetaxHelper.books, BookTreeMode.valueOf(mode));
+            final BookTree bookTree = new BookTree(BookList.books, BookTreeMode.valueOf(mode));
             UserPrefs.prefs.setProperty("cbeta.nav", mode);
             //
             final TreeItem<CbetaBook> rootItem = bookTree.getDataTree();
@@ -100,7 +102,7 @@ public class BookListController extends WorkbenchSideViewController {
             Platform.runLater(() -> treeView.setRoot(rootItem));
             DevtoolHelper.LOG.info("load booklist views used times: " + (System.currentTimeMillis() - st));
         });
-        getEventBus().addEventHandler(DataEvent.BOOKS_READY, event -> {
+        getEventBus().addEventHandler(StatusEvent.BOOKS_READY, event -> {
             if (null == this.treeView)
                 this.getViewport();
             final String navMode = UserPrefs.prefs.getString("cbeta.nav", "catalog");
@@ -109,13 +111,20 @@ public class BookListController extends WorkbenchSideViewController {
             if (!toggles.isEmpty())
                 treeViewModeGroup.selectToggle(!filtered.isEmpty() ? filtered.get(0) : toggles.get(0));
         });
+        //
+        getEventBus().addEventHandler(ApplicationEvent.STARTED, event -> CompletableFuture.runAsync(() -> {
+            BookList.books.getDataMap();
+            getEventBus().fireEvent(new StatusEvent(StatusEvent.BOOKS_READY));
+        }).whenComplete((o, err) -> {
+            if (null != err) FxHelper.alertError(getApplication(), err);
+        }));
     }
 
-    private void handleOpenBookOrChapter(Event event, CbetaBook book, Chapter chapter) {
+    private void handleEventToOpenBook(Event event, CbetaBook book, Chapter chapter) {
+        event.consume();
         final BookViewController viewController = (BookViewController) getPrimaryViewport().findMainViewController(book.id);
         if (null != viewController) {
             getPrimaryViewport().selectMainView(viewController.viewId);
-            event.consume();
             Platform.runLater(() -> {
                 viewController.openChapter(null, chapter);
                 // FIXME 是否需要每次打开书籍后同时在左侧目录树中定位？

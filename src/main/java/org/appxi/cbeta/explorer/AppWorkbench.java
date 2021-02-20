@@ -4,8 +4,7 @@ import javafx.application.Platform;
 import javafx.scene.web.WebView;
 import org.appxi.cbeta.explorer.dao.DaoHelper;
 import org.appxi.cbeta.explorer.dao.DaoService;
-import org.appxi.cbeta.explorer.event.DataEvent;
-import org.appxi.cbeta.explorer.search.SearchHelper;
+import org.appxi.hanlp.convert.ChineseConvertors;
 import org.appxi.javafx.desktop.ApplicationEvent;
 import org.appxi.javafx.helper.FxHelper;
 import org.appxi.javafx.theme.Theme;
@@ -13,30 +12,38 @@ import org.appxi.javafx.theme.ThemeSet;
 import org.appxi.javafx.workbench.WorkbenchApplication;
 import org.appxi.javafx.workbench.WorkbenchPrimaryController;
 import org.appxi.prefs.UserPrefs;
+import org.appxi.util.DateHelper;
 
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class AppWorkbench extends WorkbenchApplication {
     public AppWorkbench() {
-        AppHelper.primaryApp = AppHelper.primaryApp == null ? this : AppHelper.primaryApp;
+        AppContext.setApplication(this);
     }
 
     @Override
     public void init() throws Exception {
         super.init();
+        // 由于在配置文件中不能使用动态变量作为路径，故在此设置日志文件路径
+        if (FxHelper.productionMode) {
+            System.setProperty("org.slf4j.simpleLogger.logFile", UserPrefs.dataDir().resolve(".logs")
+                    .resolve(DateHelper.format(new Date()).replaceAll("[\s:]", "-").concat(".log")).toString());
+        }
         // 在此设置数据库基本环境，以供后续的功能正常使用
         DaoHelper.setupDatabaseService(UserPrefs.dataDir().resolve(".db"));
         initThemes();
-        eventBus.addEventHandler(ApplicationEvent.STARTED, event -> CompletableFuture.runAsync(() -> {
+        eventBus.addEventHandler(ApplicationEvent.STARTED, event -> Platform.runLater(WebView::new));
+        CompletableFuture.runAsync(() -> {
             DaoService.setupInitialize();
-            Platform.runLater(WebView::new);
+            ChineseConvertors.hans2HantTW("测试");
+            AppContext.setupInitialize();
         }).whenComplete((o, err) -> {
-            if (null != err)
-                FxHelper.alertError(this, err);
-        }));
+            if (null != err) FxHelper.alertError(this, err);
+        });
     }
 
     private void initThemes() {
@@ -74,19 +81,6 @@ public class AppWorkbench extends WorkbenchApplication {
     }
 
     @Override
-    protected void started() {
-        CompletableFuture.runAsync(() -> {
-            CbetaxHelper.books.getDataMap();
-            SearchHelper.searchById = id -> CbetaxHelper.books.getDataMap().get(id);
-            eventBus.fireEvent(new DataEvent(DataEvent.BOOKS_READY));
-            SearchHelper.setupSearchService(this);
-        }).whenComplete((o, err) -> {
-            if (null != err)
-                FxHelper.alertError(this, err);
-        });
-    }
-
-    @Override
     protected String getApplicationId() {
         return AppInfo.ID;
     }
@@ -98,10 +92,10 @@ public class AppWorkbench extends WorkbenchApplication {
 
     @Override
     protected List<URL> getApplicationIcons() {
-        final int[] iconSizes = new int[]{24, 32, 48, 64, 72, 96, 128};
+        final String[] iconSizes = new String[]{"24", "32", "48", "64", "72", "96", "128"};
         final List<URL> result = new ArrayList<>(iconSizes.length);
-        for (int iconSize : iconSizes) {
-            result.add(getClass().getResource("/appxi/cbetaExplorer/icons/icon-" + iconSize + ".png"));
+        for (String iconSize : iconSizes) {
+            result.add(getClass().getResource("/appxi/cbetaExplorer/icons/icon-".concat(iconSize).concat(".png")));
         }
         return result;
     }

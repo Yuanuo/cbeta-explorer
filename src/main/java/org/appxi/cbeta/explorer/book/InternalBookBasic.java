@@ -48,7 +48,7 @@ class InternalBookBasic extends InternalView {
             // init nav-view
             ChapterTree.parseBookChaptersToTree(bookView.book, this.tocsTree, this.volsTree);
             // init default selection in basic view
-            defaultTreeItem = this.prepareDefaultSelection(bookView.book, bookView.currentChapter);
+            defaultTreeItem = this.prepareDefaultSelection(bookView.book, bookView.initChapter);
         }
     }
 
@@ -104,5 +104,15 @@ class InternalBookBasic extends InternalView {
                 targetTree.value = this.volsTree;
             }
         }
+    }
+
+    Chapter findChapterByPath(String path, String start) {
+        Predicate<TreeItem<Chapter>> findByPath = itm ->
+                path.equals(itm.getValue().path)
+                        && (null == start || start.equals(itm.getValue().start));
+        Chapter result = TreeHelper.findFirstValue(this.tocsTree.getRoot(), findByPath);
+        if (null == result)
+            result = TreeHelper.findFirstValue(this.volsTree.getRoot(), findByPath);
+        return result;
     }
 }

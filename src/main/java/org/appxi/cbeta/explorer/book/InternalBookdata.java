@@ -8,8 +8,8 @@ import javafx.scene.layout.VBox;
 import org.appxi.cbeta.explorer.dao.Bookdata;
 import org.appxi.cbeta.explorer.dao.BookdataType;
 import org.appxi.cbeta.explorer.dao.DaoService;
-import org.appxi.cbeta.explorer.event.ChapterEvent;
-import org.appxi.javafx.control.ListViewEx;
+import org.appxi.cbeta.explorer.event.BookEvent;
+import org.appxi.javafx.control.ListViewExt;
 import org.appxi.javafx.helper.FxHelper;
 import org.appxi.javafx.helper.ToastHelper;
 import org.appxi.tome.model.Chapter;
@@ -26,7 +26,7 @@ import java.util.function.Consumer;
 
 abstract class InternalBookdata extends InternalView {
     final BookdataType dataType;
-    ListViewEx<Bookdata> listView;
+    ListViewExt<Bookdata> listView;
 
     protected InternalBookdata(BookViewController bookView, BookdataType dataType) {
         super(bookView);
@@ -35,7 +35,7 @@ abstract class InternalBookdata extends InternalView {
 
     @Override
     protected void onViewportInitOnce() {
-        this.listView = new ListViewEx<>(this::handleOnEnterOrDoubleClickAction);
+        this.listView = new ListViewExt<>(this::handleOnEnterOrDoubleClickAction);
         this.listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         this.viewport.setCenter(this.listView);
         //
@@ -47,13 +47,13 @@ abstract class InternalBookdata extends InternalView {
             {
                 cardBox = new VBox(dataLabel, timeLabel);
                 cardBox.setSpacing(10);
-                dataLabel.setWrapText(true);
-                dataLabel.maxWidthProperty().bind(Bindings.createDoubleBinding(
+                cardBox.maxWidthProperty().bind(Bindings.createDoubleBinding(
                         () -> getWidth() - getPadding().getLeft() - getPadding().getRight() - 1,
                         widthProperty(), paddingProperty()));
                 setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
                 setStyle(getStyle().concat("-fx-padding: .8em"));
 
+                dataLabel.setWrapText(true);
                 timeLabel.setStyle(timeLabel.getStyle().concat(";-fx-font-size: 80%;-fx-opacity: .65;"));
             }
 
@@ -186,7 +186,7 @@ abstract class InternalBookdata extends InternalView {
         final Chapter chapter = new Chapter();
         chapter.path = item.volume;
         chapter.start = item.anchor;
-        bookView.getEventBus().fireEvent(new ChapterEvent(ChapterEvent.OPEN, book, chapter));
+        bookView.getEventBus().fireEvent(new BookEvent(BookEvent.OPEN, book, chapter));
     }
 
     Bookdata findByAnchor(String anchor) {

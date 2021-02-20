@@ -2,22 +2,28 @@ package org.appxi.cbeta.explorer.book;
 
 import de.jensd.fx.glyphs.materialicons.MaterialIcon;
 import de.jensd.fx.glyphs.materialicons.MaterialIconView;
+import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.input.InputEvent;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import netscape.javascript.JSObject;
+import org.appxi.cbeta.explorer.AppContext;
 import org.appxi.cbeta.explorer.event.BookEvent;
-import org.appxi.cbeta.explorer.event.ChapterEvent;
-import org.appxi.cbeta.explorer.event.DataEvent;
+import org.appxi.cbeta.explorer.event.SearchEvent;
+import org.appxi.cbeta.explorer.event.StatusEvent;
 import org.appxi.hanlp.convert.ChineseConvertors;
+import org.appxi.javafx.control.BlockingView;
 import org.appxi.javafx.control.TabPaneExt;
 import org.appxi.javafx.control.ToolBarEx;
 import org.appxi.javafx.control.WebViewer;
@@ -47,8 +53,9 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class BookViewController extends WorkbenchMainViewController {
-    public final CbetaBook book;
     private final BookDocument bookDocument;
+    public final CbetaBook book;
+    Chapter initChapter;
 
     TabPane sideViews;
 
@@ -63,11 +70,11 @@ public class BookViewController extends WorkbenchMainViewController {
         this(book, null, application);
     }
 
-    public BookViewController(CbetaBook book, Chapter chapter, WorkbenchApplication application) {
+    public BookViewController(CbetaBook book, Chapter initChapter, WorkbenchApplication application) {
         super(book.id, book.title, application);
         this.book = book;
         this.bookDocument = new BookDocumentEx(book);
-        this.currentChapter = chapter;
+        this.initChapter = initChapter;
     }
 
     @Override
@@ -76,13 +83,16 @@ public class BookViewController extends WorkbenchMainViewController {
     }
 
     @Override
-    protected void onViewportInitOnce() {
+    protected void onViewportInitOnce(StackPane viewport) {
+        final BorderPane borderPane = new BorderPane();
+        viewport.getChildren().add(borderPane);
+
         this.toolbar = new ToolBarEx();
         this.initToolbar();
-        this.viewport.setTop(this.toolbar);
+        borderPane.setTop(this.toolbar);
         //
         this.webViewer = new WebViewer();
-        this.viewport.setCenter(this.webViewer);
+        borderPane.setCenter(this.webViewer);
         //
         this.sideViews = new TabPaneExt();
         this.sideViews.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
@@ -324,7 +334,7 @@ public class BookViewController extends WorkbenchMainViewController {
     @Override
     public void setupInitialize() {
         getEventBus().addEventHandler(ThemeEvent.CHANGED, this::handleThemeChanged);
-        getEventBus().addEventHandler(DataEvent.DISPLAY_HAN, this::handleDisplayHanChanged);
+        getEventBus().addEventHandler(StatusEvent.DISPLAY_HAN_CHANGED, this::handleDisplayHanChanged);
     }
 
     @Override
@@ -337,6 +347,13 @@ public class BookViewController extends WorkbenchMainViewController {
             this.webViewer.getEngine().setUserDataDirectory(UserPrefs.confDir().toFile());
             // init tree
             this.bookBasic.onViewportInit();
+//            if (null != this.currentChapter && null != bookBasic.defaultTreeItem) {
+//                Chapter realChapter = bookBasic.defaultTreeItem.getValue();
+//                if (null != realChapter) {
+//                    if (this.currentChapter.hasAttr("position.selector"))
+//                        realChapter.attr("position.selector", this.currentChapter.attrStr("position.selector"));
+//                }
+//            }
             this.handleChaptersTreeViewEnterOrDoubleClickAction(null, bookBasic.defaultTreeItem);
         }
         // update app title
@@ -354,13 +371,13 @@ public class BookViewController extends WorkbenchMainViewController {
         } else {
             getEventBus().removeEventHandler(ThemeEvent.CHANGED, this::handleThemeChanged);
             getEventBus().removeEventHandler(ApplicationEvent.STOPPING, this::handleApplicationEventStopping);
-            getEventBus().removeEventHandler(DataEvent.DISPLAY_HAN, this::handleDisplayHanChanged);
+            getEventBus().removeEventHandler(StatusEvent.DISPLAY_HAN_CHANGED, this::handleDisplayHanChanged);
             setPrimaryTitle(null);
-            getEventBus().fireEvent(new BookEvent(BookEvent.CLOSE, this.book));
+            getEventBus().fireEvent(new BookEvent(BookEvent.CLOSE, this.book, currentChapter));
         }
     }
 
-    private void handleDisplayHanChanged(DataEvent event) {
+    private void handleDisplayHanChanged(StatusEvent event) {
         saveUserExperienceData();
         Chapter temp = this.currentChapter;
         this.currentChapter = null;
@@ -370,65 +387,109 @@ public class BookViewController extends WorkbenchMainViewController {
     Chapter currentChapter;
     HanLang displayHan;
 
+    private void setCurrentChapter(Chapter chapter) {
+        if (null != chapter && null == chapter.id) {
+            // detect real chapter from tree
+            chapter = bookBasic.findChapterByPath(chapter.path, (String) chapter.start);
+        }
+        this.currentChapter = chapter;
+    }
+
     void handleChaptersTreeViewEnterOrDoubleClickAction(final InputEvent event, final TreeItem<Chapter> treeItem) {
         if (null == treeItem || null != event && !treeItem.isLeaf()) return;
         openChapter(event, treeItem.getValue());
     }
 
-    public void openChapter(InputEvent event, Chapter chapter) {
+    private final BlockingView blockingView = new BlockingView();
+
+    void openChapter(InputEvent event, Chapter chapter) {
         if (null == chapter || Objects.equals(currentChapter, chapter)) return;
 
         if (null != currentChapter && chapter.path.equals(currentChapter.path)) {
-            currentChapter = chapter;
-            if (null != chapter.start) {
+            setCurrentChapter(chapter);
+            if (chapter.hasAttr("position.selector")) {
+                webViewer.executeScript(StringHelper.concat("setScrollTop1BySelectors(\"", chapter.removeAttr("position.selector"), "\")"));
+            } else if (null != chapter.start) {
                 webViewer.executeScript("setScrollTop1BySelectors(\"".concat(chapter.start.toString()).concat("\")"));
             }
             return;
         }
 
-        if (null != currentChapter) {
-            getEventBus().fireEvent(new ChapterEvent(ChapterEvent.CLOSED, book, currentChapter));
-        }
-        currentChapter = chapter;
+        getViewport().getChildren().add(blockingView);
+        new Thread(new Task<Void>() {
+            @Override
+            protected Void call() throws Exception {
+                if (null != currentChapter && null != currentChapter.id) {
+                    getEventBus().fireEvent(new BookEvent(BookEvent.CLOSE, book, currentChapter));
+                }
+                setCurrentChapter(chapter);
 
-        final long st = System.currentTimeMillis();
-        displayHan = HanLang.valueBy(UserPrefs.prefs.getString("display.han", HanLang.hant.lang));
-        final String htmlDoc = this.bookDocument.getVolumeHtmlDocument(currentChapter.path, displayHan,
-                body -> ChineseConvertors.convert(StringHelper.concat(
-                        "<body data-finder-wrapper data-finder-scroll-offset=\"175\">\n",
-                        "  <a data-finder-activator style=\"display:none\"></a>\n",
-                        "  <article data-finder-content>", body.html(), "</article>\n",
-                        "</body>"), HanLang.hant, displayHan),
-                WebIncl.getIncludePaths()
-        );
-        this.webViewer.setOnLoadSucceedAction(we -> {
-            // set an interface object named 'dataApi' in the web engine's page
-            final JSObject window = webViewer.executeScript("window");
-            window.setMember("dataApi", dataApi);
-            //
-            if (null == event) {
-                final String selector = UserPrefs.recents.getString(book.id + ".selector", null);
-                final double percent = UserPrefs.recents.getDouble(book.id + ".percent", 0);
-                webViewer.executeScript(StringHelper.concat("setScrollTop1BySelectors(\"", selector, "\", ", percent, ")"));
-                webViewer.addEventHandler(KeyEvent.KEY_PRESSED, event1 -> {
-                    if (event1.isControlDown() && event1.getCode() == KeyCode.F) {
-                        webViewer.executeScript("handleOnSearchInPage()");
+                final long st = System.currentTimeMillis();
+                displayHan = AppContext.getDisplayHanLang();
+                final String htmlDoc = bookDocument.getVolumeHtmlDocument(chapter.path, displayHan,
+                        body -> ChineseConvertors.convert(StringHelper.concat(
+                                "<body data-finder-wrapper data-finder-scroll-offset=\"175\">\n",
+                                "  <a data-finder-activator style=\"display:none\"></a>\n",
+                                "  <article data-finder-content>", body.html(), "</article>\n",
+                                "</body>"), HanLang.hantTW, displayHan),
+                        WebIncl.getIncludePaths()
+                );
+                webViewer.setOnLoadSucceedAction(we -> {
+                    // set an interface object named 'dataApi' in the web engine's page
+                    final JSObject window = webViewer.executeScript("window");
+                    window.setMember("dataApi", dataApi);
+                    //
+                    if (null != initChapter && initChapter.hasAttr("position.selector")) {
+                        webViewer.executeScript(StringHelper.concat("setScrollTop1BySelectors(\"", initChapter.removeAttr("position.selector"), "\")"));
+                        initChapter = null;//
+                    } else if (null == event) {
+                        final String selector = UserPrefs.recents.getString(book.id + ".selector", null);
+                        final double percent = UserPrefs.recents.getDouble(book.id + ".percent", 0);
+                        webViewer.executeScript(StringHelper.concat("setScrollTop1BySelectors(\"", selector, "\", ", percent, ")"));
+                    } else if (null != chapter.start) {
+                        webViewer.executeScript("setScrollTop1BySelectors(\"".concat(chapter.start.toString()).concat("\")"));
                     }
+                    webViewer.removeEventHandler(KeyEvent.KEY_PRESSED, BookViewController.this::handleWebViewShortcuts);
+                    webViewer.addEventHandler(KeyEvent.KEY_PRESSED, BookViewController.this::handleWebViewShortcuts);
+                    webViewer.widthProperty().removeListener(BookViewController.this::handleWebViewBodyResize);
+                    webViewer.widthProperty().addListener(BookViewController.this::handleWebViewBodyResize);
+                    DevtoolHelper.LOG.info("load htmlDocFile used time: " + (System.currentTimeMillis() - st) + ", " + htmlDoc);
+                    //
+                    bookmarks.onViewportInit();
+                    favorites.onViewportInit();
+                    Platform.runLater(() -> getViewport().getChildren().remove(blockingView));
                 });
-            } else if (null != chapter.start) {
-                webViewer.executeScript("setScrollTop1BySelectors(\"".concat(currentChapter.start.toString()).concat("\")"));
-            }
-            this.webViewer.widthProperty().removeListener(this::handleWebViewBodyResize);
-            this.webViewer.widthProperty().addListener(this::handleWebViewBodyResize);
-            DevtoolHelper.LOG.info("load htmlDocFile used time: " + (System.currentTimeMillis() - st) + ", " + htmlDoc);
-            //
-            this.bookmarks.onViewportInit();
-            this.favorites.onViewportInit();
-        });
 
-        this.webViewer.getEngine().load(Path.of(htmlDoc).toUri().toString());
-        UserPrefs.recents.setProperty(book.id + ".chapter", currentChapter.id);
-        getEventBus().fireEvent(new ChapterEvent(ChapterEvent.OPENED, book, currentChapter));
+                Platform.runLater(() -> webViewer.getEngine().load(Path.of(htmlDoc).toUri().toString()));
+                UserPrefs.recents.setProperty(book.id + ".chapter", chapter.id);
+                return null;
+            }
+        }).start();
+//        getEventBus().fireEvent(new BookEvent(BookEvent.VIEW, book, currentChapter));
+    }
+
+    private void handleWebViewShortcuts(KeyEvent event) {
+        if (event.isShortcutDown()) {
+            // Ctrl + F
+            if (event.getCode() == KeyCode.F) {
+                webViewer.executeScript("handleOnSearchInPage()");
+                event.consume();
+            }
+            // Ctrl + G
+            else if (event.getCode() == KeyCode.G) {
+                final String selText = webViewer.executeScript("getValidSelectionText()");
+                if (StringHelper.isNotBlank(selText))
+                    getEventBus().fireEvent(new SearchEvent(SearchEvent.LOOKUP, selText));
+                event.consume();
+            }
+            // Ctrl + H
+            else if (event.getCode() == KeyCode.H) {
+                final String selText = webViewer.executeScript("getValidSelectionText()");
+                if (StringHelper.isNotBlank(selText))
+                    getEventBus().fireEvent(new SearchEvent(SearchEvent.SEARCH, selText));
+                event.consume();
+            }
+        }
     }
 
     private void handleWebViewBodyResize(Observable o) {
@@ -495,7 +556,7 @@ public class BookViewController extends WorkbenchMainViewController {
                 if (null != includePaths[0])
                     return includePaths;
 
-                final Path dir = UserPrefs.appDir().resolve("web-incl");
+                final Path dir = UserPrefs.appDir().resolve("template/web-incl");
                 for (int i = 0; i < includeNames.length; i++) {
                     includePaths[i] = dir.resolve(includeNames[i]).toUri().toString();
                 }

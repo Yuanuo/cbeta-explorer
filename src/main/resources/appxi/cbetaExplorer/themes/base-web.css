@@ -63,7 +63,16 @@ body {
     font-size: calc(var(--text-size) * 1.2);
 }
 .cb-mulu[leveln^='2-'] {
-    font-size: calc(var(--text-size) * 1.02);
+    font-size: calc(var(--text-size) * 1.12);
+}
+.cb-mulu[leveln^='3-'] {
+    font-size: calc(var(--text-size) * 1.09);
+}
+.cb-mulu[leveln^='4-'] {
+    font-size: calc(var(--text-size) * 1.06);
+}
+.cb-mulu[leveln^='5-'] {
+    font-size: calc(var(--text-size) * 1.03);
 }
 
 .head {

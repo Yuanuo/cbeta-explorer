@@ -5,6 +5,8 @@ import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.jdbc.JdbcPooledConnectionSource;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
+import org.appxi.cbeta.explorer.AppContext;
+import org.appxi.javafx.desktop.ApplicationEvent;
 import org.appxi.util.StringHelper;
 
 import java.nio.file.Path;
@@ -19,11 +21,13 @@ public abstract class DaoHelper {
 
     public static void setupDatabaseService(Path dataDir) {
         databaseUrl = StringHelper.concat("jdbc:h2:", dataDir.resolve("db"), ";database_to_upper=false");
-    }
-
-    public static void closeDatabaseService() {
-        if (null != connSource)
-            connSource.closeQuietly();
+        AppContext.app().eventBus.addEventHandler(ApplicationEvent.STOPPING, event -> {
+            try {
+                if (null != connSource)
+                    connSource.closeQuietly();
+            } catch (Throwable ignored) {
+            }
+        });
     }
 
     public static ConnectionSource getConnSource() {

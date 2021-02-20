@@ -7,10 +7,8 @@ import javafx.scene.Node;
 import javafx.scene.control.TreeItem;
 import org.appxi.cbeta.explorer.book.BookViewController;
 import org.appxi.cbeta.explorer.event.BookEvent;
-import org.appxi.cbeta.explorer.event.ChapterEvent;
-import org.appxi.cbeta.explorer.event.DataEvent;
-import org.appxi.cbeta.explorer.home.WelcomeController;
-import org.appxi.cbeta.explorer.search.SearchHelper;
+import org.appxi.cbeta.explorer.event.StatusEvent;
+import org.appxi.cbeta.explorer.model.BookList;
 import org.appxi.javafx.control.TreeViewEx;
 import org.appxi.javafx.control.TreeViewExt;
 import org.appxi.javafx.desktop.ApplicationEvent;
@@ -43,13 +41,12 @@ public class RecentController extends WorkbenchSideViewController {
     public void setupInitialize() {
         getEventBus().addEventHandler(BookEvent.OPEN, event -> handleToSaveOrUpdateRecentBook(event.book));
         getEventBus().addEventHandler(BookEvent.CLOSE, event -> handleToSaveOrUpdateRecentBook(event.book));
-        getEventBus().addEventHandler(ChapterEvent.OPEN, event -> handleToSaveOrUpdateRecentBook(event.book));
         getEventBus().addEventHandler(ApplicationEvent.STOPPING, event -> {
             saveRecentBooks();
             saveRecentViews();
         });
         loadRecentBooks();
-        getEventBus().addEventHandler(DataEvent.BOOKS_READY, event -> Platform.runLater(this::loadRecentViews));
+        getEventBus().addEventHandler(StatusEvent.BOOKS_READY, event -> Platform.runLater(this::loadRecentViews));
     }
 
     private void handleToSaveOrUpdateRecentBook(CbetaBook book) {
@@ -91,7 +88,7 @@ public class RecentController extends WorkbenchSideViewController {
         final Preferences recent = createRecentViews(true);
         WorkbenchViewController selectedController = null, addedController = null;
         for (String key : recent.getPropertyKeys()) {
-            final CbetaBook book = SearchHelper.searchById(key);
+            final CbetaBook book = BookList.getById(key);
             if (null == book)
                 continue;
             addedController = new BookViewController(book, getApplication());
@@ -140,7 +137,7 @@ public class RecentController extends WorkbenchSideViewController {
             this.treeView = new TreeViewExt<>((e, treeItem) -> {
                 if (!(treeItem.getValue() instanceof RecentBook rBook))
                     return;
-                final CbetaBook book = SearchHelper.searchById(rBook.id);
+                final CbetaBook book = BookList.getById(rBook.id);
                 if (null != book)
                     getEventBus().fireEvent(new BookEvent(BookEvent.OPEN, book));
             });

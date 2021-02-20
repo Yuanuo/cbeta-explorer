@@ -197,7 +197,7 @@
     -fx-background-color: rgba(50, 50, 50, 0.85);
 }
 
-.search-pane-masking {
+.lookup-view {
     -fx-background-color: derive(-fx-background, -20%);
 }
 

@@ -3,13 +3,11 @@ package org.appxi.cbeta.explorer;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 import org.appxi.prefs.UserPrefs;
-import org.appxi.tome.cbeta.BookMap;
 import org.appxi.tome.cbeta.CbetaHelper;
 
 import java.io.File;
 
 public abstract class CbetaxHelper {
-    public static final BookMap books = new BookMap();
 
     static void setDataDirectory(Stage primaryStage) {
         String dir = UserPrefs.prefs.getString("cbeta.dir", "");

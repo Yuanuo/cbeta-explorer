@@ -5,7 +5,7 @@
 
 	<groupId>org.appxi</groupId>
 	<artifactId>cbeta-explorer</artifactId>
-	<version>21.02.08</version>
+	<version>21.02.20</version>
 	<packaging>jar</packaging>
 
 	<properties>
@@ -17,45 +17,27 @@
 		<dependency>
 			<groupId>org.appxi</groupId>
 			<artifactId>appxi-shared</artifactId>
-			<version>21.02.08</version>
+			<version>[1.0.0,)</version>
 		</dependency>
 		<dependency>
 			<groupId>org.appxi</groupId>
 			<artifactId>appxi-javafx</artifactId>
-			<version>21.02.08</version>
-			<exclusions>
-				<exclusion>
-					<groupId>org.appxi</groupId>
-					<artifactId>appxi-shared</artifactId>
-				</exclusion>
-			</exclusions>
+			<version>[1.0.0,)</version>
 		</dependency>
 		<dependency>
 			<groupId>org.appxi</groupId>
 			<artifactId>appxi-tome</artifactId>
-			<version>21.02.08</version>
-			<exclusions>
-				<exclusion>
-					<groupId>org.appxi</groupId>
-					<artifactId>appxi-shared</artifactId>
-				</exclusion>
-			</exclusions>
+			<version>[1.0.0,)</version>
 		</dependency>
 		<dependency>
 			<groupId>org.appxi</groupId>
 			<artifactId>appxi-timeago</artifactId>
-			<version>21.02.00</version>
+			<version>[1.0.0,)</version>
 		</dependency>
 		<dependency>
 			<groupId>org.appxi</groupId>
 			<artifactId>appxi-hanlp-convert</artifactId>
-			<version>21.02.00</version>
-			<exclusions>
-				<exclusion>
-					<groupId>org.appxi</groupId>
-					<artifactId>appxi-shared</artifactId>
-				</exclusion>
-			</exclusions>
+			<version>[1.0.0,)</version>
 		</dependency>
 
 		<dependency>
@@ -96,26 +78,24 @@
 			<artifactId>ormlite-jdbc</artifactId>
 			<version>5.3</version>
 		</dependency>
+		<dependency>
+			<groupId>org.appxi</groupId>
+			<artifactId>appxi-preset-search</artifactId>
+			<version>[1.0.0,)</version>
+		</dependency>
 	</dependencies>
 
 	<build>
 		<plugins>
 			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.8.1</version>
 			</plugin>
 			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>
 				<version>3.2.1</version>
-				<executions>
-					<execution>
-						<id>attach-sources</id>
-						<phase>verify</phase>
-						<goals>
-							<goal>jar-no-fork</goal>
-						</goals>
-					</execution>
-				</executions>
 			</plugin>
 		</plugins>
 	</build>

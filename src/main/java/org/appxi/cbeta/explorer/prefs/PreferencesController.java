@@ -6,7 +6,8 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import org.appxi.cbeta.explorer.event.DataEvent;
+import org.appxi.cbeta.explorer.AppContext;
+import org.appxi.cbeta.explorer.event.StatusEvent;
 import org.appxi.holder.StringHolder;
 import org.appxi.javafx.control.DialogPaneEx;
 import org.appxi.javafx.helper.FxHelper;
@@ -92,7 +93,7 @@ public class PreferencesController extends WorkbenchSideToolController {
         //
         nodes.add(new Label("以 简体/繁体 显示内容"));
 
-        final StringHolder currentLang = new StringHolder(UserPrefs.prefs.getString("display.han", HanLang.hant.lang));
+        final StringHolder currentLang = new StringHolder(AppContext.getDisplayHanLang().lang);
         final ToggleGroup btnGroup = new ToggleGroup();
 
         Arrays.asList(HanLang.hans, HanLang.hant, HanLang.hantHK, HanLang.hantTW).forEach(t -> {
@@ -114,7 +115,7 @@ public class PreferencesController extends WorkbenchSideToolController {
                 return;
             currentLang.value = selHan.lang;
             UserPrefs.prefs.setProperty("display.han", selHan.lang);
-            getEventBus().fireEvent(new DataEvent(DataEvent.DISPLAY_HAN));
+            getEventBus().fireEvent(new StatusEvent(StatusEvent.DISPLAY_HAN_CHANGED));
         }));
     }
 
