@@ -18,6 +18,7 @@ public abstract class AppContext {
 
     private static AppWorkbench application;
     private static AnnotationConfigApplicationContext beans;
+    private static final Object beansInit = new Object();
 
     static void setApplication(AppWorkbench app) {
         AppContext.application = AppContext.application == null ? app : AppContext.application;
@@ -28,26 +29,33 @@ public abstract class AppContext {
     }
 
     public static BeanFactory beans() {
+        if (null != beans)
+            return beans;
+        synchronized (beansInit) {
+            if (null != beans)
+                return beans;
+            try {
+                beans = new AnnotationConfigApplicationContext(AppConfig.class) {
+                    @Override
+                    public Resource[] getResources(String locationPattern) throws IOException {
+                        Resource[] result = super.getResources(locationPattern);
+                        if (result.length == 0 && locationPattern.equals("classpath*:org/appxi/cbeta/explorer/dao/**/*.class")) {
+                            result = new Resource[]{
+                                    new UrlResource(AppContext.class.getResource("/org/appxi/cbeta/explorer/dao/PiecesRepository.class"))
+                            };
+                        }
+                        return result;
+                    }
+                };
+            } catch (Throwable t) {
+                FxHelper.alertError(app(), t);
+            }
+        }
         return beans;
     }
 
     static void setupInitialize() {
-        try {
-            beans = new AnnotationConfigApplicationContext(AppConfig.class) {
-                @Override
-                public Resource[] getResources(String locationPattern) throws IOException {
-                    Resource[] result = super.getResources(locationPattern);
-                    if (result.length == 0 && locationPattern.equals("classpath*:org/appxi/cbeta/explorer/dao/**/*.class")) {
-                        result = new Resource[]{
-                                new UrlResource(AppContext.class.getResource("/org/appxi/cbeta/explorer/dao/PiecesRepository.class"))
-                        };
-                    }
-                    return result;
-                }
-            };
-        } catch (Throwable t) {
-            FxHelper.alertError(app(), t);
-        }
+        beans();
         if (null != application) {
             application.eventBus.addEventHandler(ApplicationEvent.STOPPING, event -> {
                 if (null != AppConfig.cachedSolrClient) {

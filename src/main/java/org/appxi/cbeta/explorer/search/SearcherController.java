@@ -207,7 +207,7 @@ public class SearcherController extends WorkbenchMainViewController {
 
     private void handleSearchingImpl(String inputText) {
         if (null == repository)
-            repository = IndexingHelper.getPiecesRepository();
+            repository = AppContext.beans().getBean(PiecesRepository.class);
 
         boolean facet = true;
         categories = new ArrayList<>();

@@ -1,7 +1,5 @@
 package org.appxi.cbeta.explorer.search;
 
-import org.appxi.cbeta.explorer.AppContext;
-import org.appxi.cbeta.explorer.dao.PiecesRepository;
 import org.appxi.prefs.UserPrefs;
 import org.appxi.tome.cbeta.*;
 import org.appxi.tome.model.Chapter;
@@ -268,29 +266,5 @@ public abstract class IndexingHelper {
         final String indexedVersion = IndexingHelper.indexedVersion();
         final String currentVersion = IndexingHelper.currentVersion();
         return Objects.equals(indexedVersion, currentVersion);
-    }
-
-
-    private static final Object piecesRepository_lock = new Object();
-    private static PiecesRepository piecesRepository;
-
-    public static PiecesRepository getPiecesRepository() {
-        if (null != piecesRepository)
-            return piecesRepository;
-
-        synchronized (piecesRepository_lock) {
-            if (null != piecesRepository)
-                return piecesRepository;
-            while (null == piecesRepository) {
-                piecesRepository = AppContext.beans().getBean(PiecesRepository.class);
-                if (null == piecesRepository) {
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException ignored) {
-                    }
-                }
-            }
-        }
-        return piecesRepository;
     }
 }
