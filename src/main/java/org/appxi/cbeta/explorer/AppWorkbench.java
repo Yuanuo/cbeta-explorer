@@ -13,8 +13,10 @@ import org.appxi.javafx.workbench.WorkbenchApplication;
 import org.appxi.javafx.workbench.WorkbenchPrimaryController;
 import org.appxi.prefs.UserPrefs;
 import org.appxi.util.DateHelper;
+import org.appxi.util.FileHelper;
 
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -30,8 +32,10 @@ public class AppWorkbench extends WorkbenchApplication {
         super.init();
         // 由于在配置文件中不能使用动态变量作为路径，故在此设置日志文件路径
         if (FxHelper.productionMode) {
-            System.setProperty("org.slf4j.simpleLogger.logFile", UserPrefs.dataDir().resolve(".logs")
-                    .resolve(DateHelper.format(new Date()).replaceAll("[\s:]", "-").concat(".log")).toString());
+            final Path logFile = UserPrefs.dataDir().resolve(".logs")
+                    .resolve(DateHelper.format(new Date()).replaceAll("[\s:]", "-").concat(".log"));
+            FileHelper.makeParents(logFile);
+            System.setProperty("org.slf4j.simpleLogger.logFile", logFile.toString());
         }
         // 在此设置数据库基本环境，以供后续的功能正常使用
         DaoHelper.setupDatabaseService(UserPrefs.dataDir().resolve(".db"));
