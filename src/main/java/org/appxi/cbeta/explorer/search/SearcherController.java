@@ -305,6 +305,8 @@ public class SearcherController extends WorkbenchMainViewController {
                 authorsLabel.getStyleClass().add("authors");
                 authorsLabel.setStyle(authorsLabel.getStyle().concat("-fx-opacity:.75;"));
 
+                textFlow.getStyleClass().add("text-flow");
+
                 cardBox = new VBox(nameLabel, locationLabel, authorsLabel, textFlow);
                 cardBox.getStyleClass().addAll("v-box");
                 cardBox.setStyle(cardBox.getStyle().concat("-fx-spacing:.85em;-fx-padding:.85em .5em;"));
@@ -329,8 +331,8 @@ public class SearcherController extends WorkbenchMainViewController {
                 authorsLabel.setText(item.fields.get("authors_s"));
 
                 List<HighlightEntry.Highlight> highlights = highlightPage.getHighlights(item);
+                List<Node> texts = new ArrayList<>();
                 if (!highlights.isEmpty()) {
-                    List<Node> texts = new ArrayList<>();
                     highlights.forEach(highlight -> {
                         highlight.getSnipplets().forEach(str -> {
                             String[] strings = "...".concat(ChineseConvertors.convert(str, HanLang.hantTW, displayHan))
@@ -350,13 +352,14 @@ public class SearcherController extends WorkbenchMainViewController {
                             texts.add(new Text("\n"));
                         });
                     });
-                    textFlow.getChildren().setAll(texts.toArray(new Node[0]));
                 } else {
                     String text = item.texts.get("text_txt_cjk_substr");
                     if (null == text)
                         text = "暂无数据";
-                    textFlow.getChildren().setAll(new Text(StringHelper.trimChars(text, 200)));
+                    texts.add(new Text(StringHelper.trimChars(text, 200)));
                 }
+                texts.forEach(t -> t.getStyleClass().add("texts"));
+                textFlow.getChildren().setAll(texts.toArray(new Node[0]));
                 setGraphic(cardBox);
             }
         });

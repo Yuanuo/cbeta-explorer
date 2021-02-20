@@ -28,6 +28,17 @@
     -fx-background-color: -fx-background;
 }
 
+.context-menu {
+    -fx-border-color: derive(dimgray, 30%);
+}
+.context-menu .menu-item:hover {
+    -fx-background-color: derive(-fx-base, -25%);
+}
+.context-menu .menu-item:hover .label {
+    -fx-text-fill: -fx-mid-text-color;
+}
+
+
 .split-pane-divider {
     -fx-background-color: derive(-fx-background, 20%);
     -fx-border-width: 0 1 0 1;

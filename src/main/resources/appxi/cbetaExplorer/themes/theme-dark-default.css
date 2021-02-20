@@ -87,6 +87,29 @@
     -fx-background-color: -fx-background;
 }
 
+.context-menu {
+    -fx-border-color: darkgray;
+}
+
+.context-menu .separator {
+    -fx-background-color: darkgray;
+}
+
+.separator .line {
+    -fx-background: darkgray;
+}
+
+.check-box .box,
+.radio-button .radio {
+    -fx-background-color: derive(-fx-background, 25%);
+}
+
+.check-box:hover .box,
+.radio-button:hover .radio {
+    -fx-background-color: derive(-fx-background, 45%);
+}
+
+
 .split-pane-divider {
     -fx-background-color: derive(-fx-background, 15%);
     -fx-border-width: 0 1 0 1;
@@ -196,6 +219,13 @@
 
 .lookup-view {
     -fx-background-color: derive(-fx-background, 20%);
+}
+
+.search-view .result-item .glyph-icon {
+    -fx-fill: derive(-fx-background, 120%);
+}
+.search-view .result-item .texts.highlight {
+    -fx-fill: -fx-light-text-color;
 }
 
 .toast-pane {

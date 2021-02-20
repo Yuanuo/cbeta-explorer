@@ -121,7 +121,7 @@ public class PreferencesController extends WorkbenchSideToolController {
 
     private Separator createSeparator() {
         final Separator result = new Separator();
-        result.setStyle("-fx-padding: .5em 0;");
+        result.setStyle("-fx-padding: 1em 0;");
         return result;
     }
 }
