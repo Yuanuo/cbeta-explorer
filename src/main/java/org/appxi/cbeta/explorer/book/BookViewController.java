@@ -478,15 +478,13 @@ public class BookViewController extends WorkbenchMainViewController {
             // Ctrl + G
             else if (event.getCode() == KeyCode.G) {
                 final String selText = webViewer.executeScript("getValidSelectionText()");
-                if (StringHelper.isNotBlank(selText))
-                    getEventBus().fireEvent(new SearchEvent(SearchEvent.LOOKUP, selText));
+                getEventBus().fireEvent(new SearchEvent(SearchEvent.LOOKUP, selText));
                 event.consume();
             }
             // Ctrl + H
             else if (event.getCode() == KeyCode.H) {
                 final String selText = webViewer.executeScript("getValidSelectionText()");
-                if (StringHelper.isNotBlank(selText))
-                    getEventBus().fireEvent(new SearchEvent(SearchEvent.SEARCH, selText));
+                getEventBus().fireEvent(new SearchEvent(SearchEvent.SEARCH, selText));
                 event.consume();
             }
         }
