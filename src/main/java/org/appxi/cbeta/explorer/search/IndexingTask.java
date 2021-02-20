@@ -35,7 +35,7 @@ public class IndexingTask implements Runnable {
         final String indexedVersion = IndexingHelper.indexedVersion();
         final String currentVersion = IndexingHelper.currentVersion();
 
-        final PiecesRepository repository = AppContext.beans().getBean(PiecesRepository.class);
+        final PiecesRepository repository = IndexingHelper.getPiecesRepository();
         if (null != indexedVersion) {
             // delete old version
             repository.deleteAllByProjectAndVersion(IndexingHelper.PROJECT, indexedVersion);

@@ -31,6 +31,7 @@ import org.appxi.javafx.control.BlockingView;
 import org.appxi.javafx.control.BlockingViewEx;
 import org.appxi.javafx.control.ListViewExt;
 import org.appxi.javafx.control.TabPaneExt;
+import org.appxi.javafx.helper.ToastHelper;
 import org.appxi.javafx.workbench.WorkbenchApplication;
 import org.appxi.javafx.workbench.views.WorkbenchMainViewController;
 import org.appxi.tome.cbeta.CbetaBook;
@@ -66,7 +67,7 @@ public class SearcherController extends WorkbenchMainViewController {
     public void setupInitialize() {
     }
 
-    private BlockingViewEx blockView;
+    private BlockingViewEx indexingView;
     private InputView inputView;
 
     private TextField input;
@@ -132,15 +133,15 @@ public class SearcherController extends WorkbenchMainViewController {
 
     private void handleEventOnIndexingToBlocking(ProgressEvent event) {
         Platform.runLater(() -> {
-            if (null == blockView) {
-                blockView = new BlockingViewEx("正在建立索引\n请等待索引任务完成后再搜索\n索引期间可正常使用阅读功能");
-                getViewport().getChildren().add(blockView);
+            if (null == indexingView) {
+                indexingView = new BlockingViewEx("正在建立索引\n请等待索引任务完成后再搜索\n索引期间可正常使用阅读功能");
+                getViewport().getChildren().add(indexingView);
             }
-            blockView.progressIndicator.setProgress((double) event.step / event.steps);
-            blockView.progressMessage.setText(event.message);
+            indexingView.progressIndicator.setProgress((double) event.step / event.steps);
+            indexingView.progressMessage.setText(event.message);
             if (event.step >= event.steps) {
-                getViewport().getChildren().remove(blockView);
-                blockView = null;
+                getViewport().getChildren().remove(indexingView);
+                indexingView = null;
             }
         });
     }
@@ -191,24 +192,22 @@ public class SearcherController extends WorkbenchMainViewController {
     private FacetAndHighlightPage<Piece> facetAndHighlightPage;
 
     private void handleSearching(String inputText) {
+        if (null != indexingView) {
+            // 正在索引时不执行搜索
+            ToastHelper.toast(getApplication(), "正在准备数据，请稍后再试");
+            return;
+        }
         if (null == blockingView)
             blockingView = new BlockingView();
         setSecondaryTitle("搜索：".concat(inputText.isBlank() ? "*" : inputText));
         getViewport().getChildren().add(blockingView);
         // 使用线程，避免UI阻塞假死
         new Thread(() -> handleSearchingImpl(inputText)).start();
-//        new Thread(new Task<Void>() {
-//            @Override
-//            protected Void call() throws Exception {
-//                handleSearchingImpl(inputText);
-//                return null;
-//            }
-//        }).start();
     }
 
     private void handleSearchingImpl(String inputText) {
         if (null == repository)
-            repository = AppContext.beans().getBean(PiecesRepository.class);
+            repository = IndexingHelper.getPiecesRepository();
 
         boolean facet = true;
         categories = new ArrayList<>();
