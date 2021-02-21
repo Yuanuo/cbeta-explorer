@@ -5,7 +5,7 @@
 
 	<groupId>org.appxi</groupId>
 	<artifactId>cbeta-explorer</artifactId>
-	<version>21.02.21</version>
+	<version>21.02.22</version>
 	<packaging>jar</packaging>
 
 	<properties>
