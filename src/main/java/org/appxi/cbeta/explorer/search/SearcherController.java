@@ -211,8 +211,8 @@ public class SearcherController extends WorkbenchMainViewController {
 
         boolean facet = true;
         categories = new ArrayList<>();
-        // 当搜索条件（关键词）未改变时，认为是在根据facet条件过滤，否则开启一个新的搜索
-        if (inputText.equals(searchedText)) {
+        // 当搜索条件（关键词）未改变时，已经搜索过一次，此时认为是在根据facet条件过滤，否则开启一个新的搜索
+        if (inputText.equals(searchedText) && null != facetAndHighlightPage && facetAndHighlightPage.getTotalElements() > 0) {
             facet = false;
             categories.addAll(facetCatalogView.getItems().stream().filter(v -> v.stateProperty.get()).map(v -> v.value).collect(Collectors.toList()));
             categories.addAll(facetPeriodView.getItems().stream().filter(v -> v.stateProperty.get()).map(v -> v.value).collect(Collectors.toList()));
