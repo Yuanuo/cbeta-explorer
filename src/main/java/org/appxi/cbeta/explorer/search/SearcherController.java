@@ -14,6 +14,7 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.CheckBoxListCell;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
@@ -285,7 +286,7 @@ public class SearcherController extends WorkbenchMainViewController {
             return new Label();
 
         final HanLang displayHan = AppContext.getDisplayHanLang();
-        final ListView<Piece> resultPageView = new ListViewExt<>((event, item) -> handleActionToOpenAndPosition(item, null));
+        final ListView<Piece> resultPageView = new ListViewExt<>((event, item) -> handleActionToOpenAndPosition(item, null, null));
         resultPageView.setCellFactory(v -> new ListCell<>() {
             final VBox cardBox;
             final Label nameLabel, locationLabel, authorsLabel;
@@ -334,16 +335,20 @@ public class SearcherController extends WorkbenchMainViewController {
                 if (!highlights.isEmpty()) {
                     highlights.forEach(highlight -> {
                         highlight.getSnipplets().forEach(str -> {
-                            String[] strings = "...".concat(ChineseConvertors.convert(str, HanLang.hantTW, displayHan))
-                                    .concat("...").split("§§hl#pre§§");
+                            String[] strings = "…".concat(ChineseConvertors.convert(str, HanLang.hantTW, displayHan))
+                                    .concat("…").split("§§hl#pre§§");
                             for (String string : strings) {
                                 String[] tmpArr = string.split("§§hl#end§§", 2);
                                 if (tmpArr.length == 1) {
                                     texts.add(new Text(tmpArr[0]));
                                 } else {
-                                    Text hlText = new Text(tmpArr[0]);
+                                    final Text hlText = new Text(tmpArr[0]);
                                     hlText.getStyleClass().add("highlight");
-                                    hlText.setStyle(hlText.getStyle().concat("-fx-font-weight:bold;"));
+                                    hlText.setStyle(hlText.getStyle().concat("-fx-font-weight:bold; -fx-cursor:hand;"));
+                                    hlText.setOnMouseReleased(event -> {
+                                        if (event.getButton() == MouseButton.PRIMARY)
+                                            handleActionToOpenAndPosition(item, tmpArr[0], string);
+                                    });
                                     texts.add(hlText);
                                     texts.add(new Text(tmpArr[1]));
                                 }
@@ -375,7 +380,7 @@ public class SearcherController extends WorkbenchMainViewController {
         return resultPageView;
     }
 
-    private void handleActionToOpenAndPosition(Piece item, String snippet) {
+    private void handleActionToOpenAndPosition(Piece item, String term, String snippet) {
         if (null == item)
             return;
         CbetaBook book = BookList.getById(item.fields.get("book_s"));
@@ -387,6 +392,10 @@ public class SearcherController extends WorkbenchMainViewController {
             chapter.start = item.fields.get("anchor_s");
             if (null != chapter.start)
                 chapter.attr("position.selector", chapter.start);
+            if (null != snippet) {
+                chapter.attr("position.term", term.replace("…", ""));
+                chapter.attr("position.text", snippet.replace("§§hl#end§§", "").replace("…", ""));
+            }
         }
         getEventBus().fireEvent(new BookEvent(BookEvent.OPEN, book, chapter));
     }

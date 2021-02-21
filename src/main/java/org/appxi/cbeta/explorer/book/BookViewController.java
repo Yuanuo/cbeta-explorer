@@ -41,10 +41,7 @@ import java.io.BufferedInputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Path;
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -402,7 +399,17 @@ public class BookViewController extends WorkbenchMainViewController {
 
         if (null != currentChapter && chapter.path.equals(currentChapter.path)) {
             setCurrentChapter(chapter);
-            if (chapter.hasAttr("position.selector")) {
+            if (chapter.hasAttr("position.term")) {
+                String posTerm = chapter.removeAttr("position.term");
+                String posText = chapter.removeAttr("position.text");
+
+                List<String> posParts = new ArrayList<>(List.of(posText.split("。")));
+                posParts.sort(Comparator.comparingInt(String::length));
+                String longText = posParts.get(posParts.size() - 1);
+                if (!webViewer.findInPage(longText, true)) {
+                    webViewFinder.search(posTerm);
+                }
+            } else if (chapter.hasAttr("position.selector")) {
                 webViewer.executeScript(StringHelper.concat("setScrollTop1BySelectors(\"", chapter.removeAttr("position.selector"), "\")"));
             } else if (null != chapter.start) {
                 webViewer.executeScript("setScrollTop1BySelectors(\"".concat(chapter.start.toString()).concat("\")"));
@@ -434,7 +441,17 @@ public class BookViewController extends WorkbenchMainViewController {
                     final JSObject window = webViewer.executeScript("window");
                     window.setMember("dataApi", dataApi);
                     //
-                    if (null != initChapter && initChapter.hasAttr("position.selector")) {
+                    if (null != initChapter && initChapter.hasAttr("position.term")) {
+                        String posTerm = initChapter.removeAttr("position.term");
+                        String posText = initChapter.removeAttr("position.text");
+
+                        List<String> posParts = new ArrayList<>(List.of(posText.split("。")));
+                        posParts.sort(Comparator.comparingInt(String::length));
+                        String longText = posParts.get(posParts.size() - 1);
+                        if (!webViewer.findInPage(longText, true)) {
+                            webViewFinder.search(posTerm);
+                        }
+                    } else if (null != initChapter && initChapter.hasAttr("position.selector")) {
                         webViewer.executeScript(StringHelper.concat("setScrollTop1BySelectors(\"", initChapter.removeAttr("position.selector"), "\")"));
                         initChapter = null;//
                     } else if (null == event) {
