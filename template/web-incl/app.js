@@ -270,17 +270,6 @@ function handleOnEditMark(type) {
     }
 }
 
-function handleOnSearchInPage(str = null) {
-    if ($("#finder").is("[active]")) return;
-    if (str === null)
-        str = getValidSelectionText();
-    if (str !== null && str.length > 20)
-        str = str.substr(0, 20);
-    finder.activate();
-    if (str !== null)
-        $('#finderInput').val(str);
-}
-
 /* ************************************************************************************************************************************* */
 
 function getBookmarkAnchorInfo() {

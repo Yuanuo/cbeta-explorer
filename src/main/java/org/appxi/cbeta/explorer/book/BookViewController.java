@@ -21,10 +21,7 @@ import org.appxi.cbeta.explorer.event.BookEvent;
 import org.appxi.cbeta.explorer.event.SearchEvent;
 import org.appxi.cbeta.explorer.event.StatusEvent;
 import org.appxi.hanlp.convert.ChineseConvertors;
-import org.appxi.javafx.control.BlockingView;
-import org.appxi.javafx.control.TabPaneExt;
-import org.appxi.javafx.control.ToolBarEx;
-import org.appxi.javafx.control.WebViewer;
+import org.appxi.javafx.control.*;
 import org.appxi.javafx.desktop.ApplicationEvent;
 import org.appxi.javafx.theme.Theme;
 import org.appxi.javafx.theme.ThemeEvent;
@@ -64,6 +61,7 @@ public class BookViewController extends WorkbenchMainViewController {
 
     WebViewer webViewer;
     ToolBarEx toolbar;
+    WebViewFinder webViewFinder;
 
     public BookViewController(CbetaBook book, WorkbenchApplication application) {
         this(book, null, application);
@@ -85,13 +83,13 @@ public class BookViewController extends WorkbenchMainViewController {
     protected void onViewportInitOnce(StackPane viewport) {
         final BorderPane borderPane = new BorderPane();
         viewport.getChildren().add(borderPane);
+        //
+        this.webViewer = new WebViewer();
+        borderPane.setCenter(this.webViewer);
 
         this.toolbar = new ToolBarEx();
         this.initToolbar();
         borderPane.setTop(this.toolbar);
-        //
-        this.webViewer = new WebViewer();
-        borderPane.setCenter(this.webViewer);
         //
         this.sideViews = new TabPaneExt();
         this.sideViews.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
@@ -110,6 +108,8 @@ public class BookViewController extends WorkbenchMainViewController {
 
     protected void initToolbar() {
         addTool_SideControl();
+        addTool_Bookmark();
+        addTool_Favorite();
         this.toolbar.addRight(new Separator(Orientation.VERTICAL));
         addTool_FontSize();
 //        this.toolbar.addRight(new Separator(Orientation.VERTICAL));
@@ -122,8 +122,6 @@ public class BookViewController extends WorkbenchMainViewController {
         addTool_EditorMark();
         //
         this.toolbar.addRight(new Separator(Orientation.VERTICAL));
-        addTool_Bookmark();
-        addTool_Favorite();
         addTool_SearchInPage();
     }
 
@@ -242,12 +240,16 @@ public class BookViewController extends WorkbenchMainViewController {
     }
 
     private void addTool_SearchInPage() {
-        final Button button = new Button();
-        button.setGraphic(new MaterialIconView(MaterialIcon.SEARCH));
-        button.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
-        button.setTooltip(new Tooltip("查找"));
-        button.setOnAction(event -> webViewer.executeScript("handleOnSearchInPage()"));
-        this.toolbar.addRight(button);
+        webViewFinder = new WebViewFinder(this.webViewer,
+                input -> ChineseConvertors.convert(input, null, displayHan));
+
+        webViewFinder.prev.setGraphic(new MaterialIconView(MaterialIcon.ARROW_UPWARD));
+        webViewFinder.prev.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+
+        webViewFinder.next.setGraphic(new MaterialIconView(MaterialIcon.ARROW_DOWNWARD));
+        webViewFinder.next.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+
+        this.toolbar.addRight(webViewFinder);
     }
 
 
@@ -420,10 +422,11 @@ public class BookViewController extends WorkbenchMainViewController {
                 final long st = System.currentTimeMillis();
                 displayHan = AppContext.getDisplayHanLang();
                 final String htmlDoc = bookDocument.getVolumeHtmlDocument(chapter.path, displayHan,
-                        body -> ChineseConvertors.convert(StringHelper.concat(
-                                "<body data-finder-wrapper data-finder-scroll-offset=\"175\">\n",
-                                "  <article data-finder-content>", body.html(), "</article>\n",
-                                "</body>"), HanLang.hantTW, displayHan),
+                        body -> ChineseConvertors.convert(
+                                StringHelper.concat("<body><article>", body.html(), "</article></body>"),
+                                HanLang.hantTW,
+                                displayHan
+                        ),
                         WebIncl.getIncludePaths()
                 );
                 webViewer.setOnLoadSucceedAction(we -> {
@@ -464,7 +467,7 @@ public class BookViewController extends WorkbenchMainViewController {
         if (event.isShortcutDown()) {
             // Ctrl + F
             if (event.getCode() == KeyCode.F) {
-                webViewer.executeScript("handleOnSearchInPage()");
+                webViewFinder.search("");
                 event.consume();
             }
             // Ctrl + G
@@ -522,7 +525,7 @@ public class BookViewController extends WorkbenchMainViewController {
 
         MenuItem finder = new MenuItem("页内查找".concat(textTip));
         finder.setAccelerator(new KeyCodeCombination(KeyCode.F, KeyCombination.SHORTCUT_DOWN));
-        finder.setOnAction(event -> webViewer.executeScript(StringHelper.concat("handleOnSearchInPage()")));
+        finder.setOnAction(event -> webViewFinder.search(validText));
         //
         MenuItem dictionary = new MenuItem("查词");
         dictionary.setDisable(true);
@@ -566,7 +569,6 @@ public class BookViewController extends WorkbenchMainViewController {
                 "jquery.min.js",
                 "jquery.ext.js",
                 "jquery.isinviewport.js",
-                "jquery.highlight.js",
                 "jquery.scrollto.js",
                 "popper.min.js",
                 "tippy-bundle.umd.min.js",
@@ -577,8 +579,7 @@ public class BookViewController extends WorkbenchMainViewController {
 //                "rangy-highlighter.js",
 //                "rangy-selectionsaverestore.js",
                 "app.css",
-                "app.js",
-                "jquery.finder.js"
+                "app.js"
         };
         private static final String[] includePaths = new String[includeNames.length];
 
