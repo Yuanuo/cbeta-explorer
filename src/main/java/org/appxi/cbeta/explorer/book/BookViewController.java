@@ -528,23 +528,19 @@ public class BookViewController extends WorkbenchMainViewController {
         //
         MenuItem copy = new MenuItem("复制");
         copy.setDisable(null == validText);
-        copy.setAccelerator(new KeyCodeCombination(KeyCode.C, KeyCombination.SHORTCUT_DOWN));
         copy.setOnAction(event -> Clipboard.getSystemClipboard().setContent(Map.of(DataFormat.PLAIN_TEXT, validText)));
         //
-        String textTip = null == validText ? "" : "：".concat(StringHelper.trimChars(validText, 5));
+        String textTip = null == validText ? "" : "：".concat(StringHelper.trimChars(validText, 8));
         MenuItem search = new MenuItem("全文检索".concat(textTip));
-        search.setAccelerator(new KeyCodeCombination(KeyCode.H, KeyCombination.SHORTCUT_DOWN));
         search.setOnAction(event -> getEventBus().fireEvent(new SearchEvent(SearchEvent.SEARCH, validText)));
 
         MenuItem lookup = new MenuItem("快速检索".concat(textTip));
-        lookup.setAccelerator(new KeyCodeCombination(KeyCode.G, KeyCombination.SHORTCUT_DOWN));
         lookup.setOnAction(event -> getEventBus().fireEvent(new SearchEvent(SearchEvent.LOOKUP, validText)));
 
         MenuItem finder = new MenuItem("页内查找".concat(textTip));
-        finder.setAccelerator(new KeyCodeCombination(KeyCode.F, KeyCombination.SHORTCUT_DOWN));
         finder.setOnAction(event -> webViewFinder.search(validText));
         //
-        MenuItem dictionary = new MenuItem("查词");
+        MenuItem dictionary = new MenuItem("查词典");
         dictionary.setDisable(true);
         //
         MenuItem bookmark = new MenuItem("添加书签");
