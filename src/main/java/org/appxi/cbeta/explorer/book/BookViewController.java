@@ -9,9 +9,7 @@ import javafx.concurrent.Task;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.control.*;
-import javafx.scene.input.InputEvent;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
+import javafx.scene.input.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
@@ -48,6 +46,7 @@ import java.net.URLConnection;
 import java.nio.file.Path;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -345,15 +344,9 @@ public class BookViewController extends WorkbenchMainViewController {
             // apply theme
             this.handleThemeChanged(null);
             this.webViewer.getEngine().setUserDataDirectory(UserPrefs.confDir().toFile());
+            this.webViewer.setContextMenuBuilder(this::handleWebViewContextMenu);
             // init tree
             this.bookBasic.onViewportInit();
-//            if (null != this.currentChapter && null != bookBasic.defaultTreeItem) {
-//                Chapter realChapter = bookBasic.defaultTreeItem.getValue();
-//                if (null != realChapter) {
-//                    if (this.currentChapter.hasAttr("position.selector"))
-//                        realChapter.attr("position.selector", this.currentChapter.attrStr("position.selector"));
-//                }
-//            }
             this.handleChaptersTreeViewEnterOrDoubleClickAction(null, bookBasic.defaultTreeItem);
         }
         // update app title
@@ -429,7 +422,6 @@ public class BookViewController extends WorkbenchMainViewController {
                 final String htmlDoc = bookDocument.getVolumeHtmlDocument(chapter.path, displayHan,
                         body -> ChineseConvertors.convert(StringHelper.concat(
                                 "<body data-finder-wrapper data-finder-scroll-offset=\"175\">\n",
-                                "  <a data-finder-activator style=\"display:none\"></a>\n",
                                 "  <article data-finder-content>", body.html(), "</article>\n",
                                 "</body>"), HanLang.hantTW, displayHan),
                         WebIncl.getIncludePaths()
@@ -507,6 +499,50 @@ public class BookViewController extends WorkbenchMainViewController {
             UserPrefs.recents.setProperty(book.id + ".selector", selector);
         } catch (Exception ignore) {
         }
+    }
+
+    private ContextMenu handleWebViewContextMenu() {
+        String selText = webViewer.executeScript("getValidSelectionText()");
+        selText = null == selText ? null : selText.strip().replace('\n', ' ');
+        final String validText = StringHelper.isBlank(selText) ? null : selText;
+        //
+        MenuItem copy = new MenuItem("复制");
+        copy.setDisable(null == validText);
+        copy.setAccelerator(new KeyCodeCombination(KeyCode.C, KeyCombination.SHORTCUT_DOWN));
+        copy.setOnAction(event -> Clipboard.getSystemClipboard().setContent(Map.of(DataFormat.PLAIN_TEXT, validText)));
+        //
+        String textTip = null == validText ? "" : "：".concat(StringHelper.trimChars(validText, 5));
+        MenuItem search = new MenuItem("全文检索".concat(textTip));
+        search.setAccelerator(new KeyCodeCombination(KeyCode.H, KeyCombination.SHORTCUT_DOWN));
+        search.setOnAction(event -> getEventBus().fireEvent(new SearchEvent(SearchEvent.SEARCH, validText)));
+
+        MenuItem lookup = new MenuItem("快速检索".concat(textTip));
+        lookup.setAccelerator(new KeyCodeCombination(KeyCode.G, KeyCombination.SHORTCUT_DOWN));
+        lookup.setOnAction(event -> getEventBus().fireEvent(new SearchEvent(SearchEvent.LOOKUP, validText)));
+
+        MenuItem finder = new MenuItem("页内查找".concat(textTip));
+        finder.setAccelerator(new KeyCodeCombination(KeyCode.F, KeyCombination.SHORTCUT_DOWN));
+        finder.setOnAction(event -> webViewer.executeScript(StringHelper.concat("handleOnSearchInPage()")));
+        //
+        MenuItem dictionary = new MenuItem("查词");
+        dictionary.setDisable(true);
+        //
+        MenuItem bookmark = new MenuItem("添加书签");
+        bookmark.setOnAction(event -> bookmarks.handleOnAddAction());
+
+        MenuItem favorite = new MenuItem("添加收藏");
+        favorite.setOnAction(event -> favorites.handleOnAddAction());
+
+
+        //
+        return new ContextMenu(copy,
+                new SeparatorMenuItem(),
+                search, lookup, finder,
+                new SeparatorMenuItem(),
+                dictionary,
+                new SeparatorMenuItem(),
+                bookmark, favorite
+        );
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
