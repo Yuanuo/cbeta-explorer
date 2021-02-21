@@ -4,6 +4,8 @@
 
     -webkit-font-smoothing: subpixel-antialiased;
     -moz-osx-font-smoothing: grayscale;
+    
+    --char-size: calc(1.1 * var(--text-size));
 }
 
 * {
@@ -101,6 +103,13 @@ p.lg {
 p.lg .l {
     display: block;
 }
+.lg .l:first-child {
+    text-indent: calc(-1 * var(--char-size));
+}
+.lg .l:last-child {
+    text-indent: calc(1 * var(--char-size));
+}
+
 /*   *************************************************************************************************************    */
 .finder {
     position: fixed;
@@ -209,7 +218,7 @@ article {
 }
 
 .first-letter-indent-on .first-letter-indent {
-    text-indent: calc(-1.1 * var(--text-size));
+    text-indent: calc(-1 * var(--char-size));
 }
 
 /*   *************************************************************************************************************    */
