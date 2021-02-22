@@ -397,6 +397,8 @@ public class BookViewController extends WorkbenchMainViewController {
     void openChapter(InputEvent event, Chapter chapter) {
         if (null == chapter || Objects.equals(currentChapter, chapter)) return;
 
+        // 避免在阅读视图时焦点仍然在TAB上（此时快捷键等不起作用）
+        webViewer.getViewer().requestFocus();
         if (null != currentChapter && chapter.path.equals(currentChapter.path)) {
             setCurrentChapter(chapter);
             if (chapter.hasAttr("position.term")) {
