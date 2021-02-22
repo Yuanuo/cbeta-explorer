@@ -146,6 +146,8 @@ public class LookupController extends WorkbenchSideToolController {
             VBox.setVgrow(searchResult, Priority.ALWAYS);
             searchResult.setFocusTraversable(false);
             searchResult.setCellFactory(v -> new ListCell<>() {
+                LookupItem updatedItem;
+
                 @Override
                 protected void updateItem(LookupItem item, boolean empty) {
                     super.updateItem(item, empty);
@@ -153,6 +155,9 @@ public class LookupController extends WorkbenchSideToolController {
                         this.setText(null);
                         return;
                     }
+                    if (item == updatedItem)
+                        return;//
+                    updatedItem = item;
                     this.setText(item.toString());
                 }
             });

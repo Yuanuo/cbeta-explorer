@@ -57,17 +57,22 @@ abstract class InternalBookdata extends InternalView {
                 timeLabel.setStyle(timeLabel.getStyle().concat(";-fx-font-size: 80%;-fx-opacity: .65;"));
             }
 
+            Bookdata updatedItem;
+
             @Override
             protected void updateItem(Bookdata item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty) {
                     setText(null);
                     setGraphic(null);
-                } else {
-                    dataLabel.setText(buildLabelText(item));
-                    timeLabel.setText("创建于 ".concat(DateHelper.format(item.updateAt)));
-                    setGraphic(cardBox);
+                    return;
                 }
+                if (item == updatedItem)
+                    return;//
+                updatedItem = item;
+                dataLabel.setText(buildLabelText(item));
+                timeLabel.setText("创建于 ".concat(DateHelper.format(item.updateAt)));
+                setGraphic(cardBox);
             }
         });
         //

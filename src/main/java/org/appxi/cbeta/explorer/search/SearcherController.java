@@ -319,6 +319,8 @@ public class SearcherController extends WorkbenchMainViewController {
                 setStyle(getStyle().concat("-fx-font-size: 110%;-fx-opacity:.9;"));
             }
 
+            Piece updatedItem;
+
             @Override
             protected void updateItem(Piece item, boolean empty) {
                 super.updateItem(item, empty);
@@ -326,6 +328,9 @@ public class SearcherController extends WorkbenchMainViewController {
                     setGraphic(null);
                     return;
                 }
+                if (item == updatedItem)
+                    return; //
+                updatedItem = item;
                 nameLabel.setText(ChineseConvertors.convert(item.title, HanLang.hantTW, displayHan));
                 locationLabel.setText(item.fields.get("location_s").concat("（").concat(item.fields.get("book_s")).concat("）"));
                 authorsLabel.setText(item.fields.get("authors_s"));
