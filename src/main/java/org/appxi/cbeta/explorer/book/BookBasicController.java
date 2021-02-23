@@ -1,6 +1,7 @@
 package org.appxi.cbeta.explorer.book;
 
 import javafx.collections.ObservableList;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -8,6 +9,8 @@ import org.appxi.cbeta.explorer.model.ChapterTree;
 import org.appxi.holder.RawHolder;
 import org.appxi.javafx.control.TreeViewExt;
 import org.appxi.javafx.helper.TreeHelper;
+import org.appxi.javafx.workbench.WorkbenchApplication;
+import org.appxi.javafx.workbench.views.WorkbenchSideViewController;
 import org.appxi.prefs.UserPrefs;
 import org.appxi.tome.cbeta.CbetaBook;
 import org.appxi.tome.model.Chapter;
@@ -16,19 +19,33 @@ import org.appxi.util.StringHelper;
 import java.util.Objects;
 import java.util.function.Predicate;
 
-class InternalBookBasic extends InternalView {
+public class BookBasicController extends WorkbenchSideViewController {
+    final BookViewController bookView;
+
     Accordion accordion;
     TitledPane tocsPane, volsPane, infoPane;
     TreeViewExt<Chapter> tocsTree, volsTree;
 
     TreeItem<Chapter> defaultTreeItem;
 
-    public InternalBookBasic(BookViewController bookView) {
-        super(bookView);
+    public BookBasicController(WorkbenchApplication application, BookViewController bookView) {
+        super("BOOK-BASIC", "Book-Basic", application);
+        this.bookView = bookView;
+    }
+
+    @Override
+    public Node createToolIconGraphic(Boolean placeInSideViews) {
+        return null;
+    }
+
+    @Override
+    public void setupInitialize() {
     }
 
     @Override
     protected void onViewportInitOnce() {
+        this.viewport.setTop(null);
+
         this.tocsPane = new TitledPane("目次", this.tocsTree = new TreeViewExt<>());
         this.volsPane = new TitledPane("卷次", this.volsTree = new TreeViewExt<>());
         this.infoPane = new TitledPane("信息", new Label("Coming soon..."));
@@ -43,7 +60,7 @@ class InternalBookBasic extends InternalView {
     }
 
     @Override
-    public void onViewportInit(boolean firstTime) {
+    public void onViewportShow(boolean firstTime) {
         if (firstTime) {
             // init nav-view
             ChapterTree.parseBookChaptersToTree(bookView.book, this.tocsTree, this.volsTree);

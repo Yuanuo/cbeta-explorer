@@ -212,7 +212,7 @@
     -fx-background-color: derive(-fx-background, -20%);
 }
 
-.search-view .result-item .glyph-icon {
+.list-view .glyph-icon {
     -fx-fill: derive(-fx-background, -80%);
 }
 

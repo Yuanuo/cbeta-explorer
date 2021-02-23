@@ -17,12 +17,20 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import netscape.javascript.JSObject;
 import org.appxi.cbeta.explorer.AppContext;
+import org.appxi.cbeta.explorer.bookdata.BookdataController;
+import org.appxi.cbeta.explorer.bookdata.BookmarksController;
+import org.appxi.cbeta.explorer.bookdata.FavoritesController;
+import org.appxi.cbeta.explorer.dao.Bookdata;
+import org.appxi.cbeta.explorer.dao.BookdataType;
 import org.appxi.cbeta.explorer.event.BookEvent;
+import org.appxi.cbeta.explorer.event.BookdataEvent;
 import org.appxi.cbeta.explorer.event.SearchEvent;
 import org.appxi.cbeta.explorer.event.StatusEvent;
 import org.appxi.hanlp.convert.ChineseConvertors;
 import org.appxi.javafx.control.*;
 import org.appxi.javafx.desktop.ApplicationEvent;
+import org.appxi.javafx.helper.FxHelper;
+import org.appxi.javafx.helper.ToastHelper;
 import org.appxi.javafx.theme.Theme;
 import org.appxi.javafx.theme.ThemeEvent;
 import org.appxi.javafx.theme.ThemeSet;
@@ -36,6 +44,7 @@ import org.appxi.tome.model.Chapter;
 import org.appxi.util.DevtoolHelper;
 import org.appxi.util.StringHelper;
 import org.appxi.util.ext.HanLang;
+import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
 import java.net.URL;
@@ -52,9 +61,9 @@ public class BookViewController extends WorkbenchMainViewController {
 
     TabPane sideViews;
 
-    InternalBookBasic bookBasic;
-    InternalBookmarks bookmarks;
-    InternalFavorites favorites;
+    BookBasicController bookBasic;
+    BookmarksController bookmarks;
+    FavoritesController favorites;
 
     WebViewer webViewer;
     ToolBarEx toolbar;
@@ -92,9 +101,9 @@ public class BookViewController extends WorkbenchMainViewController {
         this.sideViews.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
         VBox.setVgrow(this.sideViews, Priority.ALWAYS);
         //
-        this.bookBasic = new InternalBookBasic(this);
-        this.bookmarks = new InternalBookmarks(this);
-        this.favorites = new InternalFavorites(this);
+        this.bookBasic = new BookBasicController(getApplication(), this);
+        this.bookmarks = new BookmarksController(getApplication(), this.book);
+        this.favorites = new FavoritesController(getApplication(), this.book);
         //
         final Tab tab1 = new Tab("基本", this.bookBasic.getViewport());
         final Tab tab2 = new Tab("书签", this.bookmarks.getViewport());
@@ -223,7 +232,7 @@ public class BookViewController extends WorkbenchMainViewController {
         button.setGraphic(new MaterialIconView(MaterialIcon.BOOKMARK_BORDER));
         button.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
         button.setTooltip(new Tooltip("添加书签"));
-        button.setOnAction(event -> bookmarks.handleOnAddAction());
+        button.setOnAction(event -> this.handleEventToCreateBookdata(BookdataType.bookmark));
         this.toolbar.addRight(button);
     }
 
@@ -232,7 +241,7 @@ public class BookViewController extends WorkbenchMainViewController {
         button.setGraphic(new MaterialIconView(MaterialIcon.STAR_BORDER));
         button.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
         button.setTooltip(new Tooltip("添加收藏"));
-        button.setOnAction(event -> favorites.handleOnAddAction());
+        button.setOnAction(event -> this.handleEventToCreateBookdata(BookdataType.favorite));
         this.toolbar.addRight(button);
     }
 
@@ -345,8 +354,10 @@ public class BookViewController extends WorkbenchMainViewController {
             this.webViewer.getEngine().setUserDataDirectory(UserPrefs.confDir().toFile());
             this.webViewer.setContextMenuBuilder(this::handleWebViewContextMenu);
             // init tree
-            this.bookBasic.onViewportInit();
+            this.bookBasic.onViewportShow(true);
             this.handleChaptersTreeViewEnterOrDoubleClickAction(null, bookBasic.defaultTreeItem);
+            this.bookmarks.onViewportShow(true);
+            this.favorites.onViewportShow(true);
         }
         // update app title
         setPrimaryTitle(book.title);
@@ -382,7 +393,8 @@ public class BookViewController extends WorkbenchMainViewController {
     private void setCurrentChapter(Chapter chapter) {
         if (null != chapter && null == chapter.id) {
             // detect real chapter from tree
-            chapter = bookBasic.findChapterByPath(chapter.path, (String) chapter.start);
+            Chapter realChapter = bookBasic.findChapterByPath(chapter.path, (String) chapter.start);
+            chapter = null != realChapter ? realChapter : chapter;
         }
         this.currentChapter = chapter;
     }
@@ -468,9 +480,6 @@ public class BookViewController extends WorkbenchMainViewController {
                     webViewer.widthProperty().removeListener(BookViewController.this::handleWebViewBodyResize);
                     webViewer.widthProperty().addListener(BookViewController.this::handleWebViewBodyResize);
                     DevtoolHelper.LOG.info("load htmlDocFile used time: " + (System.currentTimeMillis() - st) + ", " + htmlDoc);
-                    //
-                    bookmarks.onViewportInit();
-                    favorites.onViewportInit();
                     Platform.runLater(() -> getViewport().getChildren().remove(blockingView));
                 });
 
@@ -546,10 +555,10 @@ public class BookViewController extends WorkbenchMainViewController {
         dictionary.setDisable(true);
         //
         MenuItem bookmark = new MenuItem("添加书签");
-        bookmark.setOnAction(event -> bookmarks.handleOnAddAction());
+        bookmark.setOnAction(event -> this.handleEventToCreateBookdata(BookdataType.bookmark));
 
         MenuItem favorite = new MenuItem("添加收藏");
-        favorite.setOnAction(event -> favorites.handleOnAddAction());
+        favorite.setOnAction(event -> this.handleEventToCreateBookdata(BookdataType.favorite));
 
 
         //
@@ -563,6 +572,73 @@ public class BookViewController extends WorkbenchMainViewController {
         );
     }
 
+    private void handleEventToCreateBookdata(BookdataType dataType) {
+        try {
+            final String anchorInfo = webViewer.executeScript("getFavoriteAnchorInfo()");
+            BookdataController dataHandle = null;
+            if (dataType == BookdataType.bookmark) {
+                dataHandle = this.bookmarks;
+            } else if (dataType == BookdataType.favorite) {
+                dataHandle = this.favorites;
+            }
+
+            if (StringHelper.isBlank(anchorInfo))
+                throw new RuntimeException("未获取到有效定位信息，无法创建".concat(dataType.title));
+            if (anchorInfo.length() > 500)
+                throw new RuntimeException("所选文字过多，无法创建".concat(dataType.title));
+
+            final JSONObject json = new JSONObject(anchorInfo);
+            final String anchor = json.getString("anchor");
+            final String origData = json.getString("text");
+            // check exists
+            Bookdata data = dataHandle.findDataByAnchor(anchor);
+            if (null != data) {
+                Alert alert = new Alert(Alert.AlertType.NONE);
+                alert.setTitle("重复");
+                alert.setContentText("此处已存在".concat(dataType.title).concat("记录，是否删除已有").concat(dataType.title).concat("？"));
+                alert.getButtonTypes().addAll(ButtonType.YES, ButtonType.NO);
+                if (ButtonType.YES == FxHelper.withTheme(getApplication(), alert).showAndWait().orElse(null)) {
+                    dataHandle.removeData(data);
+                    getEventBus().fireEvent(new BookdataEvent(BookdataEvent.REMOVE, data));
+                    ToastHelper.toast(getApplication(), "已删除".concat(dataType.title).concat("！"));
+                    // TODO update html?
+                }
+                return;
+            }
+            //
+            Alert alert = new Alert(Alert.AlertType.NONE);
+            alert.setTitle("添加".concat(dataType.title));
+            final TextArea content = new TextArea();
+            content.setWrapText(true);
+            content.setText(origData);
+            content.setEditable(true);
+
+            final DialogPane pane = new DialogPane();
+            pane.setContent(content);
+            alert.setDialogPane(pane);
+            alert.getButtonTypes().addAll(ButtonType.YES, ButtonType.NO);
+            if (ButtonType.YES == FxHelper.withTheme(getApplication(), alert).showAndWait().orElse(null)) {
+                String editData = content.getText().strip();
+                if (editData.isBlank())
+                    editData = origData;
+                data = new Bookdata();
+                data.createAt = data.updateAt = new Date();
+                data.type = dataType;
+                data.book = book.id;
+                data.volume = currentChapter.path;
+                data.location = book.title;// .concat("/").concat(currentChapter.title);
+                data.anchor = anchor;
+                data.data = editData.length() > 300 ? editData.substring(0, 300) : editData;
+                data.extra = json.toString();
+                //
+                dataHandle.createData(data);
+                getEventBus().fireEvent(new BookdataEvent(BookdataEvent.CREATE, data));
+                ToastHelper.toast(getApplication(), "已添加".concat(dataType.title).concat("！"));
+            }
+        } catch (Exception e) {
+            FxHelper.alertError(getApplication(), e);
+        }
+    }
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**

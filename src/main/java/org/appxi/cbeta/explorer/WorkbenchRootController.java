@@ -3,6 +3,8 @@ package org.appxi.cbeta.explorer;
 import org.appxi.cbeta.explorer.book.BookDataPlaceController;
 import org.appxi.cbeta.explorer.book.BookListController;
 import org.appxi.cbeta.explorer.home.AboutController;
+import org.appxi.cbeta.explorer.bookdata.BookmarksController;
+import org.appxi.cbeta.explorer.bookdata.FavoritesController;
 import org.appxi.cbeta.explorer.prefs.PreferencesController;
 import org.appxi.cbeta.explorer.recent.RecentController;
 import org.appxi.cbeta.explorer.search.LookupController;
@@ -28,6 +30,8 @@ public class WorkbenchRootController extends WorkbenchPrimaryController {
         result.add(new LookupController(getApplication()));
         result.add(new BookDataPlaceController(getApplication()));
         result.add(new RecentController(getApplication()));
+        result.add(new FavoritesController(getApplication()));
+        result.add(new BookmarksController(getApplication()));
 
         result.add(new SearchController(getApplication()));
         result.add(new WidgetsController(getApplication()));
