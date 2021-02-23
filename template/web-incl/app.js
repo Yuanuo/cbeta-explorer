@@ -96,6 +96,7 @@ function handleOnResizeBody() {
 $(document).ready(function () {
     documentLoaded = true;
     document.body.onresize = handleOnResizeBody;
+    handleOnPrettyIndent();
     if (rangy) rangy.init();
 });
 
@@ -150,15 +151,20 @@ function handleOnWrapPages() {
     setScrollTop1BySelectors(markPos);
 }
 
-function handleOnFirstLetterIndent() {
+function handleOnPrettyIndent() {
     const article = $('body > article');
-    const markOn = 'first-letter-indent-on';
+    const markOn = 'pretty-indent-on';
     // first time need to detect
     if (!article.prop(markOn)) {
-        article.find('p').each(function () {
-            const para = $(this);
-            if (para.text().trimLeft().match(/^[“「『]/)) {
-                para.addClass('first-letter-indent');
+        article.find('p, lg').each(function () {
+            const $ele = $(this);
+            const txt = $ele.text();
+            if (txt.trimLeft().match(/^[“「『]/)) {
+                if ($ele.hasClass("lg")) {
+                    $ele.addClass('indent-first-letter-lg');
+                    if (txt.trimRight().match(/[”」』]$/))
+                        $ele.addClass('indent-last-letter-lg');
+                } else $ele.addClass('indent-first-letter');
             }
         });
         article.prop(markOn, true);

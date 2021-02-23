@@ -60,6 +60,7 @@ body {
     font-weight: bold;
     padding-top: 1rem;
     padding-bottom: 1rem;
+    text-align: center;
 }
 .cb-mulu[leveln^='1-'] {
     font-size: calc(var(--text-size) * 1.2);
@@ -79,10 +80,11 @@ body {
 
 .head {
     font-weight: bold;
+    text-align: center;
 }
 
 .place-inline {
-    font-size: 70%;
+    font-size: 75%;
     font-weight: normal;
 }
 .place-inline::before {
@@ -102,12 +104,6 @@ p.lg {
 }
 p.lg .l {
     display: block;
-}
-.lg .l:first-child {
-    text-indent: calc(-1 * var(--char-size));
-}
-.lg .l:last-child {
-    text-indent: calc(1 * var(--char-size));
 }
 
 /*   *************************************************************************************************************    */
@@ -146,10 +142,13 @@ article {
     opacity: .5;
 }
 
-.first-letter-indent-on .first-letter-indent {
+.pretty-indent-on .indent-first-letter,
+.pretty-indent-on .indent-first-letter-lg .l:first-child{
     text-indent: calc(-1 * var(--char-size));
 }
-
+.pretty-indent-on .indent-last-letter-lg .l:last-child{
+    text-indent: calc(1 * var(--char-size));
+}
 /*   *************************************************************************************************************    */
 .edit-orig-inline-on span.note.orig:before {
     content: attr(data-t);

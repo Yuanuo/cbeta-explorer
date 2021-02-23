@@ -192,7 +192,8 @@ public class BookViewController extends WorkbenchMainViewController {
         button.setGraphic(new MaterialIconView(MaterialIcon.FORMAT_INDENT_INCREASE));
         button.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
         button.setTooltip(new Tooltip("首行标点对齐"));
-        button.setOnAction(event -> webViewer.executeScript("handleOnFirstLetterIndent()"));
+        button.setSelected(true);
+        button.setOnAction(event -> webViewer.executeScript("handleOnPrettyIndent()"));
         this.toolbar.addRight(button);
     }
 
