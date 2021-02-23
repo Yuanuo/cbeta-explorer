@@ -141,12 +141,8 @@ public abstract class BookdataController extends WorkbenchSideViewController {
         final MenuItem removeAll = new MenuItem("删除全部");
         removeAll.setOnAction(event -> removeAction.accept(false));
 
-        final MenuItem refreshMI = new MenuItem("刷新");
-        refreshMI.setOnAction(event -> refreshListView());
-
         this.listView.setContextMenu(new ContextMenu(
-                removeSel, removeAll,
-                new SeparatorMenuItem(), refreshMI
+                removeSel, removeAll
         ));
     }
 
