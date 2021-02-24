@@ -65,9 +65,9 @@
 ## 多平台支持
 
 由于本程序基于Java/JavaFX/OpenJFX开发，可轻易实现跨平台，目前经过测试的三个平台
-*  Windows 10 （提供MSI安装程序）
-*  Ubuntu 20.10 （提供DEB安装程序）
-*  macOS Big Sur （提供DMG安装程序）
+*  Windows 10 （[提供MSI安装程序](https://github.com/Yuanuo/appxi-cbeta-explorer/releases)）
+*  Ubuntu 20.10 （[提供DEB安装程序](https://github.com/Yuanuo/appxi-cbeta-explorer/releases)）
+*  macOS Big Sur （[提供DMG安装程序](https://github.com/Yuanuo/appxi-cbeta-explorer/releases)）
 
 
 ## 如何使用（绿色版）
@@ -85,9 +85,9 @@
 ## 如何使用
 
 + 1、准备程序。本程序默认提供跨三种平台的安装包
-  + Windows（MSI安装程序）
-  + MacOS（DEB安装程序）
-  + Ubuntu（DMG安装程序）
+  + Windows（[MSI安装程序](https://github.com/Yuanuo/appxi-cbeta-explorer/releases)）
+  + MacOS（[DEB安装程序](https://github.com/Yuanuo/appxi-cbeta-explorer/releases)）
+  + Ubuntu（[DMG安装程序](https://github.com/Yuanuo/appxi-cbeta-explorer/releases)）
   + [云盘下载地址](https://cloud.189.cn/t/nInQ7zyA7zMr#4p5z)（访问码：4p5z）
 + 2、准备数据。本程序仅使用CBETA官方的“經文資料檔”，如果本机已经有CBReader阅读器，此阅读器本身即包含了官方“經文資料檔”数据（数据通常在CBReader.exe所在目录），无需再次下载。
   + [下载地址](http://www.cbeta.org/download/cbreader.htm) ，在此页面中查找 “經文資料檔”并选择最新版本下载，下载完成后解压到本地磁盘即可
