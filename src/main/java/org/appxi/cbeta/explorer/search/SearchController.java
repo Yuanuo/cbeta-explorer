@@ -38,14 +38,18 @@ public class SearchController extends WorkbenchSideToolController {
 
     @Override
     public void setupInitialize() {
+        // 响应快捷键 Ctrl+H 事件，以打开搜索视图
         getPrimaryScene().getAccelerators().put(new KeyCodeCombination(KeyCode.H, KeyCombination.SHORTCUT_DOWN),
                 () -> openSearcherWithText(null));
+        // 响应SEARCH Event事件，以打开搜索视图
         getEventBus().addEventHandler(SearcherEvent.SEARCH, event -> openSearcherWithText(event.text));
+        // 尝试建立/重建全文索引
         getEventBus().addEventHandler(StatusEvent.BEANS_READY,
                 event -> CompletableFuture.runAsync(new IndexingTask(application)).whenComplete((o, err) -> {
                     if (null != err) FxHelper.alertError(getApplication(), err);
                 })
         );
+        // 响应搜索结果打开事件
         getEventBus().addEventHandler(SearchedEvent.OPEN, event -> {
             if (null == event.piece)
                 return;
@@ -58,11 +62,11 @@ public class SearchController extends WorkbenchSideToolController {
                 chapter.start = event.piece.fields.get("anchor_s");
                 if (null != chapter.start)
                     chapter.attr("position.selector", chapter.start);
-                if (null != event.highlightSnippet) {
+                if (null != event.highlightTerm)
                     chapter.attr("position.term", event.highlightTerm.replace("…", ""));
+                if (null != event.highlightSnippet)
                     chapter.attr("position.text", event.highlightSnippet
                             .replace("§§hl#end§§", "").replace("…", ""));
-                }
             }
             getEventBus().fireEvent(new BookEvent(BookEvent.OPEN, book, chapter));
         });
@@ -74,6 +78,7 @@ public class SearchController extends WorkbenchSideToolController {
     }
 
     private void openSearcherWithText(String text) {
+        // 优先查找可用的搜索视图，以避免打开太多未使用的搜索视图
         SearcherController searcher = findReusableSearcher(
                 () -> new SearcherController("SEARCHER-".concat(DigestHelper.uid()), getApplication())
         );
@@ -87,7 +92,7 @@ public class SearchController extends WorkbenchSideToolController {
         });
     }
 
-    SearcherController findReusableSearcher(Supplier<SearcherController> supplier) {
+    private SearcherController findReusableSearcher(Supplier<SearcherController> supplier) {
         for (Tab tab : getPrimaryViewport().getMainViewsTabs()) {
             if (tab.getUserData() instanceof SearcherController view && view.isNeverSearched())
                 return view;
