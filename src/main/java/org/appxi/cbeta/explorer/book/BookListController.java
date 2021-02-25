@@ -8,7 +8,7 @@ import javafx.event.Event;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import org.appxi.cbeta.explorer.event.BookEvent;
-import org.appxi.cbeta.explorer.event.SearchEvent;
+import org.appxi.cbeta.explorer.event.SearcherEvent;
 import org.appxi.cbeta.explorer.event.StatusEvent;
 import org.appxi.cbeta.explorer.model.BookList;
 import org.appxi.cbeta.explorer.model.BookTree;
@@ -52,7 +52,7 @@ public class BookListController extends WorkbenchSideViewController {
         final Button btnSearch = new Button();
         btnSearch.setTooltip(new Tooltip("快速查找书籍（Ctrl+G）"));
         btnSearch.setGraphic(new MaterialIconView(MaterialIcon.SEARCH));
-        btnSearch.setOnAction(event -> getEventBus().fireEvent(new SearchEvent(SearchEvent.LOOKUP, null)));
+        btnSearch.setOnAction(event -> getEventBus().fireEvent(SearcherEvent.ofLookup(null)));
 
         //
         final Button btnLocate = new Button();

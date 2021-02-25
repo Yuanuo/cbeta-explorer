@@ -10,9 +10,8 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import org.appxi.cbeta.explorer.CbetaxHelper;
 import org.appxi.cbeta.explorer.event.BookEvent;
-import org.appxi.cbeta.explorer.event.SearchEvent;
+import org.appxi.cbeta.explorer.event.SearcherEvent;
 import org.appxi.cbeta.explorer.event.StatusEvent;
 import org.appxi.cbeta.explorer.model.BookList;
 import org.appxi.hanlp.convert.ChineseConvertors;
@@ -48,7 +47,7 @@ public class LookupController extends WorkbenchSideToolController {
         getPrimaryScene().getAccelerators().put(new KeyCodeCombination(KeyCode.G, KeyCombination.SHORTCUT_DOWN),
                 () -> this.onViewportShow(false));
         getPrimaryScene().addEventHandler(KeyEvent.KEY_PRESSED, this::handleEventToShow);
-        getEventBus().addEventHandler(SearchEvent.LOOKUP, event -> {
+        getEventBus().addEventHandler(SearcherEvent.LOOKUP, event -> {
             this.onViewportShow(false);
             if (null != event.text)
                 searchInput.setText(event.text.strip());
@@ -133,7 +132,7 @@ public class LookupController extends WorkbenchSideToolController {
             searchInfo = new Label("请输入...");
             headBox.addRight(searchInfo);
 
-            final Label searchHelp = new Label(">> 不分简繁任意汉字匹配；逗号分隔任意字/词/短语匹配；书名/书号ID/作者/译者/朝代任意匹配；");
+            final Label searchHelp = new Label(">> 不分简繁任意汉字匹配（以感叹号开始强制区分）；逗号分隔任意字/词/短语匹配；书名/书号ID/作者/译者/朝代任意匹配；");
             final ToolBar helpBox = new ToolBar(searchHelp);
 
             //
@@ -211,40 +210,41 @@ public class LookupController extends WorkbenchSideToolController {
         getEventBus().fireEvent(new BookEvent(BookEvent.OPEN, book, chapter));
     }
 
-    private boolean searching, limitReached;
-    private String searchingText;
+    private boolean searching;
+    private String searchedText;
 
     private void handleInputChangedToSearching(String input) {
-        final String inputText = CbetaxHelper.stripUnexpected(input).replaceAll("[,，]$", "");
-        if (Objects.equals(this.searchingText, inputText))
+        final String inputText = input.replaceAll("[,，]$", "").strip();
+        if (Objects.equals(this.searchedText, inputText))
             return;
-        this.searchingText = inputText;
+        // 允许输入简繁体汉字
+        if (!inputText.isEmpty() && (inputText.charAt(0) == '!' || inputText.charAt(0) == '！')) {
+            // 为避免自动转换失误导致检索失败，此处特殊处理，允许以感叹号开始的字符串不自动转换简繁体
+            this.searchedText = inputText.substring(1).strip();
+        } else {
+            // 由于CBETA数据是繁体汉字，此处转换以匹配目标文字
+            this.searchedText = ChineseConvertors.hans2HantTW(inputText.strip());
+        }
 
         searchResult.getItems().clear();
-        if (this.searchingText.isBlank()) {
+        if (this.searchedText.isBlank()) {
             searchInfo.setText("请输入...");
             return;
         }
 
-        String searchText = ChineseConvertors.hans2HantTW(inputText);
-        String[] searchWords = searchText.split("[,，]");
+        String[] searchWords = this.searchedText.split("[,，]");
         if (searchWords.length == 1)
             searchWords = null;
         searching = true;
-//        lookupProvider.search(searchText, searchWords, (idx, record) -> {
-//            limitReached = idx > RESULT_LIMIT;
-//            searchResult.getItems().add(record);
-//            updateSearchInfo();
-//            return !searching || limitReached;
-//        });
-        Collection<LookupItem> matches = lookupProvider.search(searchText, searchWords, RESULT_LIMIT);
+
+        Collection<LookupItem> matches = lookupProvider.search(this.searchedText, searchWords, RESULT_LIMIT);
         searchResult.getItems().setAll(matches);
         updateSearchInfo();
         searching = false;
     }
 
     void updateSearchInfo() {
-        if (this.searchingText.isBlank()) {
+        if (this.searchedText.isBlank()) {
             searchResult.getItems().clear();
             searchInfo.setText("请输入...");
             return;

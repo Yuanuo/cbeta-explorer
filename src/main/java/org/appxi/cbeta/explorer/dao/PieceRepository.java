@@ -44,7 +44,7 @@ public interface PieceRepository extends SolrCrudRepository<Piece, String> {
 
         if (facet) {
             FacetOptions facetOptions = new FacetOptions();
-            facetOptions.addFacetOnField("category_ss").setFacetLimit(300).setFacetPrefix("std/");
+            facetOptions.addFacetOnField("category_ss").setFacetLimit(4000);
             query.setFacetOptions(facetOptions);
         }
 

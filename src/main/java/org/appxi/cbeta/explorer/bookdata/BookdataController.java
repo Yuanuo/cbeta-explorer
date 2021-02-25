@@ -48,13 +48,13 @@ public abstract class BookdataController extends WorkbenchSideViewController {
     public void setupInitialize() {
         // not internal
         if (null == this.filterByBook) {
-            getEventBus().addEventHandler(BookdataEvent.CREATE, event -> {
+            getEventBus().addEventHandler(BookdataEvent.CREATED, event -> {
                 if (event.data.type == dataType && hasAttr(AK_FIRST_TIME)) {
                     Platform.runLater(() -> listView.getItems().add(0, event.data));
                 }
             });
 
-            getEventBus().addEventHandler(BookdataEvent.REMOVE, event -> {
+            getEventBus().addEventHandler(BookdataEvent.REMOVED, event -> {
                 if (event.data.type == dataType) {
                     Platform.runLater(() -> listView.getItems().remove(event.data));
                 }

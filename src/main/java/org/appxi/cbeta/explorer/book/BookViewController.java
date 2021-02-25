@@ -24,7 +24,7 @@ import org.appxi.cbeta.explorer.dao.Bookdata;
 import org.appxi.cbeta.explorer.dao.BookdataType;
 import org.appxi.cbeta.explorer.event.BookEvent;
 import org.appxi.cbeta.explorer.event.BookdataEvent;
-import org.appxi.cbeta.explorer.event.SearchEvent;
+import org.appxi.cbeta.explorer.event.SearcherEvent;
 import org.appxi.cbeta.explorer.event.StatusEvent;
 import org.appxi.hanlp.convert.ChineseConvertors;
 import org.appxi.javafx.control.*;
@@ -247,8 +247,17 @@ public class BookViewController extends WorkbenchMainViewController {
     }
 
     private void addTool_SearchInPage() {
-        webViewFinder = new WebViewFinder(this.webViewer,
-                input -> ChineseConvertors.convert(input, null, displayHan));
+        webViewFinder = new WebViewFinder(this.webViewer, inputText -> {
+            // 允许输入简繁体汉字
+            if (!inputText.isEmpty() && (inputText.charAt(0) == '!' || inputText.charAt(0) == '！')) {
+                // 为避免自动转换失误导致检索失败，此处特殊处理，允许以感叹号开始的字符串不自动转换简繁体
+                inputText = inputText.substring(1).strip();
+            } else {
+                // 页内查找以显示文字为准，此处转换以匹配目标文字
+                inputText = ChineseConvertors.convert(inputText.strip(), null, displayHan);
+            }
+            return inputText;
+        });
 
         webViewFinder.prev.setGraphic(new MaterialIconView(MaterialIcon.ARROW_UPWARD));
         webViewFinder.prev.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
@@ -496,19 +505,22 @@ public class BookViewController extends WorkbenchMainViewController {
         if (event.isShortcutDown()) {
             // Ctrl + F
             if (event.getCode() == KeyCode.F) {
-                webViewFinder.search("");
+                // 如果有选中文字，则按查找选中文字处理
+                String selText = webViewer.executeScript("getValidSelectionText()");
+                selText = null == selText ? null : selText.strip().replace('\n', ' ');
+                webViewFinder.search(StringHelper.isBlank(selText) ? null : selText);
                 event.consume();
             }
-            // Ctrl + G
-            else if (event.getCode() == KeyCode.G) {
+            // Ctrl + G, Ctrl + H
+            else if (event.getCode() == KeyCode.G || event.getCode() == KeyCode.H) {
+                // 如果有选中文字，则按查找选中文字处理
                 final String selText = webViewer.executeScript("getValidSelectionText()");
-                getEventBus().fireEvent(new SearchEvent(SearchEvent.LOOKUP, selText));
-                event.consume();
-            }
-            // Ctrl + H
-            else if (event.getCode() == KeyCode.H) {
-                final String selText = webViewer.executeScript("getValidSelectionText()");
-                getEventBus().fireEvent(new SearchEvent(SearchEvent.SEARCH, selText));
+                final String textToSearch = null == selText ? null :
+                        displayHan != HanLang.hantTW ? selText : "!".concat(selText);
+                getEventBus().fireEvent(event.getCode() == KeyCode.G
+                        ? SearcherEvent.ofLookup(textToSearch) // LOOKUP
+                        : SearcherEvent.ofSearch(textToSearch) // SEARCH
+                );
                 event.consume();
             }
         }
@@ -543,11 +555,13 @@ public class BookViewController extends WorkbenchMainViewController {
         copy.setOnAction(event -> Clipboard.getSystemClipboard().setContent(Map.of(DataFormat.PLAIN_TEXT, validText)));
         //
         String textTip = null == validText ? "" : "：".concat(StringHelper.trimChars(validText, 8));
+        String textForSearch = null == validText ? null : displayHan != HanLang.hantTW ? validText : "!".concat(validText);
+
         MenuItem search = new MenuItem("全文检索".concat(textTip));
-        search.setOnAction(event -> getEventBus().fireEvent(new SearchEvent(SearchEvent.SEARCH, validText)));
+        search.setOnAction(event -> getEventBus().fireEvent(SearcherEvent.ofSearch(textForSearch)));
 
         MenuItem lookup = new MenuItem("快速检索".concat(textTip));
-        lookup.setOnAction(event -> getEventBus().fireEvent(new SearchEvent(SearchEvent.LOOKUP, validText)));
+        lookup.setOnAction(event -> getEventBus().fireEvent(SearcherEvent.ofLookup(textForSearch)));
 
         MenuItem finder = new MenuItem("页内查找".concat(textTip));
         finder.setOnAction(event -> webViewFinder.search(validText));
@@ -600,7 +614,7 @@ public class BookViewController extends WorkbenchMainViewController {
                 alert.getButtonTypes().addAll(ButtonType.YES, ButtonType.NO);
                 if (ButtonType.YES == FxHelper.withTheme(getApplication(), alert).showAndWait().orElse(null)) {
                     dataHandle.removeData(data);
-                    getEventBus().fireEvent(new BookdataEvent(BookdataEvent.REMOVE, data));
+                    getEventBus().fireEvent(new BookdataEvent(BookdataEvent.REMOVED, data));
                     ToastHelper.toast(getApplication(), "已删除".concat(dataType.title).concat("！"));
                     // TODO update html?
                 }
@@ -633,7 +647,7 @@ public class BookViewController extends WorkbenchMainViewController {
                 data.extra = json.toString();
                 //
                 dataHandle.createData(data);
-                getEventBus().fireEvent(new BookdataEvent(BookdataEvent.CREATE, data));
+                getEventBus().fireEvent(new BookdataEvent(BookdataEvent.CREATED, data));
                 ToastHelper.toast(getApplication(), "已添加".concat(dataType.title).concat("！"));
             }
         } catch (Exception e) {

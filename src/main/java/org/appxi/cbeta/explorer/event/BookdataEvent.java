@@ -7,9 +7,9 @@ import org.appxi.cbeta.explorer.dao.Bookdata;
 public class BookdataEvent extends Event {
     private static final long serialVersionUID = 248520055158248448L;
 
-    public static final EventType<BookdataEvent> REMOVE = new EventType<>(Event.ANY, "BOOKDATA-REMOVE");
+    public static final EventType<BookdataEvent> REMOVED = new EventType<>(Event.ANY, "BOOKDATA-REMOVED");
 
-    public static final EventType<BookdataEvent> CREATE = new EventType<>(Event.ANY, "BOOKDATA-CREATE");
+    public static final EventType<BookdataEvent> CREATED = new EventType<>(Event.ANY, "BOOKDATA-CREATED");
 
     public final Bookdata data;
 
