@@ -468,7 +468,9 @@
         <filter class="solr.CJKBigramFilterFactory"/>
       </analyzer>
     </fieldType>
-    <copyField source="text_txt_cjk" dest="text_txt_cjk_substr" maxChars="256"/>
+
+
+    <copyField source="content_txt_cjk" dest="content_txt_cjk_substr" maxChars="256"/>
 
 
     <!-- Similarity is the scoring routine for each document vs. a query.

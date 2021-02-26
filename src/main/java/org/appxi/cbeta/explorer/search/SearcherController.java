@@ -399,7 +399,7 @@ public class SearcherController extends WorkbenchMainViewController {
                         });
                     });
                 } else {
-                    String text = item.texts.get("text_txt_cjk_substr");
+                    String text = item.contents.get("content_txt_cjk_substr");
                     if (null == text)
                         text = "暂无数据";
                     texts.add(new Text(StringHelper.trimChars(text, 200)));

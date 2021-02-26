@@ -14,7 +14,7 @@ import java.util.*;
 import java.util.function.Predicate;
 
 public abstract class IndexingHelper {
-    private static final String VERSION = "21.02.18.7";
+    private static final String VERSION = "21.02.26.1";
 
     public static final String PROJECT = "cbeta";
 

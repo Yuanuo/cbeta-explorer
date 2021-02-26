@@ -120,7 +120,7 @@ public interface PiecesRepository extends PieceRepository {
                                     buf.append(paragraph.content);
                             });
                             if (null != textFieldSuffix) {
-                                piece.texts.put("text_txt_".concat(textFieldSuffix), buf.toString());
+                                piece.contents.put("content_txt_".concat(textFieldSuffix), buf.toString());
                             }
                         }
                         //

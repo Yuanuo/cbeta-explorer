@@ -24,7 +24,7 @@ public interface PieceRepository extends SolrCrudRepository<Piece, String> {
         query.setPageRequest(pageable);
         query.addProjectionOnFields("id", "score", "path_s", "type_s", "title_s",
                 "field_book_s", "field_authors_s", "field_location_s", "field_anchor_s",
-                "text_txt_cjk_substr");
+                "content_txt_cjk_substr");
 
         if (null != project)
             query.addFilterQuery(new SimpleFilterQuery(Criteria.where("project_s").is(project)));
@@ -32,10 +32,10 @@ public interface PieceRepository extends SolrCrudRepository<Piece, String> {
 
         final String queryString;
         if (null == input || input.isBlank())
-            queryString = "text_txt_cjk:*";
+            queryString = "content_txt_cjk:*";
         else if (input.contains(":"))
             queryString = input;
-        else queryString = "text_txt_cjk:($0) OR field_title_txt_cjk:($0)^30".replace("$0", input);
+        else queryString = "content_txt_cjk:($0) OR field_title_txt_cjk:($0)^30".replace("$0", input);
         query.addCriteria(new SimpleStringCriteria(queryString));
 
         if (null != categories && !categories.isEmpty()) {
@@ -53,7 +53,7 @@ public interface PieceRepository extends SolrCrudRepository<Piece, String> {
             HighlightOptions highlightOptions = new HighlightOptions();
             highlightOptions.setSimplePrefix("§§hl#pre§§").setSimplePostfix("§§hl#end§§");
             highlightOptions.setFragsize(100).setNrSnipplets(3);
-            highlightOptions.addField("text_txt_cjk");
+            highlightOptions.addField("content_txt_cjk");
             query.setHighlightOptions(highlightOptions);
         }
 
@@ -61,15 +61,15 @@ public interface PieceRepository extends SolrCrudRepository<Piece, String> {
         return solrTemplate.queryForFacetAndHighlightPage("pieces", query, Piece.class);
     }
 
-//    //"{!type=edismax bf=\"sum(linear(boosting_${locale}_f,1000,0))\" qf=\"text_txt_cjk\"}${indexQstr}"
-//    @Query(defType = "edismax", value = "text_txt_cjk:(?0) field_title_txt_cjk:(?0)^30",
+//    //"{!type=edismax bf=\"sum(linear(boosting_${locale}_f,1000,0))\" qf=\"content_txt_cjk\"}${indexQstr}"
+//    @Query(defType = "edismax", value = "content_txt_cjk:(?0) field_title_txt_cjk:(?0)^30",
 //            defaultOperator = org.springframework.data.solr.core.query.Query.Operator.OR,
 //            fields = {"id", "score", "path_s", "type_s", "title_s",
 //                    "field_book_s", "field_authors_s", "field_location_s", "field_anchor_s",
-//                    "text_txt_cjk"},
+//                    "content_txt_cjk"},
 //            filters = {"type_s:(article)"}
 //    )
 //    @Facet(fields = {"category_ss"}, limit = 150, prefix = "std/")
-//    @Highlight(prefix = "§§hl#pre§§", postfix = "§§hl#end§§", fields = "text_txt_cjk", fragsize = 100, snipplets = 3)
+//    @Highlight(prefix = "§§hl#pre§§", postfix = "§§hl#end§§", fields = "content_txt_cjk", fragsize = 100, snipplets = 3)
 //    FacetAndHighlightPage<Piece> query(String input, Pageable page);
 }
