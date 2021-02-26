@@ -229,8 +229,13 @@ function handleOnEditMark(type) {
                 const app = lem.parent();
                 const nodes = lem.contents();
                 if (nodes && nodes.length > 0) {
-                    let tmp = $(nodes[0]);
-                    if (nodes[0].nodeType === 3) {
+                    let idx = 0;
+                    let tmp = $(nodes[idx]);
+                    if (tmp && tmp.is("span.lb") && nodes.length > 1) {
+                        idx = 1;
+                        tmp = $(nodes[idx]);
+                    }
+                    if (nodes[idx].nodeType === 3) {
                         tmp.replaceWith('<span class="tmp">' + tmp.text() + '</span>');
                         tmp = lem.find(" > span.tmp");
                         let tips = [];
@@ -244,7 +249,8 @@ function handleOnEditMark(type) {
                     } else {
                         tmp.addClass("tmp");
                         const appMod = app.prev();
-                        if (appMod) tmp.attr("data-t", appMod.attr("data-t").replaceAll("】，", "】<hr>"));
+                        if (appMod && appMod.attr("data-t"))
+                            tmp.attr("data-t", appMod.attr("data-t").replaceAll("】，", "】<hr>"));
                         else tmp.attr("data-t", "UNKNOWN");
                     }
                 }
