@@ -5,8 +5,7 @@
 
 	<groupId>org.appxi</groupId>
 	<artifactId>cbeta-explorer</artifactId>
-	<version>21.02.23</version>
-	<packaging>jar</packaging>
+	<version>21.02.26</version>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -37,6 +36,11 @@
 		<dependency>
 			<groupId>org.appxi</groupId>
 			<artifactId>appxi-hanlp-convert</artifactId>
+			<version>[1.0.0,)</version>
+		</dependency>
+		<dependency>
+			<groupId>org.appxi</groupId>
+			<artifactId>appxi-hanlp-pinyin</artifactId>
 			<version>[1.0.0,)</version>
 		</dependency>
 
