@@ -12,6 +12,7 @@ module appxi.cbetaExplorer {
     requires appxi.javafx;
     requires appxi.timeago;
     requires appxi.hanlp.convert;
+    requires appxi.hanlp.pinyin;
     requires org.jsoup;
     requires de.jensd.fx.fontawesomefx.materialicons;
 

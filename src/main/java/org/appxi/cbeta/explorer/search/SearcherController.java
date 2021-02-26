@@ -27,6 +27,7 @@ import org.appxi.cbeta.explorer.dao.PiecesRepository;
 import org.appxi.cbeta.explorer.event.ProgressEvent;
 import org.appxi.cbeta.explorer.event.SearchedEvent;
 import org.appxi.hanlp.convert.ChineseConvertors;
+import org.appxi.hanlp.pinyin.PinyinConvertors;
 import org.appxi.javafx.control.BlockingView;
 import org.appxi.javafx.control.BlockingViewEx;
 import org.appxi.javafx.control.ListViewExt;
@@ -34,18 +35,14 @@ import org.appxi.javafx.control.TabPaneExt;
 import org.appxi.javafx.helper.ToastHelper;
 import org.appxi.javafx.workbench.WorkbenchApplication;
 import org.appxi.javafx.workbench.views.WorkbenchMainViewController;
+import org.appxi.tome.cbeta.Period;
 import org.appxi.util.StringHelper;
 import org.appxi.util.ext.HanLang;
 import org.springframework.data.solr.core.query.SolrPageRequest;
-import org.springframework.data.solr.core.query.result.CountEntry;
 import org.springframework.data.solr.core.query.result.FacetAndHighlightPage;
-import org.springframework.data.solr.core.query.result.FacetFieldEntry;
 import org.springframework.data.solr.core.query.result.HighlightEntry;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -70,7 +67,7 @@ public class SearcherController extends WorkbenchMainViewController {
 
     private TextField input;
     private Button submit;
-    private ListView<FacetValueLabel> facetCatalogView, facetPeriodView, facetTripitakaView, facetAuthorView;
+    private ListView<FacetFilter> facetCatalogView, facetPeriodView, facetTripitakaView, facetAuthorView;
     private BorderPane resultView;
     private Label resultInfo;
 
@@ -100,12 +97,12 @@ public class SearcherController extends WorkbenchMainViewController {
         tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
         VBox.setVgrow(tabPane, Priority.ALWAYS);
         Tab tab1 = new Tab("部类", facetCatalogView = new ListViewExt<>(this::handleEventOnFacetEnterOrDoubleClick));
-        Tab tab2 = new Tab("年代", facetPeriodView = new ListViewExt<>(this::handleEventOnFacetEnterOrDoubleClick));
+        Tab tab2 = new Tab("时域", facetPeriodView = new ListViewExt<>(this::handleEventOnFacetEnterOrDoubleClick));
         Tab tab3 = new Tab("藏经", facetTripitakaView = new ListViewExt<>(this::handleEventOnFacetEnterOrDoubleClick));
         Tab tab4 = new Tab("作译者", facetAuthorView = new ListViewExt<>(this::handleEventOnFacetEnterOrDoubleClick));
         tabPane.getTabs().addAll(tab1, tab2, tab3, tab4);
 
-        final Callback<ListView<FacetValueLabel>, ListCell<FacetValueLabel>> facetCellFactory =
+        final Callback<ListView<FacetFilter>, ListCell<FacetFilter>> facetCellFactory =
                 param -> new CheckBoxListCell<>(val -> {
                     val.stateProperty.removeListener(facetCellStateListener);
                     val.stateProperty.addListener(facetCellStateListener);
@@ -148,12 +145,12 @@ public class SearcherController extends WorkbenchMainViewController {
         });
     }
 
-    private void handleEventOnFacetEnterOrDoubleClick(InputEvent inputEvent, FacetValueLabel item) {
-        final List<FacetValueLabel> selectedList = new ArrayList<>();
-        selectedList.addAll(filterSelectedFacets(facetCatalogView));
-        selectedList.addAll(filterSelectedFacets(facetPeriodView));
-        selectedList.addAll(filterSelectedFacets(facetTripitakaView));
-        selectedList.addAll(filterSelectedFacets(facetAuthorView));
+    private void handleEventOnFacetEnterOrDoubleClick(InputEvent inputEvent, FacetFilter item) {
+        final List<FacetFilter> selectedList = new ArrayList<>();
+        selectedList.addAll(getSelectedFacetFilters(facetCatalogView));
+        selectedList.addAll(getSelectedFacetFilters(facetPeriodView));
+        selectedList.addAll(getSelectedFacetFilters(facetTripitakaView));
+        selectedList.addAll(getSelectedFacetFilters(facetAuthorView));
 
         // remove listener
         selectedList.forEach(v -> v.stateProperty.removeListener(facetCellStateListener));
@@ -165,11 +162,11 @@ public class SearcherController extends WorkbenchMainViewController {
         item.stateProperty.set(true);
     }
 
-    private List<FacetValueLabel> filterSelectedFacets(ListView<FacetValueLabel> listView) {
+    private List<FacetFilter> getSelectedFacetFilters(ListView<FacetFilter> listView) {
         return listView.getItems().stream().filter(v -> v.stateProperty.get()).collect(Collectors.toList());
     }
 
-    private List<String> filterSelectedFacetValues(ListView<FacetValueLabel> listView) {
+    private List<String> getSelectedFacetFilterValues(ListView<FacetFilter> listView) {
         return listView.getItems().stream().filter(v -> v.stateProperty.get()).map(v -> v.value).collect(Collectors.toList());
     }
 
@@ -243,52 +240,57 @@ public class SearcherController extends WorkbenchMainViewController {
         // 当搜索条件（关键词）未改变时，已经搜索过一次，此时认为是在根据facet条件过滤，否则开启一个新的搜索
         if (inputText.equals(searchedText) && null != facetAndHighlightPage && facetAndHighlightPage.getTotalElements() > 0) {
             facet = false;
-            categories.addAll(filterSelectedFacetValues(facetCatalogView));
-            categories.addAll(filterSelectedFacetValues(facetPeriodView));
-            categories.addAll(filterSelectedFacetValues(facetTripitakaView));
-            categories.addAll(filterSelectedFacetValues(facetAuthorView));
+            categories.addAll(getSelectedFacetFilterValues(facetCatalogView));
+            categories.addAll(getSelectedFacetFilterValues(facetPeriodView));
+            categories.addAll(getSelectedFacetFilterValues(facetTripitakaView));
+            categories.addAll(getSelectedFacetFilterValues(facetAuthorView));
         }
         searchedText = inputText;
         inputQuery = inputText;
         facetAndHighlightPage = repository.query(IndexingHelper.PROJECT, inputQuery, categories, facet, new SolrPageRequest(0, PAGE_SIZE));
 
         // update facet ui
-        List<FacetValueLabel> tripitakaList = new ArrayList<>(), catalogList = new ArrayList<>(),
-                periodList = new ArrayList<>(), authorList = new ArrayList<>();
+        final List<FacetFilter> facetTripitakaList = new ArrayList<>(), facetCatalogList = new ArrayList<>(),
+                facetPeriodList = new ArrayList<>(), facetAuthorList = new ArrayList<>();
         if (facet) {
+            final Map<String, List<FacetFilter>> listMap = Map.of(
+                    "/tripitaka/", facetTripitakaList,
+                    "/catalog/", facetCatalogList,
+                    "/period/", facetPeriodList,
+                    "/author/", facetAuthorList);
             facetAndHighlightPage.getFacetResultPages().forEach(facetResultPage -> {
-                final List<FacetFieldEntry> facetResultList = new ArrayList<>(facetResultPage.getContent());
-                facetResultList.sort(Comparator.comparing(CountEntry::getValue));
-                facetResultList.forEach(entry -> {
+                facetResultPage.getContent().forEach(entry -> {
                     String value = entry.getValue();
                     long count = entry.getValueCount();
 
-                    List<FacetValueLabel> facetList = null;
-                    if (value.contains("/tripitaka/"))
-                        facetList = tripitakaList;
-                    else if (value.contains("/catalog/"))
-                        facetList = catalogList;
-                    else if (value.contains("/period/"))
-                        facetList = periodList;
-                    else if (value.contains("/author/"))
-                        facetList = authorList;
-                    if (null != facetList) {
-                        String label = value;
-                        label = label.substring(label.indexOf('/') + 1);
-                        label = label.substring(label.indexOf('/') + 1);
-                        label = label.concat("（").concat(String.valueOf(count)).concat("）");
-                        facetList.add(new FacetValueLabel(value, label));
+                    for (String k : listMap.keySet()) {
+                        if (!value.contains(k))
+                            continue;
+
+                        String label = value.split(k, 2)[1];
+                        String order = PinyinConvertors.convert(label, "-", false);
+                        listMap.get(k).add(new FacetFilter(value, label, count, order));
+                        break;
                     }
                 });
             });
+            // fix
+            if (!facetPeriodList.isEmpty()) {
+                facetPeriodList.forEach(f -> Optional.ofNullable(Period.valueBy(f.label))
+                        .ifPresentOrElse(p -> f.update(p.toString(), p.start), () -> f.order = 99999));
+                facetPeriodList.sort(Comparator.comparingInt(v -> (int) v.order));
+            }
+            facetCatalogList.sort(Comparator.comparing(v -> String.valueOf(v.order)));
+            facetTripitakaList.sort(Comparator.comparing(v -> String.valueOf(v.order)));
+            facetAuthorList.sort(Comparator.comparing(v -> String.valueOf(v.order)));
         }
         boolean finalFacet = facet;
         Runnable runnable = () -> {
             if (finalFacet) {
-                facetCatalogView.getItems().setAll(catalogList);
-                facetPeriodView.getItems().setAll(periodList);
-                facetTripitakaView.getItems().setAll(tripitakaList);
-                facetAuthorView.getItems().setAll(authorList);
+                facetCatalogView.getItems().setAll(facetCatalogList);
+                facetPeriodView.getItems().setAll(facetPeriodList);
+                facetTripitakaView.getItems().setAll(facetTripitakaList);
+                facetAuthorView.getItems().setAll(facetAuthorList);
             }
             if (facetAndHighlightPage.getTotalElements() > 0) {
                 Pagination pagination = new Pagination(facetAndHighlightPage.getTotalPages(), 0);
@@ -420,18 +422,29 @@ public class SearcherController extends WorkbenchMainViewController {
         return resultPageView;
     }
 
-    static class FacetValueLabel {
+    static class FacetFilter {
         final SimpleBooleanProperty stateProperty = new SimpleBooleanProperty();
-        final String value, label;
+        final String value;
+        String label;
+        final long count;
+        Object order;
 
-        FacetValueLabel(String value, String label) {
+        FacetFilter(String value, String label, long count, Object order) {
             this.value = value;
             this.label = label;
+            this.count = count;
+            this.order = order;
+        }
+
+        FacetFilter update(String label, Object order) {
+            this.label = label;
+            this.order = order;
+            return this;
         }
 
         @Override
         public String toString() {
-            return label;
+            return "%s（%d）".formatted(label, count);
         }
     }
 
