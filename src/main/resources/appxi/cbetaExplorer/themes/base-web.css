@@ -1,28 +1,3 @@
-:root {
-    --text-size: 1.3rem;
-    --font-family: "PingFang SC", "Hiragino Sans GB", "Heiti SC", "Microsoft YaHei", "WenQuanYi Micro Hei", STXihei, Arial, "Helvetica Neue", Helvetica, sans-serif;
-
-    -webkit-font-smoothing: subpixel-antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    
-    --char-size: calc(1.1 * var(--text-size));
-}
-
-* {
-    box-sizing: border-box;
-    font-family: var(--font-family);
-    -webkit-font-smoothing: subpixel-antialiased;
-    -moz-osx-font-smoothing: grayscale;
-}
-
-body {
-    font-family: var(--font-family);
-    font-size: var(--text-size);
-    color: var(--text-color);
-    line-height: 2.4rem;
-    letter-spacing: .1rem;
-    margin: 0;
-}
 /*   *************************************************************************************************************    */
 .cb-docNumber {
     opacity: .75;

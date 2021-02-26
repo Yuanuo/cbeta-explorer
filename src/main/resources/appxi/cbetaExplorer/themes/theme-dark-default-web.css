@@ -1,33 +1,3 @@
-:root {
-    --text-color: #bbb;
-}
-
-body {
-    background-color: #3b3b3b;
-}
-
-.finder {
-    background-color: #666;
-    box-shadow: 0 2px 8px 2px #333;
-}
-
-.finder-input {
-    border-bottom: 1px solid darkgray;
-}
-
-.finder-input.not-found {
-    color: #e7353f;
-}
-
-.highlight {
-    background: #d2d23b;
-    color: #333;
-}
-
-.highlight.active {
-    background: #ffd71b;
-}
-
 .tippy-box {
     background: #666 !important;
 }

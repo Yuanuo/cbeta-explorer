@@ -697,7 +697,7 @@ public class BookViewController extends WorkbenchMainViewController {
                 if (null != includePaths[0])
                     return includePaths;
 
-                final Path dir = UserPrefs.appDir().resolve("template/web-incl");
+                final Path dir = FxHelper.appDir().resolve("template/web-incl");
                 for (int i = 0; i < includeNames.length; i++) {
                     includePaths[i] = dir.resolve(includeNames[i]).toUri().toString();
                 }

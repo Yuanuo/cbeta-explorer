@@ -1,0 +1,5 @@
+.main-views {
+    -fx-background-image: url('app-hint.png');
+    -fx-background-position: center;
+    -fx-background-repeat: no-repeat;
+}

@@ -4,6 +4,7 @@ import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.embedded.EmbeddedSolrServer;
 import org.apache.solr.client.solrj.request.CoreAdminRequest;
 import org.apache.solr.core.NodeConfig;
+import org.appxi.javafx.helper.FxHelper;
 import org.appxi.prefs.UserPrefs;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,7 +22,7 @@ class AppConfig {
     SolrClient solrClient() throws Exception {
         final String coreName = "pieces";
         final Path solrHome = UserPrefs.dataDir().resolve(".solr");
-        final Path confHome = UserPrefs.appDir().resolve("template");
+        final Path confHome = FxHelper.appDir().resolve("template");
 
         final NodeConfig config = new NodeConfig.NodeConfigBuilder(coreName, solrHome)
                 .setConfigSetBaseDirectory(confHome.toString())

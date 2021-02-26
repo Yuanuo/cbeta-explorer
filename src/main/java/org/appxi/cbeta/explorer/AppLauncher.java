@@ -2,14 +2,15 @@ package org.appxi.cbeta.explorer;
 
 import javafx.application.Application;
 
-import java.util.Locale;
-
 public class AppLauncher {
+    protected static void beforeLaunch() {
+        //
+        System.setProperty("javafx.preloader", "org.appxi.cbeta.explorer.AppPreloader");
+    }
 
     public static void main(String[] args) {
-        Locale.setDefault(Locale.SIMPLIFIED_CHINESE);
-        System.setProperty("javafx.preloader", "org.appxi.cbeta.explorer.AppPreloader");
         try {
+            beforeLaunch();
             Application.launch(AppWorkbench.class, args);
         } catch (Throwable t) {
             t.printStackTrace();
