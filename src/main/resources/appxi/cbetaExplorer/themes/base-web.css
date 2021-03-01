@@ -81,6 +81,25 @@ p.lg .l {
     display: block;
 }
 
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+    empty-cells: show;
+    border: 1px solid;
+    margin: 1rem auto;
+}
+table td {
+    border-width: 0 0 0 1px;
+    border-left: 1px solid;
+    border-bottom: 1px solid;
+    margin: 0;
+    overflow: visible;
+    padding: .5rem 1rem !important;
+}
+table td p {
+    margin-block-start: 0;
+    margin-block-end: 0;
+}
 /*   *************************************************************************************************************    */
 article {
     padding: 3rem;
