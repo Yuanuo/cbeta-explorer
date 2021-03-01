@@ -25,7 +25,7 @@ public class AboutController extends WorkbenchSideToolController {
     }
 
     @Override
-    public Node createToolIconGraphic(Boolean placeInSideViews) {
+    public Node createToolIconGraphic(boolean sideToolOrElseViewTool) {
         return new MaterialIconView(MaterialIcon.INFO_OUTLINE);
     }
 

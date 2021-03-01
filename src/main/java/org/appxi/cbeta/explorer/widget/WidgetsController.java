@@ -22,7 +22,7 @@ public class WidgetsController extends WorkbenchSideViewController {
     }
 
     @Override
-    public javafx.scene.Node createToolIconGraphic(Boolean placeInSideViews) {
+    public javafx.scene.Node createToolIconGraphic(boolean sideToolOrElseViewTool) {
         return new MaterialIconView(MaterialIcon.WIDGETS);
     }
 

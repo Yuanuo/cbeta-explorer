@@ -18,7 +18,7 @@ public class FavoritesController extends BookdataController {
     }
 
     @Override
-    public Node createToolIconGraphic(Boolean placeInSideViews) {
+    public Node createToolIconGraphic(boolean sideToolOrElseViewTool) {
         return new MaterialIconView(MaterialIcon.STAR);
     }
 }

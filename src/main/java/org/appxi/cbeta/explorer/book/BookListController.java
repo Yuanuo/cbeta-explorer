@@ -38,7 +38,7 @@ public class BookListController extends WorkbenchSideViewController {
     }
 
     @Override
-    public Node createToolIconGraphic(Boolean placeInSideViews) {
+    public Node createToolIconGraphic(boolean sideToolOrElseViewTool) {
         return new MaterialIconView(MaterialIcon.LOCAL_LIBRARY);
     }
 

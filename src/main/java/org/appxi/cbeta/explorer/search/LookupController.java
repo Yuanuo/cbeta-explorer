@@ -3,7 +3,6 @@ package org.appxi.cbeta.explorer.search;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.input.*;
 import javafx.scene.layout.Priority;
@@ -20,7 +19,7 @@ import org.appxi.javafx.control.ListViewExt;
 import org.appxi.javafx.control.MaskingPane;
 import org.appxi.javafx.control.ToolBarEx;
 import org.appxi.javafx.workbench.WorkbenchApplication;
-import org.appxi.javafx.workbench.views.WorkbenchSideToolController;
+import org.appxi.javafx.workbench.views.WorkbenchNoneViewController;
 import org.appxi.tome.cbeta.CbetaBook;
 import org.appxi.tome.model.Chapter;
 import org.appxi.util.StringHelper;
@@ -28,18 +27,13 @@ import org.appxi.util.StringHelper;
 import java.util.Collection;
 import java.util.Objects;
 
-public class LookupController extends WorkbenchSideToolController {
+public class LookupController extends WorkbenchNoneViewController {
     private static final int RESULT_LIMIT = 100;
 
     private LookupProvider lookupProvider;
 
     public LookupController(WorkbenchApplication application) {
         super("LOOKUP", "快速查找", application);
-    }
-
-    @Override
-    public Node createToolIconGraphic(Boolean placeInSideViews) {
-        return null;
     }
 
     @Override
