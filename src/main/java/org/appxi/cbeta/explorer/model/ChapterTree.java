@@ -40,6 +40,12 @@ public class ChapterTree extends ChapterTreeParser<TreeItem<Chapter>> {
         final ChapterTree chapterTree = new ChapterTree(book);
         tocTree.setRoot(chapterTree.getTocChapters());
         volTree.setRoot(chapterTree.getVolChapters());
+        // 由于原数据中卷次列表并不一定连续，其中有修复填补的部分，在其显示文字上加上“暂无”可能对用户更友好
+        TreeHelper.walkLeafs(volTree.getRoot(), t -> {
+            if (t.getValue() != null && "title".equals(t.getValue().type))
+                t.getValue().title = t.getValue().title.concat("（暂无）");
+            return false;
+        });
     }
 
 
