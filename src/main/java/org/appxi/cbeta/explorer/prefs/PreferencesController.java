@@ -7,7 +7,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import org.appxi.cbeta.explorer.AppContext;
-import org.appxi.cbeta.explorer.event.StatusEvent;
+import org.appxi.cbeta.explorer.event.GenericEvent;
 import org.appxi.holder.StringHolder;
 import org.appxi.javafx.control.DialogPaneEx;
 import org.appxi.javafx.helper.FxHelper;
@@ -115,7 +115,7 @@ public class PreferencesController extends WorkbenchSideToolController {
                 return;
             currentLang.value = selHan.lang;
             UserPrefs.prefs.setProperty("display.han", selHan.lang);
-            getEventBus().fireEvent(new StatusEvent(StatusEvent.DISPLAY_HAN_CHANGED));
+            getEventBus().fireEvent(new GenericEvent(GenericEvent.DISPLAY_HAN_CHANGED, selHan));
         }));
     }
 

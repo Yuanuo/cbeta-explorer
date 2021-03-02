@@ -10,8 +10,6 @@ public class StatusEvent extends Event {
 
     public static final EventType<StatusEvent> BEANS_READY = new EventType<>(Event.ANY, "BEANS_READY");
 
-    public static final EventType<StatusEvent> DISPLAY_HAN_CHANGED = new EventType<>(Event.ANY, "DISPLAY_HAN");
-
     public StatusEvent(EventType<StatusEvent> eventType) {
         super(eventType);
     }

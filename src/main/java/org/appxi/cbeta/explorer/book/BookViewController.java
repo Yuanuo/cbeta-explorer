@@ -24,8 +24,8 @@ import org.appxi.cbeta.explorer.dao.Bookdata;
 import org.appxi.cbeta.explorer.dao.BookdataType;
 import org.appxi.cbeta.explorer.event.BookEvent;
 import org.appxi.cbeta.explorer.event.BookdataEvent;
+import org.appxi.cbeta.explorer.event.GenericEvent;
 import org.appxi.cbeta.explorer.event.SearcherEvent;
-import org.appxi.cbeta.explorer.event.StatusEvent;
 import org.appxi.hanlp.convert.ChineseConvertors;
 import org.appxi.javafx.control.*;
 import org.appxi.javafx.desktop.ApplicationEvent;
@@ -254,7 +254,7 @@ public class BookViewController extends WorkbenchMainViewController {
                 inputText = inputText.substring(1).strip();
             } else {
                 // 页内查找以显示文字为准，此处转换以匹配目标文字
-                inputText = ChineseConvertors.convert(inputText.strip(), null, displayHan);
+                inputText = ChineseConvertors.convert(inputText.strip(), null, AppContext.getDisplayHanLang());
             }
             return inputText;
         });
@@ -351,7 +351,7 @@ public class BookViewController extends WorkbenchMainViewController {
     @Override
     public void setupInitialize() {
         getEventBus().addEventHandler(ThemeEvent.CHANGED, this::handleThemeChanged);
-        getEventBus().addEventHandler(StatusEvent.DISPLAY_HAN_CHANGED, this::handleDisplayHanChanged);
+        getEventBus().addEventHandler(GenericEvent.DISPLAY_HAN_CHANGED, this::handleDisplayHanChanged);
     }
 
     @Override
@@ -384,13 +384,13 @@ public class BookViewController extends WorkbenchMainViewController {
         } else {
             getEventBus().removeEventHandler(ThemeEvent.CHANGED, this::handleThemeChanged);
             getEventBus().removeEventHandler(ApplicationEvent.STOPPING, this::handleApplicationEventStopping);
-            getEventBus().removeEventHandler(StatusEvent.DISPLAY_HAN_CHANGED, this::handleDisplayHanChanged);
+            getEventBus().removeEventHandler(GenericEvent.DISPLAY_HAN_CHANGED, this::handleDisplayHanChanged);
             setPrimaryTitle(null);
             getEventBus().fireEvent(new BookEvent(BookEvent.CLOSE, this.book, currentChapter));
         }
     }
 
-    private void handleDisplayHanChanged(StatusEvent event) {
+    private void handleDisplayHanChanged(GenericEvent event) {
         saveUserExperienceData();
         Chapter temp = this.currentChapter;
         this.currentChapter = null;
@@ -398,7 +398,6 @@ public class BookViewController extends WorkbenchMainViewController {
     }
 
     Chapter currentChapter;
-    HanLang displayHan;
 
     private void setCurrentChapter(Chapter chapter) {
         if (null != chapter && null == chapter.id) {
@@ -451,7 +450,7 @@ public class BookViewController extends WorkbenchMainViewController {
                 setCurrentChapter(chapter);
 
                 final long st = System.currentTimeMillis();
-                displayHan = AppContext.getDisplayHanLang();
+                final HanLang displayHan = AppContext.getDisplayHanLang();
                 final String htmlDoc = bookDocument.getVolumeHtmlDocument(chapter.path, displayHan,
                         body -> ChineseConvertors.convert(
                                 StringHelper.concat("<body><article>", body.html(), "</article></body>"),
@@ -516,7 +515,7 @@ public class BookViewController extends WorkbenchMainViewController {
                 // 如果有选中文字，则按查找选中文字处理
                 final String selText = webViewer.executeScript("getValidSelectionText()");
                 final String textToSearch = null == selText ? null :
-                        displayHan != HanLang.hantTW ? selText : "!".concat(selText);
+                        AppContext.getDisplayHanLang() != HanLang.hantTW ? selText : "!".concat(selText);
                 getEventBus().fireEvent(event.getCode() == KeyCode.G
                         ? SearcherEvent.ofLookup(textToSearch) // LOOKUP
                         : SearcherEvent.ofSearch(textToSearch) // SEARCH
@@ -555,7 +554,7 @@ public class BookViewController extends WorkbenchMainViewController {
         copy.setOnAction(event -> Clipboard.getSystemClipboard().setContent(Map.of(DataFormat.PLAIN_TEXT, validText)));
         //
         String textTip = null == validText ? "" : "：".concat(StringHelper.trimChars(validText, 8));
-        String textForSearch = null == validText ? null : displayHan != HanLang.hantTW ? validText : "!".concat(validText);
+        String textForSearch = null == validText ? null : AppContext.getDisplayHanLang() != HanLang.hantTW ? validText : "!".concat(validText);
 
         MenuItem search = new MenuItem("全文检索".concat(textTip));
         search.setOnAction(event -> getEventBus().fireEvent(SearcherEvent.ofSearch(textForSearch)));
@@ -666,7 +665,7 @@ public class BookViewController extends WorkbenchMainViewController {
          * 用于将输入文字转换成与实际显示的相同，以方便页内查找
          */
         public String convertToDisplayHan(String input) {
-            return ChineseConvertors.convert(input, null, displayHan);
+            return ChineseConvertors.convert(input, null, AppContext.getDisplayHanLang());
         }
     }
 
