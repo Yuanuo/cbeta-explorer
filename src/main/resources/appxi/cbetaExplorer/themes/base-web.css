@@ -4,8 +4,8 @@
 }
 
 .cb-juan {
-    padding-top: 1rem;
-    padding-bottom: 1rem;
+    padding-top: calc(var(--font-size) * .85);
+    padding-bottom: calc(var(--font-size) * .85);
 }
 
 .cb-juan.open {
@@ -13,7 +13,7 @@
 }
 
 .cb-juan .cb-jhead {
-    font-size: calc(var(--text-size) * 1.4);
+    font-size: 140%;
     font-weight: bold;
 }
 
@@ -33,24 +33,24 @@
 
 .cb-mulu {
     font-weight: bold;
-    padding-top: 1rem;
-    padding-bottom: 1rem;
+    padding-top: calc(var(--font-size) * .85);
+    padding-bottom: calc(var(--font-size) * .85);
     text-align: center;
 }
 .cb-mulu[leveln^='1-'] {
-    font-size: calc(var(--text-size) * 1.2);
+    font-size: 120%;
 }
 .cb-mulu[leveln^='2-'] {
-    font-size: calc(var(--text-size) * 1.12);
+    font-size: 112%;
 }
 .cb-mulu[leveln^='3-'] {
-    font-size: calc(var(--text-size) * 1.09);
+    font-size: 109%;
 }
 .cb-mulu[leveln^='4-'] {
-    font-size: calc(var(--text-size) * 1.06);
+    font-size: 106%;
 }
 .cb-mulu[leveln^='5-'] {
-    font-size: calc(var(--text-size) * 1.03);
+    font-size: 103%;
 }
 
 .head {
@@ -59,7 +59,7 @@
 }
 
 .place-inline {
-    font-size: 75%;
+    font-size: 85%;
     font-weight: normal;
 }
 .place-inline::before {
@@ -71,7 +71,7 @@
 
 div.p,
 p {
-    padding-bottom: 1rem;
+    padding-bottom: calc(var(--font-size) * .85);
 }
 
 p.lg {
@@ -102,12 +102,12 @@ table td p {
 }
 /*   *************************************************************************************************************    */
 article {
-    padding: 3rem;
+    padding: 4rem;
 }
 
 .wrap-lines-on,
 .wrap-pages-on {
-    margin-left: 6rem;
+    margin-left: 4rem;
 }
 .wrap-lines-on div,
 .wrap-lines-on p,
@@ -143,16 +143,23 @@ article {
 .pretty-indent-on .indent-last-letter-lg .l:last-child{
     text-indent: calc(1 * var(--char-size));
 }
+.pretty-indent-on .indent-first2-letter,
+.pretty-indent-on .indent-first2-letter-lg .l:first-child{
+    text-indent: calc(-2 * var(--char-size));
+}
+.pretty-indent-on .indent-last2-letter-lg .l:last-child{
+    text-indent: calc(2 * var(--char-size));
+}
 /*   *************************************************************************************************************    */
 .edit-orig-inline-on span.note.orig:before {
     content: attr(data-t);
-    font-size: 75%;
+    font-size: 85%;
     color: #20b771;
 }
 
 .edit-mod-sharp-on span.note.mod:before {
     content: "[#]";
-    font-size: 75%;
+    font-size: 85%;
     font-weight: 600;
     color: #20b771;
 }
@@ -160,16 +167,17 @@ article {
 .edit-mod-color-on span.lem > .tmp,
 .edit-mod-popover-on span.lem > .tmp {
     color: #20b771;
-    padding: 0 .25rem;
+    padding: 0 .5rem;
 }
 
 .edit-mod-inline-on span.note.mod:before {
     content: attr(data-t);
-    font-size: 75%;
+    font-size: 85%;
     color: #20b771;
 }
 
 /*   *************************************************************************************************************    */
 .tippy-box {
-    font-size: 1.25rem !important;
+    font-size: 95% !important;
+    max-width: 70rem !important;
 }

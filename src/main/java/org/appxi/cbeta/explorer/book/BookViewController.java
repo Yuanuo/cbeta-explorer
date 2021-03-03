@@ -5,7 +5,6 @@ import de.jensd.fx.glyphs.materialicons.MaterialIconView;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.collections.ObservableList;
-import javafx.concurrent.Task;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.control.*;
@@ -51,7 +50,6 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class BookViewController extends WorkbenchMainViewController {
@@ -116,8 +114,6 @@ public class BookViewController extends WorkbenchMainViewController {
         addTool_SideControl();
         addTool_Bookmark();
         addTool_Favorite();
-        this.toolbar.addRight(new Separator(Orientation.VERTICAL));
-        addTool_FontSize();
 //        this.toolbar.addRight(new Separator(Orientation.VERTICAL));
 //        addTool_Themes();
         this.toolbar.addRight(new Separator(Orientation.VERTICAL));
@@ -138,28 +134,6 @@ public class BookViewController extends WorkbenchMainViewController {
         button.setTooltip(new Tooltip("显示本书相关数据（目录、书签等）"));
         button.setOnAction(event -> this.getPrimaryViewport().selectSideTool(BookDataPlaceController.getInstance().viewId));
         this.toolbar.addLeft(button);
-    }
-
-    private void addTool_FontSize() {
-        //TODO 是否使用全局默认值，并可保存为默认？
-        final Consumer<Boolean> fSizeAction = state -> {
-            if (null == state) {// reset ?
-                webViewer.getViewer().setFontScale(1.0);
-            } else if (state) { //
-                webViewer.getViewer().setFontScale(webViewer.getViewer().getFontScale() + 0.1);
-            } else {
-                webViewer.getViewer().setFontScale(webViewer.getViewer().getFontScale() - 0.1);
-            }
-        };
-
-        Button fSizeSubBtn = new Button(null, new MaterialIconView(MaterialIcon.ZOOM_OUT));
-        fSizeSubBtn.setTooltip(new Tooltip("减小字号"));
-        fSizeSubBtn.setOnAction(event -> fSizeAction.accept(false));
-
-        Button fSizeSupBtn = new Button(null, new MaterialIconView(MaterialIcon.ZOOM_IN));
-        fSizeSupBtn.setTooltip(new Tooltip("增大字号"));
-        fSizeSupBtn.setOnAction(event -> fSizeAction.accept(true));
-        this.toolbar.addRight(fSizeSubBtn, fSizeSupBtn);
     }
 
     private void addTool_Themes() {
@@ -274,7 +248,7 @@ public class BookViewController extends WorkbenchMainViewController {
         if (null == this.webViewer)
             return;
 
-        byte[] allBytes = new byte[0];
+        byte[] allBytes = (":root {--zoom: " + AppContext.getDisplayZoomLevel() + " !important;}").getBytes();
         if (null != webTheme && !webTheme.stylesheets.isEmpty()) {
             for (String webStyle : webTheme.stylesheets) {
                 try {
@@ -352,6 +326,7 @@ public class BookViewController extends WorkbenchMainViewController {
     public void setupInitialize() {
         getEventBus().addEventHandler(ThemeEvent.CHANGED, this::handleThemeChanged);
         getEventBus().addEventHandler(GenericEvent.DISPLAY_HAN_CHANGED, this::handleDisplayHanChanged);
+        getEventBus().addEventHandler(GenericEvent.DISPLAY_ZOOM_CHANGED, this::handleDisplayZoomChanged);
     }
 
     @Override
@@ -368,12 +343,11 @@ public class BookViewController extends WorkbenchMainViewController {
             this.handleChaptersTreeViewEnterOrDoubleClickAction(null, bookBasic.defaultTreeItem);
             this.bookmarks.onViewportShow(true);
             this.favorites.onViewportShow(true);
+        } else {
+            getEventBus().fireEvent(new BookEvent(BookEvent.VIEW, book));
         }
         // update app title
         setPrimaryTitle(book.title);
-        //
-        getEventBus().fireEvent(new BookEvent(BookEvent.VIEW, this.book));
-//        //FIXME 是否要同时显示左侧视图？
     }
 
     @Override
@@ -385,16 +359,32 @@ public class BookViewController extends WorkbenchMainViewController {
             getEventBus().removeEventHandler(ThemeEvent.CHANGED, this::handleThemeChanged);
             getEventBus().removeEventHandler(ApplicationEvent.STOPPING, this::handleApplicationEventStopping);
             getEventBus().removeEventHandler(GenericEvent.DISPLAY_HAN_CHANGED, this::handleDisplayHanChanged);
+            getEventBus().removeEventHandler(GenericEvent.DISPLAY_ZOOM_CHANGED, this::handleDisplayZoomChanged);
             setPrimaryTitle(null);
             getEventBus().fireEvent(new BookEvent(BookEvent.CLOSE, this.book, currentChapter));
         }
     }
 
     private void handleDisplayHanChanged(GenericEvent event) {
+        if (null == this.webViewer)
+            return;
         saveUserExperienceData();
         Chapter temp = this.currentChapter;
         this.currentChapter = null;
         openChapter(null, temp);
+    }
+
+    private void handleDisplayZoomChanged(GenericEvent event) {
+        if (null == this.webViewer)
+            return;
+        // save position
+        saveUserExperienceData();
+        // reload theme
+        this.handleThemeChanged(null);
+        // restore position
+        final String selector = UserPrefs.recents.getString(book.id + ".selector", null);
+        final double percent = UserPrefs.recents.getDouble(book.id + ".percent", 0);
+        webViewer.executeScript(StringHelper.concat("setScrollTop1BySelectors(\"", selector, "\", ", percent, ")"));
     }
 
     Chapter currentChapter;
@@ -441,63 +431,58 @@ public class BookViewController extends WorkbenchMainViewController {
         }
 
         getViewport().getChildren().add(blockingView);
-        new Thread(new Task<Void>() {
-            @Override
-            protected Void call() throws Exception {
-                if (null != currentChapter && null != currentChapter.id) {
-                    getEventBus().fireEvent(new BookEvent(BookEvent.CLOSE, book, currentChapter));
-                }
-                setCurrentChapter(chapter);
+        new Thread(() -> {
+            setCurrentChapter(chapter);
+            final long st = System.currentTimeMillis();
+            final HanLang displayHan = AppContext.getDisplayHanLang();
+            final String htmlDoc = bookDocument.getVolumeHtmlDocument(chapter.path, displayHan,
+                    body -> ChineseConvertors.convert(
+                            StringHelper.concat("<body><article>", body.html(), "</article></body>"),
+                            HanLang.hantTW,
+                            displayHan
+                    ),
+                    WebIncl.getIncludePaths()
+            );
+            webViewer.setOnLoadSucceedAction(we -> {
+                // set an interface object named 'dataApi' in the web engine's page
+                final JSObject window = webViewer.executeScript("window");
+                window.setMember("dataApi", dataApi);
+                //
+                if (null != initChapter && initChapter.hasAttr("position.term")) {
+                    String posTerm = initChapter.removeAttr("position.term");
+                    String posText = initChapter.removeAttr("position.text");
 
-                final long st = System.currentTimeMillis();
-                final HanLang displayHan = AppContext.getDisplayHanLang();
-                final String htmlDoc = bookDocument.getVolumeHtmlDocument(chapter.path, displayHan,
-                        body -> ChineseConvertors.convert(
-                                StringHelper.concat("<body><article>", body.html(), "</article></body>"),
-                                HanLang.hantTW,
-                                displayHan
-                        ),
-                        WebIncl.getIncludePaths()
-                );
-                webViewer.setOnLoadSucceedAction(we -> {
-                    // set an interface object named 'dataApi' in the web engine's page
-                    final JSObject window = webViewer.executeScript("window");
-                    window.setMember("dataApi", dataApi);
-                    //
-                    if (null != initChapter && initChapter.hasAttr("position.term")) {
-                        String posTerm = initChapter.removeAttr("position.term");
-                        String posText = initChapter.removeAttr("position.text");
-
-                        List<String> posParts = new ArrayList<>(List.of(posText.split("。")));
-                        posParts.sort(Comparator.comparingInt(String::length));
-                        String longText = posParts.get(posParts.size() - 1);
-                        if (!webViewer.findInPage(longText, true)) {
-                            webViewFinder.search(posTerm);
-                        }
-                    } else if (null != initChapter && initChapter.hasAttr("position.selector")) {
-                        webViewer.executeScript(StringHelper.concat("setScrollTop1BySelectors(\"", initChapter.removeAttr("position.selector"), "\")"));
-                        initChapter = null;//
-                    } else if (null == event) {
-                        final String selector = UserPrefs.recents.getString(book.id + ".selector", null);
-                        final double percent = UserPrefs.recents.getDouble(book.id + ".percent", 0);
-                        webViewer.executeScript(StringHelper.concat("setScrollTop1BySelectors(\"", selector, "\", ", percent, ")"));
-                    } else if (null != chapter.start) {
-                        webViewer.executeScript("setScrollTop1BySelectors(\"".concat(chapter.start.toString()).concat("\")"));
+                    List<String> posParts = new ArrayList<>(List.of(posText.split("。")));
+                    posParts.sort(Comparator.comparingInt(String::length));
+                    String longText = posParts.get(posParts.size() - 1);
+                    if (!webViewer.findInPage(longText, true)) {
+                        webViewFinder.search(posTerm);
                     }
-                    webViewer.removeEventHandler(KeyEvent.KEY_PRESSED, BookViewController.this::handleWebViewShortcuts);
-                    webViewer.addEventHandler(KeyEvent.KEY_PRESSED, BookViewController.this::handleWebViewShortcuts);
-                    webViewer.widthProperty().removeListener(BookViewController.this::handleWebViewBodyResize);
-                    webViewer.widthProperty().addListener(BookViewController.this::handleWebViewBodyResize);
-                    DevtoolHelper.LOG.info("load htmlDocFile used time: " + (System.currentTimeMillis() - st) + ", " + htmlDoc);
-                    Platform.runLater(() -> getViewport().getChildren().remove(blockingView));
+                } else if (null != initChapter && initChapter.hasAttr("position.selector")) {
+                    webViewer.executeScript(StringHelper.concat("setScrollTop1BySelectors(\"", initChapter.removeAttr("position.selector"), "\")"));
+                    initChapter = null;//
+                } else if (null == event) {
+                    final String selector = UserPrefs.recents.getString(book.id + ".selector", null);
+                    final double percent = UserPrefs.recents.getDouble(book.id + ".percent", 0);
+                    webViewer.executeScript(StringHelper.concat("setScrollTop1BySelectors(\"", selector, "\", ", percent, ")"));
+                } else if (null != chapter.start) {
+                    webViewer.executeScript("setScrollTop1BySelectors(\"".concat(chapter.start.toString()).concat("\")"));
+                }
+                //
+                webViewer.removeEventHandler(KeyEvent.KEY_PRESSED, BookViewController.this::handleWebViewShortcuts);
+                webViewer.addEventHandler(KeyEvent.KEY_PRESSED, BookViewController.this::handleWebViewShortcuts);
+                webViewer.widthProperty().removeListener(BookViewController.this::handleWebViewBodyResize);
+                webViewer.widthProperty().addListener(BookViewController.this::handleWebViewBodyResize);
+                DevtoolHelper.LOG.info("load htmlDocFile used time: " + (System.currentTimeMillis() - st) + ", " + htmlDoc);
+                Platform.runLater(() -> {
+                    getEventBus().fireEvent(new BookEvent(BookEvent.VIEW, book));
+                    getViewport().getChildren().remove(blockingView);
                 });
+            });
 
-                Platform.runLater(() -> webViewer.getEngine().load(Path.of(htmlDoc).toUri().toString()));
-                UserPrefs.recents.setProperty(book.id + ".chapter", chapter.id);
-                return null;
-            }
+            Platform.runLater(() -> webViewer.getEngine().load(Path.of(htmlDoc).toUri().toString()));
+            UserPrefs.recents.setProperty(book.id + ".chapter", chapter.id);
         }).start();
-//        getEventBus().fireEvent(new BookEvent(BookEvent.VIEW, book, currentChapter));
     }
 
     private void handleWebViewShortcuts(KeyEvent event) {

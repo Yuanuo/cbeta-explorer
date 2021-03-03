@@ -84,6 +84,13 @@ public abstract class AppContext {
         return HanLang.valueBy(UserPrefs.prefs.getString("display.han", HanLang.hantTW.lang));
     }
 
+    public static double getDisplayZoomLevel() {
+        double zoomLevel = UserPrefs.prefs.getDouble("display.zoom", 1.6);
+        if (zoomLevel < 1.5 || zoomLevel > 3.0)
+            zoomLevel = 1.6;
+        return zoomLevel;
+    }
+
     private AppContext() {
     }
 }

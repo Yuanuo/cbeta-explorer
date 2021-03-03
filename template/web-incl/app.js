@@ -158,8 +158,16 @@ function handleOnPrettyIndent() {
     if (!article.prop(markOn)) {
         article.find('p, lg').each(function () {
             const $ele = $(this);
-            const txt = $ele.text();
-            if (txt.trimLeft().match(/^[“「『]/)) {
+            const txt = $ele.text().trimLeft();
+            if (txt.match(/^((“「)|(“『)|(「『)|(『「))/)) {
+                if ($ele.hasClass("lg")) {
+                    $ele.addClass('indent-first2-letter-lg');
+                    if (txt.trimRight().match(/((”」)|(”』)|(」』)|(』」))$/))
+                        $ele.addClass('indent-last2-letter-lg');
+                    else if (txt.trimRight().match(/[”」』]$/))
+                        $ele.addClass('indent-last-letter-lg');
+                } else $ele.addClass('indent-first2-letter');
+            } else if (txt.match(/^[“「『]/)) {
                 if ($ele.hasClass("lg")) {
                     $ele.addClass('indent-first-letter-lg');
                     if (txt.trimRight().match(/[”」』]$/))
@@ -217,7 +225,6 @@ function handleOnEditMark(type) {
         tippyInstances = tippy('.' + markOn + ' span.note.mod', {
             allowHTML: true,
             animation: false,
-            interactive: true, interactiveBorder: 30, interactiveDebounce: 100,
             placement: 'top',
             content: (mod) => mod.getAttribute('data-t')
         });
@@ -262,7 +269,6 @@ function handleOnEditMark(type) {
             tippyInstances = tippy('.' + markOn + ' span.app > .lem > .tmp', {
                 allowHTML: true,
                 animation: false,
-                interactive: true, interactiveBorder: 30, interactiveDebounce: 100,
                 placement: 'top',
                 content: (tmp) => tmp.getAttribute('data-t')
             });
@@ -270,7 +276,6 @@ function handleOnEditMark(type) {
             tippyInstances = tippy('.' + markOn + ' span.app > .lem > .tmp', {
                 allowHTML: true,
                 animation: false,
-                interactive: true, interactiveBorder: 30, interactiveDebounce: 100,
                 placement: 'top',
                 content: function (tmp) {
                     const lem = $(tmp).parent();
