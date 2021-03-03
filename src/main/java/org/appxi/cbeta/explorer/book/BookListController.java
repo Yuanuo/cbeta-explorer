@@ -103,13 +103,13 @@ public class BookListController extends WorkbenchSideViewController {
             DevtoolHelper.LOG.info("load booklist views used times: " + (System.currentTimeMillis() - st));
         });
         getEventBus().addEventHandler(StatusEvent.BOOKS_READY, event -> {
-            if (null == this.treeView)
-                this.getViewport();
-            final String navMode = UserPrefs.prefs.getString("cbeta.nav", "catalog");
-            final ObservableList<Toggle> toggles = treeViewModeGroup.getToggles();
-            final List<Toggle> filtered = toggles.filtered(v -> navMode.equals(v.getUserData()));
-            if (!toggles.isEmpty())
-                treeViewModeGroup.selectToggle(!filtered.isEmpty() ? filtered.get(0) : toggles.get(0));
+            booksReadyHandled = true;
+            if (firstTimeShowHandled) {
+                // init now
+                lazyInitTreeView();
+            } else {
+                // init later
+            }
         });
         //
         getEventBus().addEventHandler(ApplicationEvent.STARTED, event -> CompletableFuture.runAsync(() -> {
@@ -156,5 +156,26 @@ public class BookListController extends WorkbenchSideViewController {
 
     @Override
     public void onViewportShow(boolean firstTime) {
+        if (firstTime && booksReadyHandled) {
+            // init now
+            lazyInitTreeView();
+        } else if (firstTime) {
+            firstTimeShowHandled = true;
+            // init later
+        } else {
+            // do nothing
+        }
+    }
+
+    private boolean firstTimeShowHandled, booksReadyHandled;
+
+    private void lazyInitTreeView() {
+        if (null == this.treeView)
+            this.getViewport();
+        final String navMode = UserPrefs.prefs.getString("cbeta.nav", "catalog");
+        final ObservableList<Toggle> toggles = treeViewModeGroup.getToggles();
+        final List<Toggle> filtered = toggles.filtered(v -> navMode.equals(v.getUserData()));
+        if (!toggles.isEmpty())
+            treeViewModeGroup.selectToggle(!filtered.isEmpty() ? filtered.get(0) : toggles.get(0));
     }
 }
