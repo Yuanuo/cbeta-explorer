@@ -27,12 +27,12 @@ public class WorkbenchRootController extends WorkbenchPrimaryController {
     protected List<WorkbenchViewController> createViewControllers() {
         final List<WorkbenchViewController> result = new ArrayList<>();
         result.add(new BookListController(getApplication()));
-        result.add(new LookupController(getApplication()));
         result.add(new BookDataPlaceController(getApplication()));
         result.add(new RecentController(getApplication()));
         result.add(new FavoritesController(getApplication()));
         result.add(new BookmarksController(getApplication()));
 
+        result.add(new LookupController(getApplication()));
         result.add(new SearchController(getApplication()));
         result.add(new WidgetsController(getApplication()));
 

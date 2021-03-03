@@ -103,17 +103,19 @@ public class BookListController extends WorkbenchSideViewController {
             DevtoolHelper.LOG.info("load booklist views used times: " + (System.currentTimeMillis() - st));
         });
         getEventBus().addEventHandler(StatusEvent.BOOKS_READY, event -> {
-            booksReadyHandled = true;
             if (firstTimeShowHandled) {
                 // init now
                 lazyInitTreeView();
             } else {
                 // init later
+                booksReadyHandled = true;
             }
         });
         //
         getEventBus().addEventHandler(ApplicationEvent.STARTED, event -> CompletableFuture.runAsync(() -> {
+            final long st = System.currentTimeMillis();
             BookList.books.getDataMap();
+            DevtoolHelper.LOG.info("load booklist data used times: " + (System.currentTimeMillis() - st));
             getEventBus().fireEvent(new StatusEvent(StatusEvent.BOOKS_READY));
         }).whenComplete((o, err) -> {
             if (null != err) FxHelper.alertError(getApplication(), err);

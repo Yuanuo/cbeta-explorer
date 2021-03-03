@@ -2,16 +2,17 @@ package org.appxi.cbeta.explorer.recent;
 
 import de.jensd.fx.glyphs.materialicons.MaterialIcon;
 import de.jensd.fx.glyphs.materialicons.MaterialIconView;
-import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.control.TreeItem;
 import org.appxi.cbeta.explorer.book.BookViewController;
 import org.appxi.cbeta.explorer.event.BookEvent;
-import org.appxi.cbeta.explorer.event.StatusEvent;
 import org.appxi.cbeta.explorer.model.BookList;
+import org.appxi.holder.RawHolder;
 import org.appxi.javafx.control.TreeViewEx;
 import org.appxi.javafx.control.TreeViewExt;
 import org.appxi.javafx.desktop.ApplicationEvent;
+import org.appxi.javafx.helper.FxHelper;
+import org.appxi.javafx.views.ViewController;
 import org.appxi.javafx.workbench.WorkbenchApplication;
 import org.appxi.javafx.workbench.WorkbenchViewController;
 import org.appxi.javafx.workbench.views.WorkbenchSideViewController;
@@ -46,7 +47,36 @@ public class RecentController extends WorkbenchSideViewController {
             saveRecentViews();
         });
         loadRecentBooks();
-        getEventBus().addEventHandler(StatusEvent.BOOKS_READY, event -> Platform.runLater(this::loadRecentViews));
+        //
+        final RawHolder<WorkbenchViewController> swapRecentViewSelected = new RawHolder<>();
+        final List<WorkbenchViewController> swapRecentViews = new ArrayList<>();
+        getEventBus().addEventHandler(ApplicationEvent.STARTING, event -> FxHelper.runLater(() -> {
+            final Preferences recent = createRecentViews(true);
+            WorkbenchViewController addedController = null;
+            for (String key : recent.getPropertyKeys()) {
+                final CbetaBook book = BookList.getById(key);
+                if (null == book)
+                    continue;
+                addedController = new BookViewController(book, getApplication());
+                if (recent.getBoolean(key, false))
+                    swapRecentViewSelected.value = addedController;
+                swapRecentViews.add(addedController);
+            }
+            if (!swapRecentViews.isEmpty()) {
+                for (WorkbenchViewController viewController : swapRecentViews) {
+                    getPrimaryViewport().addWorkbenchViewAsMainView(viewController, true);
+                }
+                if (null == swapRecentViewSelected.value)
+                    swapRecentViewSelected.value = addedController;
+            }
+        }));
+        getEventBus().addEventHandler(ApplicationEvent.STARTED, event -> {
+            if (!swapRecentViews.isEmpty()) {
+                swapRecentViews.forEach(ViewController::setupInitialize);
+                if (null != swapRecentViewSelected.value)
+                    FxHelper.runLater(() -> getPrimaryViewport().selectMainView(swapRecentViewSelected.value.viewId));
+            }
+        });
     }
 
     private void handleToSaveOrUpdateRecentBook(CbetaBook book) {
@@ -82,25 +112,6 @@ public class RecentController extends WorkbenchSideViewController {
                 //
             }
         });
-    }
-
-    private void loadRecentViews() {
-        final Preferences recent = createRecentViews(true);
-        WorkbenchViewController selectedController = null, addedController = null;
-        for (String key : recent.getPropertyKeys()) {
-            final CbetaBook book = BookList.getById(key);
-            if (null == book)
-                continue;
-            addedController = new BookViewController(book, getApplication());
-            if (recent.getBoolean(key, false))
-                selectedController = addedController;
-            getPrimaryViewport().addWorkbenchViewAsMainView(addedController, true);
-            addedController.setupInitialize();
-        }
-        if (null == selectedController)
-            selectedController = addedController;
-        if (null != selectedController)
-            getPrimaryViewport().selectMainView(selectedController.viewId);
     }
 
     private void saveRecentBooks() {

@@ -4,8 +4,8 @@ import javafx.application.Platform;
 import javafx.scene.web.WebView;
 import org.appxi.cbeta.explorer.dao.DaoHelper;
 import org.appxi.cbeta.explorer.dao.DaoService;
+import org.appxi.cbeta.explorer.model.BookList;
 import org.appxi.hanlp.convert.ChineseConvertors;
-import org.appxi.javafx.desktop.ApplicationEvent;
 import org.appxi.javafx.helper.FxHelper;
 import org.appxi.javafx.workbench.WorkbenchApplication;
 import org.appxi.javafx.workbench.WorkbenchPrimaryController;
@@ -41,14 +41,19 @@ public class AppWorkbench extends WorkbenchApplication {
         // 在此设置数据库基本环境，以供后续的功能正常使用
         DaoHelper.setupDatabaseService(UserPrefs.dataDir().resolve(".db"));
         initThemes();
-        eventBus.addEventHandler(ApplicationEvent.STARTED, event -> Platform.runLater(WebView::new));
         CompletableFuture.runAsync(() -> {
+            BookList.books.getDataMap();
             DaoService.setupInitialize();
             ChineseConvertors.hans2HantTW("测试");
             AppContext.setupInitialize();
         }).whenComplete((o, err) -> {
             if (null != err) FxHelper.alertError(this, err);
         });
+    }
+
+    @Override
+    protected void started() {
+        Platform.runLater(WebView::new);
     }
 
     @Override
