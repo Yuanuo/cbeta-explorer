@@ -171,14 +171,15 @@ public class SearcherController extends WorkbenchMainViewController {
     }
 
     @Override
-    public void onViewportShow(boolean firstTime) {
+    protected void onViewportShowing(boolean firstTime) {
         if (null != inputView) {
             inputView.input.requestFocus();
         }
     }
 
     @Override
-    public void onViewportHide(boolean hideOrElseClose) {
+    protected void onViewportClosing() {
+        super.onViewportClosing();
         getEventBus().removeEventHandler(ProgressEvent.INDEXING, this::handleEventOnIndexingToBlocking);
     }
 
@@ -225,7 +226,8 @@ public class SearcherController extends WorkbenchMainViewController {
         }
         if (null == blockingView)
             blockingView = new BlockingView();
-        setSecondaryTitle("搜索：".concat(inputText.isBlank() ? "*" : inputText));
+        final String viewTitle = "搜索：".concat(inputText.isBlank() ? "*" : inputText);
+        setViewTitle(viewTitle);
         getViewport().getChildren().add(blockingView);
         // 使用线程，避免UI阻塞假死
         new Thread(() -> handleSearchingImpl(inputText)).start();

@@ -2,11 +2,16 @@ package org.appxi.cbeta.explorer.book;
 
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
-import javafx.scene.control.*;
+import javafx.scene.control.Accordion;
+import javafx.scene.control.Label;
+import javafx.scene.control.TitledPane;
+import javafx.scene.control.TreeItem;
+import javafx.scene.input.InputEvent;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.appxi.cbeta.explorer.model.ChapterTree;
 import org.appxi.holder.RawHolder;
+import org.appxi.javafx.control.TreeViewEx;
 import org.appxi.javafx.control.TreeViewExt;
 import org.appxi.javafx.helper.TreeHelper;
 import org.appxi.javafx.workbench.WorkbenchApplication;
@@ -26,7 +31,7 @@ public class BookBasicController extends WorkbenchSideViewController {
     TitledPane tocsPane, volsPane, infoPane;
     TreeViewExt<Chapter> tocsTree, volsTree;
 
-    TreeItem<Chapter> defaultTreeItem;
+    TreeItem<Chapter> selectedTreeItem;
 
     public BookBasicController(WorkbenchApplication application, BookViewController bookView) {
         super("BOOK-BASIC", "Book-Basic", application);
@@ -55,8 +60,13 @@ public class BookBasicController extends WorkbenchSideViewController {
         this.viewport.setCenter(this.accordion);
 
         //
-        this.tocsTree.setEnterOrDoubleClickAction(this.bookView::handleChaptersTreeViewEnterOrDoubleClickAction);
-        this.volsTree.setEnterOrDoubleClickAction(this.bookView::handleChaptersTreeViewEnterOrDoubleClickAction);
+        this.tocsTree.setEnterOrDoubleClickAction(this::handleChaptersTreeViewEnterOrDoubleClickAction);
+        this.volsTree.setEnterOrDoubleClickAction(this::handleChaptersTreeViewEnterOrDoubleClickAction);
+    }
+
+    void handleChaptersTreeViewEnterOrDoubleClickAction(final InputEvent event, final TreeItem<Chapter> treeItem) {
+        if (null == treeItem || null != event && !treeItem.isLeaf()) return;
+        bookView.openChapter(treeItem.getValue());
     }
 
     @Override
@@ -64,19 +74,20 @@ public class BookBasicController extends WorkbenchSideViewController {
         if (firstTime) {
             // init nav-view
             ChapterTree.parseBookChaptersToTree(bookView.book, this.tocsTree, this.volsTree);
-            // init default selection in basic view
-            defaultTreeItem = this.prepareDefaultSelection(bookView.book, bookView.initChapter);
         }
     }
 
-    public TreeItem<Chapter> prepareDefaultSelection(CbetaBook book, Chapter chapter) {
+    public Chapter selectChapter(CbetaBook book, Chapter chapter) {
+        if (null != selectedTreeItem && selectedTreeItem.getValue() == chapter)
+            return selectedTreeItem.getValue();
+
         RawHolder<TitledPane> targetPane = new RawHolder<>();
-        RawHolder<TreeView<Chapter>> targetTree = new RawHolder<>();
+        RawHolder<TreeViewEx<Chapter>> targetTree = new RawHolder<>();
         RawHolder<TreeItem<Chapter>> targetTreeItem = new RawHolder<>();
 
         if (null != chapter && null != chapter.path) {
             Predicate<TreeItem<Chapter>> findByPath = itm ->
-                    chapter.path.equals(itm.getValue().path)
+                    itm.isLeaf() && chapter.path.equals(itm.getValue().path)
                             && (null == chapter.start || chapter.start.equals(itm.getValue().start));
             detectAvailTarget(targetPane, targetTree, targetTreeItem, findByPath);
         }
@@ -99,15 +110,19 @@ public class BookBasicController extends WorkbenchSideViewController {
             targetTreeItem.value = tmpList.isEmpty() ? null : tmpList.get(0);
         }
 
-        this.accordion.setExpandedPane(targetPane.value);
-        targetTreeItem.value.setExpanded(true);
-        targetTree.value.getSelectionModel().select(targetTreeItem.value);
+        if (null == targetTreeItem.value)
+            return null; // avoid NPE
 
-        return targetTreeItem.value;
+        this.accordion.setExpandedPane(targetPane.value);
+        selectedTreeItem = targetTreeItem.value;
+        selectedTreeItem.setExpanded(true);
+        targetTree.value.getSelectionModel().select(selectedTreeItem);
+
+        return selectedTreeItem.getValue();
     }
 
     private void detectAvailTarget(RawHolder<TitledPane> targetPane,
-                                   RawHolder<TreeView<Chapter>> targetTree,
+                                   RawHolder<TreeViewEx<Chapter>> targetTree,
                                    RawHolder<TreeItem<Chapter>> targetTreeItem,
                                    Predicate<TreeItem<Chapter>> findByExpr) {
         targetTreeItem.value = TreeHelper.findFirst(this.tocsTree.getRoot(), findByExpr);
@@ -121,15 +136,5 @@ public class BookBasicController extends WorkbenchSideViewController {
                 targetTree.value = this.volsTree;
             }
         }
-    }
-
-    Chapter findChapterByPath(String path, String start) {
-        Predicate<TreeItem<Chapter>> findByPath = itm ->
-                path.equals(itm.getValue().path)
-                        && (null == start || start.equals(itm.getValue().start));
-        Chapter result = TreeHelper.findFirstValue(this.tocsTree.getRoot(), findByPath);
-        if (null == result)
-            result = TreeHelper.findFirstValue(this.volsTree.getRoot(), findByPath);
-        return result;
     }
 }

@@ -127,20 +127,15 @@ public class BookListController extends WorkbenchSideViewController {
         final BookViewController viewController = (BookViewController) getPrimaryViewport().findMainViewController(book.id);
         if (null != viewController) {
             getPrimaryViewport().selectMainView(viewController.viewId);
-            Platform.runLater(() -> {
-                viewController.openChapter(null, chapter);
-                // FIXME 是否需要每次打开书籍后同时在左侧目录树中定位？
-//                handleLocateInTreeViewAction(viewController);
-            });
+            Platform.runLater(() -> viewController.openChapter(chapter));
             return;
         }
         Platform.runLater(() -> {
-            final BookViewController controller = new BookViewController(book, chapter, getApplication());
+            final BookViewController controller = new BookViewController(book, getApplication());
+            controller.attr(Chapter.class, chapter);
             getPrimaryViewport().addWorkbenchViewAsMainView(controller, false);
             controller.setupInitialize();
             getPrimaryViewport().selectMainView(controller.viewId);
-            // FIXME 是否需要每次打开书籍后同时在左侧目录树中定位？
-//            handleLocateInTreeViewAction(controller);
         });
     }
 
