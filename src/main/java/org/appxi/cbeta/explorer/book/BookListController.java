@@ -92,15 +92,17 @@ public class BookListController extends WorkbenchSideViewController {
         //
         treeViewModeGroup.selectedToggleProperty().addListener((o, ov, nv) -> {
             if (null == nv) return;
-            final String mode = (String) nv.getUserData();
-            final long st = System.currentTimeMillis();
-            final BookTree bookTree = new BookTree(BookList.books, BookTreeMode.valueOf(mode));
-            UserPrefs.prefs.setProperty("cbeta.nav", mode);
-            //
-            final TreeItem<CbetaBook> rootItem = bookTree.getDataTree();
-            rootItem.setExpanded(true);
-            Platform.runLater(() -> treeView.setRoot(rootItem));
-            DevtoolHelper.LOG.info("load booklist views used times: " + (System.currentTimeMillis() - st));
+            new Thread(() -> {
+                final String mode = (String) nv.getUserData();
+                final long st = System.currentTimeMillis();
+                final BookTree bookTree = new BookTree(BookList.books, BookTreeMode.valueOf(mode));
+                UserPrefs.prefs.setProperty("cbeta.nav", mode);
+                //
+                final TreeItem<CbetaBook> rootItem = bookTree.getDataTree();
+                rootItem.setExpanded(true);
+                FxHelper.runLater(() -> treeView.setRoot(rootItem));
+                DevtoolHelper.LOG.info("load booklist views used times: " + (System.currentTimeMillis() - st));
+            }).start();
         });
         getEventBus().addEventHandler(StatusEvent.BOOKS_READY, event -> {
             if (firstTimeShowHandled) {
@@ -112,14 +114,7 @@ public class BookListController extends WorkbenchSideViewController {
             }
         });
         //
-        getEventBus().addEventHandler(ApplicationEvent.STARTED, event -> CompletableFuture.runAsync(() -> {
-            final long st = System.currentTimeMillis();
-            BookList.books.getDataMap();
-            DevtoolHelper.LOG.info("load booklist data used times: " + (System.currentTimeMillis() - st));
-            getEventBus().fireEvent(new StatusEvent(StatusEvent.BOOKS_READY));
-        }).whenComplete((o, err) -> {
-            if (null != err) FxHelper.alertError(getApplication(), err);
-        }));
+        getEventBus().addEventHandler(ApplicationEvent.STARTED, event -> getEventBus().fireEvent(new StatusEvent(StatusEvent.BOOKS_READY)));
     }
 
     private void handleEventToOpenBook(Event event, CbetaBook book, Chapter chapter) {
@@ -127,10 +122,10 @@ public class BookListController extends WorkbenchSideViewController {
         final BookViewController viewController = (BookViewController) getPrimaryViewport().findMainViewController(book.id);
         if (null != viewController) {
             getPrimaryViewport().selectMainView(viewController.viewId);
-            Platform.runLater(() -> viewController.openChapter(chapter));
+            FxHelper.runLater(() -> viewController.openChapter(chapter));
             return;
         }
-        Platform.runLater(() -> {
+        FxHelper.runLater(() -> {
             final BookViewController controller = new BookViewController(book, getApplication());
             controller.attr(Chapter.class, chapter);
             getPrimaryViewport().addWorkbenchViewAsMainView(controller, false);

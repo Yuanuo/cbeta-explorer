@@ -82,7 +82,7 @@ public class SearchController extends WorkbenchSideToolController {
         SearcherController searcher = findReusableSearcher(
                 () -> new SearcherController("SEARCHER-".concat(DigestHelper.uid()), getApplication())
         );
-        Platform.runLater(() -> {
+        FxHelper.runLater(() -> {
             if (!getPrimaryViewport().existsMainView(searcher.viewId)) {
                 getPrimaryViewport().addWorkbenchViewAsMainView(searcher, false);
                 searcher.setupInitialize();

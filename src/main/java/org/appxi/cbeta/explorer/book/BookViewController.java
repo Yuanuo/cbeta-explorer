@@ -2,7 +2,6 @@ package org.appxi.cbeta.explorer.book;
 
 import de.jensd.fx.glyphs.materialicons.MaterialIcon;
 import de.jensd.fx.glyphs.materialicons.MaterialIconView;
-import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.collections.ObservableList;
 import javafx.geometry.Orientation;
@@ -25,7 +24,7 @@ import org.appxi.cbeta.explorer.event.BookEvent;
 import org.appxi.cbeta.explorer.event.BookdataEvent;
 import org.appxi.cbeta.explorer.event.GenericEvent;
 import org.appxi.cbeta.explorer.event.SearcherEvent;
-import org.appxi.cbeta.explorer.search.LookupView;
+import org.appxi.cbeta.explorer.search.LookupViewEx;
 import org.appxi.hanlp.convert.ChineseConvertors;
 import org.appxi.holder.IntHolder;
 import org.appxi.javafx.control.*;
@@ -53,6 +52,8 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class BookViewController extends WorkbenchMainViewController {
@@ -160,13 +161,8 @@ public class BookViewController extends WorkbenchMainViewController {
         gotoMenu.getStyleClass().add("goto-menu");
         gotoMenu.setGraphic(new MaterialIconView(MaterialIcon.NEAR_ME));
         gotoMenu.setTooltip(new Tooltip("转到 (Ctrl+T)"));
-        final LookupView<Chapter> lookupView = new LookupView<>(viewport) {
+        final LookupViewEx<Chapter> lookupView = new LookupViewEx<>(viewport) {
             private final Object AK_INDEX = new Object();
-
-            @Override
-            protected int getResultLimit() {
-                return 300;
-            }
 
             @Override
             protected int getPrefWidth() {
@@ -179,30 +175,33 @@ public class BookViewController extends WorkbenchMainViewController {
             }
 
             @Override
-            protected String getSearchTitle() {
-                return "快速跳转本书目录（快捷键：Ctrl+T 在阅读视图中开启。ESC 或 点击透明区 退出此界面。上下方向键选择列表项）";
+            protected String getHeaderText() {
+                return "快速跳转本书目录";
             }
 
             @Override
-            protected String getSearchHelp() {
-                return ">> 不分简繁任意汉字匹配（以感叹号开始强制区分）；逗号分隔任意字/词/短语匹配；卷编号/卷名/章节名匹配；斜杠'/'匹配卷次；";
+            protected String getUsagesText() {
+                return """
+                        >> 不分简繁任意汉字匹配（以感叹号起始则强制区分）；逗号分隔任意字/词/短语匹配；卷编号/卷名/章节名匹配；
+                        >> 斜杠'/'匹配经卷目录；#号起始开启本书卷/行定位；
+                        >> 快捷键：Ctrl+T 在阅读视图中开启；ESC 或 点击透明区 退出此界面；上下方向键选择列表项；回车键打开；
+                        """;
             }
 
             @Override
-            protected String convertItemToString(Chapter item) {
-                if (item.hasAttr(AK_INDEX)) {
-                    return StringHelper.concat(item.attrStr(AK_INDEX), " / ", item.title);
-                }
-                return item.title;
+            protected void updateItemOnce(Labeled labeled, Chapter item) {
+                labeled.setText(item.hasAttr(AK_INDEX)
+                        ? StringHelper.concat(item.attrStr(AK_INDEX), " / ", item.title)
+                        : item.title);
             }
 
             @Override
-            protected Collection<Chapter> search(String searchedText, String[] searchWords, int resultLimit) {
+            protected Collection<Chapter> search(String searchText, String[] searchWords, int resultLimit) {
                 final Collection<Chapter> result = new ArrayList<>(resultLimit);
 
                 TreeHelper.walkLeafs(bookBasic.tocsTree.getRoot(), itm -> {
                     String content = itm.getValue().title;
-                    if (null != content && (searchedText.isEmpty() || content.contains(searchedText))) {
+                    if (null != content && (searchText.isEmpty() || content.contains(searchText))) {
                         result.add(itm.getValue());
                     }
 
@@ -217,7 +216,7 @@ public class BookViewController extends WorkbenchMainViewController {
                         itm.getValue().attr(AK_INDEX, indexStr);
 
                         String content = StringHelper.concat(indexStr, " / ", itm.getValue().title);
-                        if (searchedText.isEmpty() || content.contains(searchedText)) {
+                        if (searchText.isEmpty() || content.contains(searchText)) {
                             result.add(itm.getValue());
                         }
 
@@ -227,10 +226,61 @@ public class BookViewController extends WorkbenchMainViewController {
                 return result;
             }
 
+            private final String specialMarker = "#";
+
+            @Override
+            protected void convertSearchTermToCommands(String searchTerm, Collection<Chapter> result) {
+                String chapter = null;
+                boolean lineOrVolume = true;
+                Matcher matcher;
+                if (searchTerm.isBlank()) {
+                    if (!result.isEmpty())
+                        return;
+                } else if ((matcher = Pattern.compile("p(.*)").matcher(searchTerm)).matches()) {
+                    chapter = "p".concat(matcher.group(1));
+                } else if ((matcher = Pattern.compile("p\\. (.*)").matcher(searchTerm)).matches()) {
+                    String str = matcher.group(1);
+                    if (str.matches(".*[a-z]\\d$"))
+                        str = str.substring(0, str.length() - 1).concat("0").concat(str.substring(str.length() - 1));
+                    str = StringHelper.padLeft(str, 7, '0');
+                    chapter = "p".concat(str);
+                } else if ((matcher = Pattern.compile("(\\d+)").matcher(searchTerm)).matches()) {
+                    chapter = matcher.group(1);
+                    lineOrVolume = false;
+                } else {
+                    chapter = "p".concat(searchTerm);
+                }
+                if (null != chapter) {
+                    String title = "《".concat(book.title).concat("》");
+                    if (!lineOrVolume) {
+                        chapter = chapter.length() >= 3 ? chapter.substring(0, 3) : StringHelper.padLeft(chapter, 3, '0');
+                    }
+                    title = StringHelper.concat("转到 >>> 本经：", book.id, " ", title,
+                            (lineOrVolume ? "，行号：" : "，卷号：").concat(chapter));
+                    result.add(new Chapter(specialMarker, chapter, title, null, null));
+                } else {
+                    result.add(new Chapter(specialMarker, null, "??? 使用说明：请使用以下几种格式", null, null));
+                    result.add(new Chapter(specialMarker, null, "格式1：#p0001a01  表示：转到本经行号p0001a01处", null, null));
+                    result.add(new Chapter(specialMarker, null, "格式2：#p. 1a1  表示：转到本经行号p0001a01处", null, null));
+                    result.add(new Chapter(specialMarker, null, "格式3：#1  表示：转到本经第001卷", null, null));
+                    result.add(new Chapter(specialMarker, null, "格式4：#001  表示：转到本经第001卷", null, null));
+                    result.add(new Chapter(specialMarker, null, "格式5：#0001a01  表示：转到本经行号p0001a01处", null, null));
+                }
+            }
+
             @Override
             protected void handleEnterOrDoubleClickActionOnSearchResultList(InputEvent event, Chapter item) {
-                super.handleEnterOrDoubleClickActionOnSearchResultList(event, item);
-                openChapter(item);
+                if (null == item.id)
+                    return;
+                Chapter chapter = item;
+                if (item.type == specialMarker) {
+                    chapter = new Chapter();
+                    chapter.id = "#";
+                    chapter.path = item.id;
+                }
+
+                hide();
+                openChapter(chapter);
             }
 
             @Override
@@ -464,18 +514,22 @@ public class BookViewController extends WorkbenchMainViewController {
     @Override
     protected void onViewportShowing(boolean firstTime) {
         if (firstTime) {
+            // 此处逻辑没问题，但首次加载时会卡，暂时没有有次的办法
+            getViewport().getChildren().add(blockingView);
             getEventBus().addEventHandler(ApplicationEvent.STOPPING, this::handleApplicationEventStopping);
+            // 在线程中执行，使不造成一个空白的阻塞
+            new Thread(() -> FxHelper.runLater(() -> {
+                this.webViewer.getEngine().setUserDataDirectory(UserPrefs.confDir().toFile());
+                // apply theme
+                this.handleThemeChanged(null);
+                this.webViewer.setContextMenuBuilder(this::handleWebViewContextMenu);
+                // init tree
+                this.bookBasic.onViewportShow(true);
+                openChapter(null);
 
-            // apply theme
-            this.handleThemeChanged(null);
-            this.webViewer.getEngine().setUserDataDirectory(UserPrefs.confDir().toFile());
-            this.webViewer.setContextMenuBuilder(this::handleWebViewContextMenu);
-            // init tree
-            this.bookBasic.onViewportShow(true);
-            openChapter(null);
-
-            this.bookmarks.onViewportShow(true);
-            this.favorites.onViewportShow(true);
+                this.bookmarks.onViewportShow(true);
+                this.favorites.onViewportShow(true);
+            })).start();
         } else {
             getEventBus().fireEvent(new BookEvent(BookEvent.VIEW, book, openedChapter));
         }
@@ -503,22 +557,16 @@ public class BookViewController extends WorkbenchMainViewController {
         if (null == this.webViewer)
             return;
         saveUserExperienceData();
-        Chapter temp = this.openedChapter;
         this.openedChapter = null;
-        openChapter(temp);
+        openChapter(null);
     }
 
     private void handleDisplayZoomChanged(GenericEvent event) {
         if (null == this.webViewer)
             return;
-        // save position
         saveUserExperienceData();
-        // reload theme
         this.handleThemeChanged(null);
-        // restore position
-        final String selector = UserPrefs.recents.getString(book.id + ".selector", null);
-        final double percent = UserPrefs.recents.getDouble(book.id + ".percent", 0);
-        webViewer.executeScript(StringHelper.concat("setScrollTop1BySelectors(\"", selector, "\", ", percent, ")"));
+        openChapter(null);
     }
 
     private Chapter openedChapter;
@@ -530,7 +578,7 @@ public class BookViewController extends WorkbenchMainViewController {
         } else {
             chapter = bookBasic.selectChapter(this.book, chapter);
         }
-        if (null == chapter || Objects.equals(openedChapter, chapter)) return;
+        if (null == chapter) return;
 
         if (null != openedChapter && Objects.equals(chapter.path, openedChapter.path)) {
             openedChapter = chapter;
@@ -538,40 +586,37 @@ public class BookViewController extends WorkbenchMainViewController {
             return;
         }
 
-        getViewport().getChildren().add(blockingView);
+        if (!getViewport().getChildren().contains(blockingView))
+            getViewport().getChildren().add(blockingView);
         openedChapter = chapter;
-        new Thread(() -> {
-            final long st = System.currentTimeMillis();
-            final HanLang displayHan = AppContext.getDisplayHanLang();
-            final String htmlDoc = bookDocument.getVolumeHtmlDocument(openedChapter.path, displayHan,
-                    body -> ChineseConvertors.convert(
-                            StringHelper.concat("<body><article>", body.html(), "</article></body>"),
-                            HanLang.hantTW,
-                            displayHan
-                    ),
-                    WebIncl.getIncludePaths()
-            );
-            webViewer.setOnLoadSucceedAction(we -> {
-                // set an interface object named 'dataApi' in the web engine's page
-                final JSObject window = webViewer.executeScript("window");
-                window.setMember("dataApi", dataApi);
-                //
-                gotoChapter(posChapter);
-                //
-                webViewer.removeEventHandler(KeyEvent.KEY_PRESSED, BookViewController.this::handleWebViewShortcuts);
-                webViewer.addEventHandler(KeyEvent.KEY_PRESSED, BookViewController.this::handleWebViewShortcuts);
-                webViewer.widthProperty().removeListener(BookViewController.this::handleWebViewBodyResize);
-                webViewer.widthProperty().addListener(BookViewController.this::handleWebViewBodyResize);
-                DevtoolHelper.LOG.info("load htmlDocFile used time: " + (System.currentTimeMillis() - st) + ", " + htmlDoc);
-                Platform.runLater(() -> {
-                    getEventBus().fireEvent(new BookEvent(BookEvent.VIEW, book));
-                    getViewport().getChildren().remove(blockingView);
-                });
-            });
+        final long st = System.currentTimeMillis();
+        final HanLang displayHan = AppContext.getDisplayHanLang();
+        final String htmlDoc = bookDocument.getVolumeHtmlDocument(openedChapter.path, displayHan,
+                body -> ChineseConvertors.convert(
+                        StringHelper.concat("<body><article>", body.html(), "</article></body>"),
+                        HanLang.hantTW,
+                        displayHan
+                ),
+                WebIncl.getIncludePaths()
+        );
+        webViewer.setOnLoadSucceedAction(we -> {
+            // set an interface object named 'dataApi' in the web engine's page
+            final JSObject window = webViewer.executeScript("window");
+            window.setMember("dataApi", dataApi);
+            //
+            gotoChapter(posChapter);
+            //
+            webViewer.removeEventHandler(KeyEvent.KEY_PRESSED, BookViewController.this::handleWebViewShortcuts);
+            webViewer.addEventHandler(KeyEvent.KEY_PRESSED, BookViewController.this::handleWebViewShortcuts);
+            webViewer.widthProperty().removeListener(BookViewController.this::handleWebViewBodyResize);
+            webViewer.widthProperty().addListener(BookViewController.this::handleWebViewBodyResize);
+            DevtoolHelper.LOG.info("load htmlDocFile used time: " + (System.currentTimeMillis() - st) + ", " + htmlDoc);
+            getViewport().getChildren().remove(blockingView);
+            getEventBus().fireEvent(new BookEvent(BookEvent.VIEW, book));
+        });
 
-            Platform.runLater(() -> webViewer.getEngine().load(Path.of(htmlDoc).toUri().toString()));
-            UserPrefs.recents.setProperty(book.id + ".chapter", openedChapter.id);
-        }).start();
+        webViewer.getEngine().load(Path.of(htmlDoc).toUri().toString());
+        UserPrefs.recents.setProperty(book.id + ".chapter", openedChapter.id);
     }
 
     private void gotoChapter(Chapter posChapter) {
@@ -602,6 +647,7 @@ public class BookViewController extends WorkbenchMainViewController {
                 }
             }
         } catch (Throwable ignored) {
+            ignored.printStackTrace();
         }
         // 避免在阅读视图时焦点仍然在TAB上（此时快捷键等不起作用）
         webViewer.getViewer().requestFocus();

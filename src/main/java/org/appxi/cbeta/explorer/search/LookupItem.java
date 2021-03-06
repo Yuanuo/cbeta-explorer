@@ -15,11 +15,16 @@ public record LookupItem(boolean stdBook, String bookId, String bookTitle,
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
-        sb.append(bookId).append(" / ").append(bookTitle);
+        if (null != bookId)
+            sb.append(" / ").append(bookId);
+        if (null != bookTitle)
+            sb.append(" / ").append(bookTitle);
         if (null != chapterTitle)
             sb.append(" / ").append(chapterTitle);
         if (null != authorInfo)
             sb.append(" / ").append(authorInfo);
-        return sb.toString();
+
+        final String str = sb.toString();
+        return str.length() > 3 ? str.substring(3) : str;
     }
 }

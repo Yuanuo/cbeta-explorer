@@ -1,7 +1,5 @@
 package org.appxi.cbeta.explorer;
 
-import javafx.application.Platform;
-import javafx.scene.web.WebView;
 import org.appxi.cbeta.explorer.dao.DaoHelper;
 import org.appxi.cbeta.explorer.dao.DaoService;
 import org.appxi.cbeta.explorer.model.BookList;
@@ -49,11 +47,6 @@ public class AppWorkbench extends WorkbenchApplication {
         }).whenComplete((o, err) -> {
             if (null != err) FxHelper.alertError(this, err);
         });
-    }
-
-    @Override
-    protected void started() {
-        Platform.runLater(WebView::new);
     }
 
     @Override

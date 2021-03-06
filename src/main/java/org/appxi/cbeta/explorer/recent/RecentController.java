@@ -70,13 +70,13 @@ public class RecentController extends WorkbenchSideViewController {
                     swapRecentViewSelected.value = addedController;
             }
         }));
-        getEventBus().addEventHandler(ApplicationEvent.STARTED, event -> {
+        getEventBus().addEventHandler(ApplicationEvent.STARTED, event -> new Thread(() -> {
             if (!swapRecentViews.isEmpty()) {
                 swapRecentViews.forEach(ViewController::setupInitialize);
                 if (null != swapRecentViewSelected.value)
                     FxHelper.runLater(() -> getPrimaryViewport().selectMainView(swapRecentViewSelected.value.viewId));
             }
-        });
+        }).start());
     }
 
     private void handleToSaveOrUpdateRecentBook(CbetaBook book) {

@@ -19,8 +19,10 @@ import org.appxi.javafx.workbench.views.WorkbenchSideViewController;
 import org.appxi.prefs.UserPrefs;
 import org.appxi.tome.cbeta.CbetaBook;
 import org.appxi.tome.model.Chapter;
+import org.appxi.util.DigestHelper;
 import org.appxi.util.StringHelper;
 
+import java.nio.charset.Charset;
 import java.util.Objects;
 import java.util.function.Predicate;
 
@@ -85,6 +87,41 @@ public class BookBasicController extends WorkbenchSideViewController {
         RawHolder<TreeViewEx<Chapter>> targetTree = new RawHolder<>();
         RawHolder<TreeItem<Chapter>> targetTreeItem = new RawHolder<>();
 
+        // 此处用于根据#命令时指定的行号或卷号找到真正的（Volume）path，然后再在后面匹配到树形菜单上的对应位置
+        if (null != chapter && "#".equals(chapter.id) && null != chapter.path) {
+            String path = chapter.path;
+//            chapter.path = null;// reset
+            // 按指定行号处理
+            if (path.startsWith("p")) {
+                final String pathExpr = "#".concat(path);
+                RawHolder<Chapter> found = new RawHolder<>(), prev = new RawHolder<>();
+                TreeHelper.walkLeafs(tocsTree.getRoot(), itm -> {
+                    if (null == itm.getValue() || null == itm.getValue().start) return false;
+                    int compared = itm.getValue().start.toString().compareToIgnoreCase(pathExpr);
+                    if (compared > 0) {
+                        found.value = null != prev.value ? prev.value : itm.getValue();
+                        return true;
+                    } else if (compared == 0) {
+                        found.value = itm.getValue();
+                        return true;
+                    }
+                    prev.value = itm.getValue();
+                    return false;
+                });
+                if (null != found.value) {
+                    chapter.path = found.value.path;
+                }
+                chapter.attr("position.selector", pathExpr);
+            } else { // 按指定卷号处理
+                final String pathExpr = path.concat(".xml");
+                Chapter found = TreeHelper.findFirstValue(this.volsTree.getRoot(),
+                        itm -> null != itm.getValue() && null != itm.getValue().path && itm.getValue().path.endsWith(pathExpr));
+                if (null != found) {
+                    chapter.path = found.path;
+                }
+            }
+        }
+
         if (null != chapter && null != chapter.path) {
             Predicate<TreeItem<Chapter>> findByPath = itm ->
                     itm.isLeaf() && chapter.path.equals(itm.getValue().path)
@@ -94,7 +131,18 @@ public class BookBasicController extends WorkbenchSideViewController {
         if (null == targetTreeItem.value) {
             final String lastChapterId = UserPrefs.recents.getString(book.id + ".chapter", null);
             if (StringHelper.isNotBlank(lastChapterId)) {
-                Predicate<TreeItem<Chapter>> findById = itm -> Objects.equals(lastChapterId, itm.getValue().id);
+                final Predicate<TreeItem<Chapter>> findById;
+                if (lastChapterId.contains("-"))
+                    findById = itm -> {
+                        if (null == itm.getValue() || null == itm.getValue().path)
+                            return false;
+                        final String oldStyleId = DigestHelper.crc32c(
+                                itm.getValue().path.concat(null == itm.getValue().start ? "" : itm.getValue().start.toString()),
+                                itm.getValue().title,
+                                Charset.forName("GBK"));
+                        return lastChapterId.equals(book.id.concat("-").concat(oldStyleId));
+                    };
+                else findById = itm -> Objects.equals(lastChapterId, itm.getValue().id);
                 detectAvailTarget(targetPane, targetTree, targetTreeItem, findById);
             }
         }

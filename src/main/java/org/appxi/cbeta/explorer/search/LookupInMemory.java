@@ -15,17 +15,17 @@ class LookupInMemory implements LookupProvider {
 
     void setupInitialize() {
         CompletableFuture.runAsync(() -> {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException ignored) {
+            }
             long st = System.currentTimeMillis();
-            Collection<CbetaBook> books = BookList.books.getDataMap().values();
+            final Collection<CbetaBook> books = new ArrayList<>(BookList.books.getDataMap().values());
             books.parallelStream().forEachOrdered(book -> DATABASE.add(new LookupItem(
                     book.path.startsWith("toc/"),
                     book.id, book.title,
                     null, null,
                     book.authorInfo, null)));
-            try {
-                Thread.sleep(300);
-            } catch (InterruptedException ignored) {
-            }
             books.parallelStream().forEachOrdered(book -> {
                 final Collection<LookupItem> items = new ArrayList<>();
                 final boolean stdBook = book.path.startsWith("toc/");

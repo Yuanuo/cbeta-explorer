@@ -50,13 +50,13 @@ public abstract class BookdataController extends WorkbenchSideViewController {
         if (null == this.filterByBook) {
             getEventBus().addEventHandler(BookdataEvent.CREATED, event -> {
                 if (event.data.type == dataType && hasAttr(AK_FIRST_TIME)) {
-                    Platform.runLater(() -> listView.getItems().add(0, event.data));
+                    FxHelper.runLater(() -> listView.getItems().add(0, event.data));
                 }
             });
 
             getEventBus().addEventHandler(BookdataEvent.REMOVED, event -> {
                 if (event.data.type == dataType) {
-                    Platform.runLater(() -> listView.getItems().remove(event.data));
+                    FxHelper.runLater(() -> listView.getItems().remove(event.data));
                 }
             });
         }

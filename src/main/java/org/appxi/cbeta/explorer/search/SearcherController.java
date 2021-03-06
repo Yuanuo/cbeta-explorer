@@ -32,6 +32,7 @@ import org.appxi.javafx.control.BlockingView;
 import org.appxi.javafx.control.BlockingViewEx;
 import org.appxi.javafx.control.ListViewExt;
 import org.appxi.javafx.control.TabPaneExt;
+import org.appxi.javafx.helper.FxHelper;
 import org.appxi.javafx.helper.ToastHelper;
 import org.appxi.javafx.workbench.WorkbenchApplication;
 import org.appxi.javafx.workbench.views.WorkbenchMainViewController;
@@ -131,7 +132,7 @@ public class SearcherController extends WorkbenchMainViewController {
     }
 
     private void handleEventOnIndexingToBlocking(ProgressEvent event) {
-        Platform.runLater(() -> {
+        FxHelper.runLater(() -> {
             if (null == indexingView) {
                 indexingView = new BlockingViewEx("正在建立索引\n请等待索引任务完成后再搜索\n索引期间可正常使用阅读功能");
                 getViewport().getChildren().add(indexingView);
@@ -304,9 +305,7 @@ public class SearcherController extends WorkbenchMainViewController {
             }
             getViewport().getChildren().remove(blockingView);
         };
-        if (Platform.isFxApplicationThread())
-            runnable.run();
-        else Platform.runLater(runnable);
+        FxHelper.runLater(runnable);
     }
 
     private Node createResultPageView(int pageIdx) {
