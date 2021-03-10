@@ -4,6 +4,8 @@ import de.jensd.fx.glyphs.materialicons.MaterialIcon;
 import de.jensd.fx.glyphs.materialicons.MaterialIconView;
 import javafx.scene.control.Accordion;
 import javafx.scene.control.TitledPane;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import org.appxi.javafx.workbench.WorkbenchApplication;
 import org.appxi.javafx.workbench.views.WorkbenchSideViewController;
 import org.appxi.util.StringHelper;
@@ -53,6 +55,7 @@ public class WidgetsController extends WorkbenchSideViewController {
         }
 
         final Accordion accordion = new Accordion(widgetList.toArray(new TitledPane[0]));
+        VBox.setVgrow(accordion, Priority.ALWAYS);
         accordion.expandedPaneProperty().addListener((o, ov, pane) -> {
             if (null == pane) return;
             Widget widget = (Widget) pane.getUserData();
@@ -73,5 +76,6 @@ public class WidgetsController extends WorkbenchSideViewController {
 
     private void createWidgetsOnce() {
         this.widgets.add(new ImplEpubRenamer(this));
+        this.widgets.add(new ImplHanLangConvertor(this));
     }
 }
