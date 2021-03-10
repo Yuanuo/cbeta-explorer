@@ -31,6 +31,11 @@ public class SearchController extends WorkbenchSideToolController {
     }
 
     @Override
+    public String createToolTooltipText() {
+        return viewName.concat(" (Ctrl+H)");
+    }
+
+    @Override
     public Node createToolIconGraphic(boolean sideToolOrElseViewTool) {
         this.attr(Pos.class, Pos.CENTER_LEFT);
         return new MaterialIconView(MaterialIcon.SEARCH);

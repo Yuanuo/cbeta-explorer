@@ -27,6 +27,11 @@ public class LookupController extends WorkbenchSideToolController {
     }
 
     @Override
+    public String createToolTooltipText() {
+        return viewName.concat(" (Ctrl+G)");
+    }
+
+    @Override
     public Node createToolIconGraphic(boolean sideToolOrElseViewTool) {
         this.attr(Pos.class, Pos.CENTER_LEFT);
         return new MaterialIconView(MaterialIcon.NEAR_ME);

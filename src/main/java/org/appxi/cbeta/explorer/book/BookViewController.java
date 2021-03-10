@@ -86,6 +86,13 @@ public class BookViewController extends WorkbenchMainViewController {
     }
 
     @Override
+    public String createToolTooltipText() {
+        if (StringHelper.isBlank(book.authorInfo))
+            return book.title;
+        return book.title.concat("\n").concat(book.authorInfo);
+    }
+
+    @Override
     public Node createToolIconGraphic(boolean sideToolOrElseViewTool) {
         return null;
     }
