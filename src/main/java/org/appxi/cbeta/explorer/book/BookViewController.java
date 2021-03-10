@@ -2,8 +2,10 @@ package org.appxi.cbeta.explorer.book;
 
 import de.jensd.fx.glyphs.materialicons.MaterialIcon;
 import de.jensd.fx.glyphs.materialicons.MaterialIconView;
+import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.collections.ObservableList;
+import javafx.event.EventHandler;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.control.*;
@@ -57,6 +59,11 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class BookViewController extends WorkbenchMainViewController {
+    private final EventHandler<ThemeEvent> handleThemeChanged = this::handleThemeChanged;
+    private final EventHandler<ApplicationEvent> handleApplicationEventStopping = this::handleApplicationEventStopping;
+    private final EventHandler<GenericEvent> handleDisplayHanChanged = this::handleDisplayHanChanged;
+    private final EventHandler<GenericEvent> handleDisplayZoomChanged = this::handleDisplayZoomChanged;
+    private final InvalidationListener handleWebViewBodyResize = this::handleWebViewBodyResize;
     private final BookDocument bookDocument;
     public final CbetaBook book;
 
@@ -91,6 +98,7 @@ public class BookViewController extends WorkbenchMainViewController {
         viewport.getChildren().add(borderPane);
         //
         this.webViewer = new WebViewer();
+        this.webViewer.addEventHandler(KeyEvent.KEY_PRESSED, this::handleWebViewShortcuts);
         borderPane.setCenter(this.webViewer);
 
         this.toolbar = new ToolBarEx();
@@ -506,9 +514,9 @@ public class BookViewController extends WorkbenchMainViewController {
 
     @Override
     public void setupInitialize() {
-        getEventBus().addEventHandler(ThemeEvent.CHANGED, this::handleThemeChanged);
-        getEventBus().addEventHandler(GenericEvent.DISPLAY_HAN_CHANGED, this::handleDisplayHanChanged);
-        getEventBus().addEventHandler(GenericEvent.DISPLAY_ZOOM_CHANGED, this::handleDisplayZoomChanged);
+        getEventBus().addEventHandler(ThemeEvent.CHANGED, handleThemeChanged);
+        getEventBus().addEventHandler(GenericEvent.DISPLAY_HAN_CHANGED, handleDisplayHanChanged);
+        getEventBus().addEventHandler(GenericEvent.DISPLAY_ZOOM_CHANGED, handleDisplayZoomChanged);
     }
 
     @Override
@@ -516,7 +524,7 @@ public class BookViewController extends WorkbenchMainViewController {
         if (firstTime) {
             // 此处逻辑没问题，但首次加载时会卡，暂时没有有次的办法
             getViewport().getChildren().add(blockingView);
-            getEventBus().addEventHandler(ApplicationEvent.STOPPING, this::handleApplicationEventStopping);
+            getEventBus().addEventHandler(ApplicationEvent.STOPPING, handleApplicationEventStopping);
             // 在线程中执行，使不造成一个空白的阻塞
             new Thread(() -> FxHelper.runLater(() -> {
                 this.webViewer.getEngine().setUserDataDirectory(UserPrefs.confDir().toFile());
@@ -546,10 +554,10 @@ public class BookViewController extends WorkbenchMainViewController {
     protected void onViewportClosing() {
         super.onViewportClosing();
         saveUserExperienceData();
-        getEventBus().removeEventHandler(ThemeEvent.CHANGED, this::handleThemeChanged);
-        getEventBus().removeEventHandler(ApplicationEvent.STOPPING, this::handleApplicationEventStopping);
-        getEventBus().removeEventHandler(GenericEvent.DISPLAY_HAN_CHANGED, this::handleDisplayHanChanged);
-        getEventBus().removeEventHandler(GenericEvent.DISPLAY_ZOOM_CHANGED, this::handleDisplayZoomChanged);
+        getEventBus().removeEventHandler(ThemeEvent.CHANGED, handleThemeChanged);
+        getEventBus().removeEventHandler(ApplicationEvent.STOPPING, handleApplicationEventStopping);
+        getEventBus().removeEventHandler(GenericEvent.DISPLAY_HAN_CHANGED, handleDisplayHanChanged);
+        getEventBus().removeEventHandler(GenericEvent.DISPLAY_ZOOM_CHANGED, handleDisplayZoomChanged);
         getEventBus().fireEvent(new BookEvent(BookEvent.CLOSE, this.book, openedChapter));
     }
 
@@ -606,10 +614,8 @@ public class BookViewController extends WorkbenchMainViewController {
             //
             gotoChapter(posChapter);
             //
-            webViewer.removeEventHandler(KeyEvent.KEY_PRESSED, BookViewController.this::handleWebViewShortcuts);
-            webViewer.addEventHandler(KeyEvent.KEY_PRESSED, BookViewController.this::handleWebViewShortcuts);
-            webViewer.widthProperty().removeListener(BookViewController.this::handleWebViewBodyResize);
-            webViewer.widthProperty().addListener(BookViewController.this::handleWebViewBodyResize);
+            webViewer.widthProperty().removeListener(handleWebViewBodyResize);
+            webViewer.widthProperty().addListener(handleWebViewBodyResize);
             DevtoolHelper.LOG.info("load htmlDocFile used time: " + (System.currentTimeMillis() - st) + ", " + htmlDoc);
             getViewport().getChildren().remove(blockingView);
             getEventBus().fireEvent(new BookEvent(BookEvent.VIEW, book));
@@ -682,6 +688,7 @@ public class BookViewController extends WorkbenchMainViewController {
             }
             // Ctrl + RIGHT
             else if (event.getCode() == KeyCode.RIGHT) {
+                System.out.println("Ctrl + RIGHT");
                 gotoNext.fire();
                 event.consume();
             }

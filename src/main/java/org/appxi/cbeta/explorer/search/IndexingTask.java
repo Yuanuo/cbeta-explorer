@@ -1,5 +1,6 @@
 package org.appxi.cbeta.explorer.search;
 
+import javafx.event.EventHandler;
 import org.appxi.cbeta.explorer.AppContext;
 import org.appxi.cbeta.explorer.dao.PiecesRepository;
 import org.appxi.cbeta.explorer.event.ProgressEvent;
@@ -18,6 +19,7 @@ import org.appxi.tome.cbeta.Tripitaka;
 import java.util.Objects;
 
 public class IndexingTask implements Runnable {
+    private final EventHandler<ApplicationEvent> handleEventToBreaking = this::handleEventToBreaking;
 
     final DesktopApplication application;
 
@@ -58,7 +60,7 @@ public class IndexingTask implements Runnable {
         final IntHolder indexSteps = new IntHolder(0);
         bookTree.getDataTree().traverse((level, node, book) -> indexSteps.value++);
         //
-        application.eventBus.addEventHandler(ApplicationEvent.STOPPING, this::handleEventToBreaking);
+        application.eventBus.addEventHandler(ApplicationEvent.STOPPING, handleEventToBreaking);
         try {
             final IntHolder indexStep = new IntHolder(0);
             bookTree.getDataTree().traverse((level, node, book) -> {
@@ -99,7 +101,7 @@ public class IndexingTask implements Runnable {
             UserPrefs.prefs.removeProperty("indexing.ver");
             UserPrefs.prefs.removeProperty("indexing.pos");
             // unbind
-            application.eventBus.removeEventHandler(ApplicationEvent.STOPPING, this::handleEventToBreaking);
+            application.eventBus.removeEventHandler(ApplicationEvent.STOPPING, handleEventToBreaking);
         } catch (RuntimeException ignored) {
         }
     }

@@ -2,10 +2,10 @@ package org.appxi.cbeta.explorer.search;
 
 import de.jensd.fx.glyphs.materialicons.MaterialIcon;
 import de.jensd.fx.glyphs.materialicons.MaterialIconView;
-import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -49,6 +49,7 @@ import java.util.stream.Collectors;
 
 public class SearcherController extends WorkbenchMainViewController {
     static final int PAGE_SIZE = 10;
+    private final EventHandler<ProgressEvent> handleEventOnIndexingToBlocking = this::handleEventOnIndexingToBlocking;
 
     public SearcherController(String viewId, WorkbenchApplication application) {
         super(viewId, "搜索", application);
@@ -128,7 +129,7 @@ public class SearcherController extends WorkbenchMainViewController {
         viewport.getChildren().addAll(splitPane, inputView);
 
         //
-        getEventBus().addEventHandler(ProgressEvent.INDEXING, this::handleEventOnIndexingToBlocking);
+        getEventBus().addEventHandler(ProgressEvent.INDEXING, handleEventOnIndexingToBlocking);
     }
 
     private void handleEventOnIndexingToBlocking(ProgressEvent event) {
@@ -181,7 +182,7 @@ public class SearcherController extends WorkbenchMainViewController {
     @Override
     protected void onViewportClosing() {
         super.onViewportClosing();
-        getEventBus().removeEventHandler(ProgressEvent.INDEXING, this::handleEventOnIndexingToBlocking);
+        getEventBus().removeEventHandler(ProgressEvent.INDEXING, handleEventOnIndexingToBlocking);
     }
 
     boolean isNeverSearched() {
