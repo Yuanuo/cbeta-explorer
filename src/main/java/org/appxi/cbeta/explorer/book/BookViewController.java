@@ -527,6 +527,11 @@ public class BookViewController extends WorkbenchMainViewController {
     }
 
     @Override
+    protected String getMainTitle() {
+        return StringHelper.isBlank(book.authorInfo) ? book.title : book.title.concat(" -- ").concat(book.authorInfo);
+    }
+
+    @Override
     protected void onViewportShowing(boolean firstTime) {
         if (firstTime) {
             // 此处逻辑没问题，但首次加载时会卡，暂时没有有次的办法

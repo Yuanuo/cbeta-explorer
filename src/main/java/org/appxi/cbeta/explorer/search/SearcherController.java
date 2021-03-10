@@ -228,8 +228,7 @@ public class SearcherController extends WorkbenchMainViewController {
         }
         if (null == blockingView)
             blockingView = new BlockingView();
-        final String viewTitle = "搜索：".concat(inputText.isBlank() ? "*" : inputText);
-        setViewTitle(viewTitle);
+        setTitles("搜索：".concat(inputText.isBlank() ? "*" : inputText));
         getViewport().getChildren().add(blockingView);
         // 使用线程，避免UI阻塞假死
         new Thread(() -> handleSearchingImpl(inputText)).start();
