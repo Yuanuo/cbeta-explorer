@@ -73,7 +73,7 @@ public class LookupController extends WorkbenchSideToolController {
             lookupView.search(text);
     }
 
-    private class LookupViewImpl extends LookupViewEx<LookupItem> {
+    private class LookupViewImpl extends LookupViewExt<LookupItem> {
         private final String specialMarker = "#";
 
         public LookupViewImpl() {

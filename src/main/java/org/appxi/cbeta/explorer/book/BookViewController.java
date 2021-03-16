@@ -26,7 +26,7 @@ import org.appxi.cbeta.explorer.event.BookEvent;
 import org.appxi.cbeta.explorer.event.BookdataEvent;
 import org.appxi.cbeta.explorer.event.GenericEvent;
 import org.appxi.cbeta.explorer.event.SearcherEvent;
-import org.appxi.cbeta.explorer.search.LookupViewEx;
+import org.appxi.cbeta.explorer.search.LookupViewExt;
 import org.appxi.hanlp.convert.ChineseConvertors;
 import org.appxi.holder.IntHolder;
 import org.appxi.javafx.control.*;
@@ -176,7 +176,7 @@ public class BookViewController extends WorkbenchMainViewController {
         gotoMenu.getStyleClass().add("goto-menu");
         gotoMenu.setGraphic(new MaterialIconView(MaterialIcon.NEAR_ME));
         gotoMenu.setTooltip(new Tooltip("转到 (Ctrl+T)"));
-        final LookupViewEx<Chapter> lookupView = new LookupViewEx<>(viewport) {
+        final LookupViewExt<Chapter> lookupView = new LookupViewExt<>(viewport) {
             private final Object AK_INDEX = new Object();
 
             @Override
