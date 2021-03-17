@@ -2,17 +2,20 @@ package org.appxi.cbeta.explorer.book;
 
 import de.jensd.fx.glyphs.materialicons.MaterialIcon;
 import de.jensd.fx.glyphs.materialicons.MaterialIconView;
-import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.event.Event;
-import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import org.appxi.cbeta.explorer.DisplayHelper;
 import org.appxi.cbeta.explorer.event.BookEvent;
+import org.appxi.cbeta.explorer.event.GenericEvent;
 import org.appxi.cbeta.explorer.event.SearcherEvent;
 import org.appxi.cbeta.explorer.event.StatusEvent;
 import org.appxi.cbeta.explorer.model.BookList;
 import org.appxi.cbeta.explorer.model.BookTree;
 import org.appxi.javafx.control.SeparatorMenuItemEx;
+import org.appxi.javafx.control.ToolBarEx;
 import org.appxi.javafx.control.TreeViewExt;
 import org.appxi.javafx.desktop.ApplicationEvent;
 import org.appxi.javafx.helper.FxHelper;
@@ -25,32 +28,25 @@ import org.appxi.tome.cbeta.BookTreeMode;
 import org.appxi.tome.cbeta.CbetaBook;
 import org.appxi.tome.model.Chapter;
 import org.appxi.util.DevtoolHelper;
+import org.appxi.util.StringHelper;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import java.util.Optional;
 
 public class BookListController extends WorkbenchSideViewController {
     private final ToggleGroup treeViewModeGroup = new ToggleGroup();
     private TreeViewExt<CbetaBook> treeView;
 
     public BookListController(WorkbenchApplication application) {
-        super("BOOKS", "典籍", application);
-    }
-
-    @Override
-    public Node createToolIconGraphic(boolean sideToolOrElseViewTool) {
-        return new MaterialIconView(MaterialIcon.LOCAL_LIBRARY);
-    }
-
-    @Override
-    protected boolean isToolbarEnable() {
-        return true;
+        super("BOOKS", application);
+        this.setTitles("典籍");
+        this.viewIcon.set(new MaterialIconView(MaterialIcon.LOCAL_LIBRARY));
     }
 
     @Override
     protected void onViewportInitOnce() {
         final Button btnSearch = new Button();
-        btnSearch.setTooltip(new Tooltip("快速查找书籍（Ctrl+G）"));
+        btnSearch.setTooltip(new Tooltip("快捷检索（Ctrl+G）"));
         btnSearch.setGraphic(new MaterialIconView(MaterialIcon.SEARCH));
         btnSearch.setOnAction(event -> getEventBus().fireEvent(SearcherEvent.ofLookup(null)));
 
@@ -79,10 +75,39 @@ public class BookListController extends WorkbenchSideViewController {
         //
         btnMore.getItems().addAll(new SeparatorMenuItemEx("目录模式"), mCatalog, mSimple, mAdvance);
         //
-        this.toolbar.addRight(btnSearch, btnLocate, btnMore);
+        final ToolBarEx toolbar = new ToolBarEx();
+        HBox.setHgrow(toolbar, Priority.ALWAYS);
+        toolbar.addRight(btnSearch, btnLocate, btnMore);
+        this.headBar.getChildren().add(toolbar);
         //
         this.treeView = new TreeViewExt<>((e, t) -> getEventBus().fireEvent(new BookEvent(BookEvent.OPEN, t.getValue())));
         this.treeView.setShowRoot(false);
+        this.treeView.setCellFactory(v -> new TreeCell<>() {
+            CbetaBook updatedItem;
+
+            @Override
+            protected void updateItem(CbetaBook item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    updatedItem = null;
+                    this.setText(null);
+                    this.setTooltip(null);
+                    return;
+                }
+                if (item == updatedItem)
+                    return;//
+                updatedItem = item;
+                String text = item.title;
+                if (null != item.path && item.numberVols > 0) {
+                    text = StringHelper.concat(text, "（", item.numberVols, "卷）");
+                }
+                this.setText(DisplayHelper.displayText(text));
+                //
+                if (null != item.path && StringHelper.isNotBlank(item.authorInfo))
+                    this.setTooltip(new Tooltip(DisplayHelper.displayText(item.authorInfo)));
+                else this.setTooltip(null);
+            }
+        });
         this.viewportVBox.getChildren().add(this.treeView);
     }
 
@@ -114,7 +139,10 @@ public class BookListController extends WorkbenchSideViewController {
             }
         });
         //
-        getEventBus().addEventHandler(ApplicationEvent.STARTED, event -> getEventBus().fireEvent(new StatusEvent(StatusEvent.BOOKS_READY)));
+        getEventBus().addEventHandler(ApplicationEvent.STARTED,
+                event -> getEventBus().fireEvent(new StatusEvent(StatusEvent.BOOKS_READY)));
+        getEventBus().addEventHandler(GenericEvent.DISPLAY_HAN_CHANGED,
+                event -> Optional.ofNullable(this.treeView).ifPresent(TreeView::refresh));
     }
 
     private void handleEventToOpenBook(Event event, CbetaBook book, Chapter chapter) {
@@ -147,7 +175,7 @@ public class BookListController extends WorkbenchSideViewController {
     }
 
     @Override
-    public void onViewportShow(boolean firstTime) {
+    public void onViewportShowing(boolean firstTime) {
         if (firstTime && booksReadyHandled) {
             // init now
             lazyInitTreeView();
@@ -157,6 +185,10 @@ public class BookListController extends WorkbenchSideViewController {
         } else {
             // do nothing
         }
+    }
+
+    @Override
+    public void onViewportHiding() {
     }
 
     private boolean firstTimeShowHandled, booksReadyHandled;

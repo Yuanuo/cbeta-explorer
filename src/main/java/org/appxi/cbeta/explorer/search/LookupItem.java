@@ -2,7 +2,7 @@ package org.appxi.cbeta.explorer.search;
 
 import org.appxi.util.StringHelper;
 
-public record LookupItem(boolean stdBook, String bookId, String bookTitle,
+public record LookupItem(boolean stdBook, String bookId, int bookVols, String bookTitle,
                          String chapter, String chapterTitle,
                          String authorInfo, String extra) {
 
@@ -19,9 +19,11 @@ public record LookupItem(boolean stdBook, String bookId, String bookTitle,
             sb.append(" / ").append(bookId);
         if (null != bookTitle)
             sb.append(" / ").append(bookTitle);
+        if (bookVols > 0)
+            sb.append("（").append(bookVols).append("卷）");
         if (null != chapterTitle)
             sb.append(" / ").append(chapterTitle);
-        if (null != authorInfo)
+        if (StringHelper.isNotBlank(authorInfo))
             sb.append(" / ").append(authorInfo);
 
         final String str = sb.toString();

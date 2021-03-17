@@ -2,9 +2,7 @@ package org.appxi.cbeta.explorer.search;
 
 import de.jensd.fx.glyphs.materialicons.MaterialIcon;
 import de.jensd.fx.glyphs.materialicons.MaterialIconView;
-import javafx.application.Platform;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.Tab;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
@@ -27,18 +25,10 @@ import java.util.function.Supplier;
 public class SearchController extends WorkbenchSideToolController {
 
     public SearchController(WorkbenchApplication application) {
-        super("SEARCH", "搜索", application);
-    }
-
-    @Override
-    public String createToolTooltipText() {
-        return viewName.concat(" (Ctrl+H)");
-    }
-
-    @Override
-    public Node createToolIconGraphic(boolean sideToolOrElseViewTool) {
+        super("SEARCH", application);
+        this.setTitles("搜索", "全文检索 (Ctrl+H)");
         this.attr(Pos.class, Pos.CENTER_LEFT);
-        return new MaterialIconView(MaterialIcon.SEARCH);
+        this.viewIcon.set(new MaterialIconView(MaterialIcon.SEARCH));
     }
 
     @Override
@@ -78,7 +68,7 @@ public class SearchController extends WorkbenchSideToolController {
     }
 
     @Override
-    public void onViewportShow(boolean firstTime) {
+    public void onViewportShowing(boolean firstTime) {
         openSearcherWithText(null);
     }
 

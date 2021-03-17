@@ -3,7 +3,6 @@ package org.appxi.cbeta.explorer.home;
 import de.jensd.fx.glyphs.materialicons.MaterialIcon;
 import de.jensd.fx.glyphs.materialicons.MaterialIconView;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
@@ -21,18 +20,19 @@ import org.appxi.prefs.UserPrefs;
 
 public class AboutController extends WorkbenchSideToolController {
     public AboutController(WorkbenchApplication application) {
-        super("ABOUT", "关于", application);
+        super("ABOUT", application);
+        this.setTitles("关于");
+        this.viewIcon.set(new MaterialIconView(MaterialIcon.INFO_OUTLINE));
     }
 
     @Override
-    public Node createToolIconGraphic(boolean sideToolOrElseViewTool) {
-        return new MaterialIconView(MaterialIcon.INFO_OUTLINE);
+    public void setupInitialize() {
     }
 
     @Override
-    public void onViewportShow(boolean firstTime) {
+    public void onViewportShowing(boolean firstTime) {
         final Alert alert = new Alert(Alert.AlertType.NONE);
-        alert.setTitle(viewName);
+        alert.setTitle(viewTitle.get());
 
         final Label head = new Label(AppInfo.NAME, new ImageView(getClass().getResource("/appxi/cbetaExplorer/icons/icon-64.png").toExternalForm()));
         head.setStyle("-fx-font-size: 2em; -fx-padding: 1em 0;");

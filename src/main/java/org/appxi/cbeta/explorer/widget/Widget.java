@@ -15,5 +15,5 @@ abstract class Widget extends Attributes {
 
     abstract Node getViewport();
 
-    abstract void onViewportShow(boolean firstTime);
+    abstract void onViewportShowing(boolean firstTime);
 }

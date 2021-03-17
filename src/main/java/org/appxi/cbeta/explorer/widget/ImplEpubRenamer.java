@@ -170,7 +170,7 @@ class ImplEpubRenamer extends Widget {
     }
 
     @Override
-    void onViewportShow(boolean firstTime) {
+    void onViewportShowing(boolean firstTime) {
 
     }
 }

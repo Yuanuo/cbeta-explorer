@@ -2,10 +2,13 @@ package org.appxi.cbeta.explorer.recent;
 
 import de.jensd.fx.glyphs.materialicons.MaterialIcon;
 import de.jensd.fx.glyphs.materialicons.MaterialIconView;
-import javafx.scene.Node;
+import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
+import javafx.scene.control.TreeView;
+import org.appxi.cbeta.explorer.DisplayHelper;
 import org.appxi.cbeta.explorer.book.BookViewController;
 import org.appxi.cbeta.explorer.event.BookEvent;
+import org.appxi.cbeta.explorer.event.GenericEvent;
 import org.appxi.cbeta.explorer.model.BookList;
 import org.appxi.holder.RawHolder;
 import org.appxi.javafx.control.TreeViewEx;
@@ -14,7 +17,7 @@ import org.appxi.javafx.desktop.ApplicationEvent;
 import org.appxi.javafx.helper.FxHelper;
 import org.appxi.javafx.views.ViewController;
 import org.appxi.javafx.workbench.WorkbenchApplication;
-import org.appxi.javafx.workbench.WorkbenchViewController;
+import org.appxi.javafx.workbench.views.WorkbenchMainViewController;
 import org.appxi.javafx.workbench.views.WorkbenchSideViewController;
 import org.appxi.prefs.Preferences;
 import org.appxi.prefs.PreferencesInProperties;
@@ -22,6 +25,7 @@ import org.appxi.prefs.UserPrefs;
 import org.appxi.timeago.TimeAgo;
 import org.appxi.tome.cbeta.CbetaBook;
 import org.appxi.util.NumberHelper;
+import org.appxi.util.StringHelper;
 
 import java.util.*;
 
@@ -30,12 +34,9 @@ public class RecentController extends WorkbenchSideViewController {
     private TreeViewEx<Object> treeView;
 
     public RecentController(WorkbenchApplication application) {
-        super("RECENT", "已读", application);
-    }
-
-    @Override
-    public Node createToolIconGraphic(boolean sideToolOrElseViewTool) {
-        return new MaterialIconView(MaterialIcon.HISTORY);
+        super("RECENT", application);
+        this.setTitles("已读");
+        this.viewIcon.set(new MaterialIconView(MaterialIcon.HISTORY));
     }
 
     @Override
@@ -48,11 +49,11 @@ public class RecentController extends WorkbenchSideViewController {
         });
         loadRecentBooks();
         //
-        final RawHolder<WorkbenchViewController> swapRecentViewSelected = new RawHolder<>();
-        final List<WorkbenchViewController> swapRecentViews = new ArrayList<>();
+        final RawHolder<WorkbenchMainViewController> swapRecentViewSelected = new RawHolder<>();
+        final List<WorkbenchMainViewController> swapRecentViews = new ArrayList<>();
         getEventBus().addEventHandler(ApplicationEvent.STARTING, event -> FxHelper.runLater(() -> {
             final Preferences recent = createRecentViews(true);
-            WorkbenchViewController addedController = null;
+            WorkbenchMainViewController addedController = null;
             for (String key : recent.getPropertyKeys()) {
                 final CbetaBook book = BookList.getById(key);
                 if (null == book)
@@ -63,7 +64,7 @@ public class RecentController extends WorkbenchSideViewController {
                 swapRecentViews.add(addedController);
             }
             if (!swapRecentViews.isEmpty()) {
-                for (WorkbenchViewController viewController : swapRecentViews) {
+                for (WorkbenchMainViewController viewController : swapRecentViews) {
                     getPrimaryViewport().addWorkbenchViewAsMainView(viewController, true);
                 }
                 if (null == swapRecentViewSelected.value)
@@ -77,6 +78,8 @@ public class RecentController extends WorkbenchSideViewController {
                     FxHelper.runLater(() -> getPrimaryViewport().selectMainView(swapRecentViewSelected.value.viewId));
             }
         }).start());
+        getEventBus().addEventHandler(GenericEvent.DISPLAY_HAN_CHANGED,
+                event -> Optional.ofNullable(this.treeView).ifPresent(TreeView::refresh));
     }
 
     private void handleToSaveOrUpdateRecentBook(CbetaBook book) {
@@ -143,7 +146,7 @@ public class RecentController extends WorkbenchSideViewController {
     }
 
     @Override
-    public void onViewportShow(boolean firstTime) {
+    public void onViewportShowing(boolean firstTime) {
         if (firstTime) {
             this.treeView = new TreeViewExt<>((e, treeItem) -> {
                 if (!(treeItem.getValue() instanceof RecentBook rBook))
@@ -153,6 +156,40 @@ public class RecentController extends WorkbenchSideViewController {
                     getEventBus().fireEvent(new BookEvent(BookEvent.OPEN, book));
             });
             this.treeView.setRoot(new TreeItem<>("ROOT"));
+            this.treeView.setCellFactory(v -> new TreeCell<>() {
+                Object updatedItem;
+
+                @Override
+                protected void updateItem(Object item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty) {
+                        updatedItem = null;
+                        this.setText(null);
+                        return;
+                    }
+                    if (item == updatedItem)
+                        return;//
+                    updatedItem = item;
+                    String text = null;
+                    if (item instanceof String str) {
+                        text = str;
+                    } else if (item instanceof RecentBook rBook) {
+                        final CbetaBook book = BookList.getById(rBook.id);
+                        if (null != book) {
+                            text = book.title;
+                            if (null != book.path && book.numberVols > 0) {
+                                text = StringHelper.concat(text, "（", book.numberVols, "卷）");
+                            }
+                            text = DisplayHelper.displayText(text);
+                        } else {
+                            text = rBook.id;
+                        }
+                    } else {
+                        text = item.toString();
+                    }
+                    this.setText(text);
+                }
+            });
             this.viewportVBox.getChildren().add(this.treeView);
         }
 
@@ -177,5 +214,9 @@ public class RecentController extends WorkbenchSideViewController {
             treeRoot.getChildren().setAll(groups);
             treeRoot.getChildren().get(0).setExpanded(true);
         }
+    }
+
+    @Override
+    public void onViewportHiding() {
     }
 }

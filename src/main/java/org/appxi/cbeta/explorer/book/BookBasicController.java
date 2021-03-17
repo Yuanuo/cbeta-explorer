@@ -1,7 +1,6 @@
 package org.appxi.cbeta.explorer.book;
 
 import javafx.collections.ObservableList;
-import javafx.scene.Node;
 import javafx.scene.control.Accordion;
 import javafx.scene.control.Label;
 import javafx.scene.control.TitledPane;
@@ -36,13 +35,8 @@ public class BookBasicController extends WorkbenchSideViewController {
     TreeItem<Chapter> selectedTreeItem;
 
     public BookBasicController(WorkbenchApplication application, BookViewController bookView) {
-        super("BOOK-BASIC", "Book-Basic", application);
+        super("BOOK-BASIC", application);
         this.bookView = bookView;
-    }
-
-    @Override
-    public Node createToolIconGraphic(boolean sideToolOrElseViewTool) {
-        return null;
     }
 
     @Override
@@ -72,11 +66,15 @@ public class BookBasicController extends WorkbenchSideViewController {
     }
 
     @Override
-    public void onViewportShow(boolean firstTime) {
+    public void onViewportShowing(boolean firstTime) {
         if (firstTime) {
             // init nav-view
             ChapterTree.parseBookChaptersToTree(bookView.book, this.tocsTree, this.volsTree);
         }
+    }
+
+    @Override
+    public void onViewportHiding() {
     }
 
     public Chapter selectChapter(CbetaBook book, Chapter chapter) {

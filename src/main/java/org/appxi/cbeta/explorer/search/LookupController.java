@@ -3,8 +3,8 @@ package org.appxi.cbeta.explorer.search;
 import de.jensd.fx.glyphs.materialicons.MaterialIcon;
 import de.jensd.fx.glyphs.materialicons.MaterialIconView;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.input.*;
+import org.appxi.cbeta.explorer.DisplayHelper;
 import org.appxi.cbeta.explorer.event.BookEvent;
 import org.appxi.cbeta.explorer.event.SearcherEvent;
 import org.appxi.cbeta.explorer.event.StatusEvent;
@@ -23,18 +23,10 @@ public class LookupController extends WorkbenchSideToolController {
     private LookupProvider lookupProvider;
 
     public LookupController(WorkbenchApplication application) {
-        super("LOOKUP", "快速查找", application);
-    }
-
-    @Override
-    public String createToolTooltipText() {
-        return viewName.concat(" (Ctrl+G)");
-    }
-
-    @Override
-    public Node createToolIconGraphic(boolean sideToolOrElseViewTool) {
+        super("LOOKUP", application);
+        this.setTitles("检索", "快捷检索 (Ctrl+G)");
         this.attr(Pos.class, Pos.CENTER_LEFT);
-        return new MaterialIconView(MaterialIcon.NEAR_ME);
+        this.viewIcon.set(new MaterialIconView(MaterialIcon.NEAR_ME));
     }
 
     private long lastShiftKeyPressedTime;
@@ -42,29 +34,29 @@ public class LookupController extends WorkbenchSideToolController {
     @Override
     public void setupInitialize() {
         getPrimaryScene().getAccelerators().put(new KeyCodeCombination(KeyCode.G, KeyCombination.SHORTCUT_DOWN),
-                () -> this.onViewportShow(false));
+                () -> this.onViewportShowing(false));
         getPrimaryScene().addEventHandler(KeyEvent.KEY_PRESSED, evt -> {
             if (evt.getCode() == KeyCode.SHIFT) {
                 final long currShiftKeyPressedTime = System.currentTimeMillis();
                 if (currShiftKeyPressedTime - lastShiftKeyPressedTime <= 400) {
-                    this.onViewportShow(false);
+                    this.onViewportShowing(false);
                 } else lastShiftKeyPressedTime = currShiftKeyPressedTime;
             }
         });
         getEventBus().addEventHandler(SearcherEvent.LOOKUP,
-                event -> this.onViewportShow(null != event.text ? event.text.strip() : null));
+                event -> this.onViewportShowing(null != event.text ? event.text.strip() : null));
         this.lookupProvider = new LookupInMemory();
         getEventBus().addEventHandler(StatusEvent.BOOKS_READY, event -> ((LookupInMemory) lookupProvider).setupInitialize());
     }
 
     @Override
-    public void onViewportShow(boolean firstTime) {
-        onViewportShow(null);
+    public void onViewportShowing(boolean firstTime) {
+        onViewportShowing(null);
     }
 
     private LookupViewImpl lookupView;
 
-    private void onViewportShow(String text) {
+    private void onViewportShowing(String text) {
         if (null == lookupView) {
             lookupView = new LookupViewImpl();
         }
@@ -82,7 +74,7 @@ public class LookupController extends WorkbenchSideToolController {
 
         @Override
         protected String getHeaderText() {
-            return "快速查找书籍";
+            return "快捷检索";
         }
 
         @Override
@@ -141,16 +133,16 @@ public class LookupController extends WorkbenchSideToolController {
                 }
                 title = StringHelper.concat("转到 >>> 经号：", bookId, "，经名：", title,
                         (lineOrVolume ? "，行号：" : "，卷号：").concat(chapter));
-                result.add(new LookupItem(lineOrVolume, bookId, title, chapter, null, null, specialMarker));
+                result.add(new LookupItem(lineOrVolume, bookId, -1, DisplayHelper.displayText(title), chapter, null, null, specialMarker));
             } else {
-                result.add(new LookupItem(false, null, "??? 使用说明：请使用以下几种格式", null, null, null, specialMarker));
-                result.add(new LookupItem(false, null, "格式1：#T01n0001_p0001a01  表示：转到经号T0001的行号p0001a01处", null, null, null, specialMarker));
-                result.add(new LookupItem(false, null, "格式2：#T0001_p0001a01  表示：转到经号T0001的行号p0001a01处", null, null, null, specialMarker));
-                result.add(new LookupItem(false, null, "格式3：#T01, no. 1, p. 1a1  表示：转到经号T0001的行号p0001a01处", null, null, null, specialMarker));
-                result.add(new LookupItem(false, null, "格式4：#T01n0001_1  表示：转到经号T0001的第001卷", null, null, null, specialMarker));
-                result.add(new LookupItem(false, null, "格式5：#T01n0001_001  表示：转到经号T0001的第001卷", null, null, null, specialMarker));
-                result.add(new LookupItem(false, null, "格式6：#T0001_1  表示：转到经号T0001的第001卷", null, null, null, specialMarker));
-                result.add(new LookupItem(false, null, "格式7：#T0001_001  表示：转到经号T0001的第001卷", null, null, null, specialMarker));
+                result.add(new LookupItem(false, null, -1, "??? 使用说明：请使用以下几种格式", null, null, null, specialMarker));
+                result.add(new LookupItem(false, null, -1, "格式1：#T01n0001_p0001a01  表示：转到经号T0001的行号p0001a01处", null, null, null, specialMarker));
+                result.add(new LookupItem(false, null, -1, "格式2：#T0001_p0001a01  表示：转到经号T0001的行号p0001a01处", null, null, null, specialMarker));
+                result.add(new LookupItem(false, null, -1, "格式3：#T01, no. 1, p. 1a1  表示：转到经号T0001的行号p0001a01处", null, null, null, specialMarker));
+                result.add(new LookupItem(false, null, -1, "格式4：#T01n0001_1  表示：转到经号T0001的第001卷", null, null, null, specialMarker));
+                result.add(new LookupItem(false, null, -1, "格式5：#T01n0001_001  表示：转到经号T0001的第001卷", null, null, null, specialMarker));
+                result.add(new LookupItem(false, null, -1, "格式6：#T0001_1  表示：转到经号T0001的第001卷", null, null, null, specialMarker));
+                result.add(new LookupItem(false, null, -1, "格式7：#T0001_001  表示：转到经号T0001的第001卷", null, null, null, specialMarker));
             }
         }
 

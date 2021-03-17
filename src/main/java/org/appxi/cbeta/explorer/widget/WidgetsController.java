@@ -20,12 +20,9 @@ public class WidgetsController extends WorkbenchSideViewController {
     final List<Widget> widgets = new ArrayList<>();
 
     public WidgetsController(WorkbenchApplication application) {
-        super("WIDGETS", "工具", application);
-    }
-
-    @Override
-    public javafx.scene.Node createToolIconGraphic(boolean sideToolOrElseViewTool) {
-        return new MaterialIconView(MaterialIcon.WIDGETS);
+        super("WIDGETS", application);
+        this.setTitles("工具", "辅助工具集");
+        this.viewIcon.set(new MaterialIconView(MaterialIcon.WIDGETS));
     }
 
     @Override
@@ -34,11 +31,10 @@ public class WidgetsController extends WorkbenchSideViewController {
 
     @Override
     protected void onViewportInitOnce() {
-        this.titleBar.setText("辅助工具集");
     }
 
     @Override
-    public void onViewportShow(boolean firstTime) {
+    public void onViewportShowing(boolean firstTime) {
         // only init at first time
         if (!firstTime) return;
 
@@ -62,9 +58,13 @@ public class WidgetsController extends WorkbenchSideViewController {
             if (null == pane.getContent()) {
                 pane.setContent(widget.getViewport());
             }
-            widget.onViewportShow(ensureFirstTime(widget));
+            widget.onViewportShowing(ensureFirstTime(widget));
         });
         this.viewportVBox.getChildren().add(accordion);
+    }
+
+    @Override
+    public void onViewportHiding() {
     }
 
     private static boolean ensureFirstTime(Attributes attrs) {

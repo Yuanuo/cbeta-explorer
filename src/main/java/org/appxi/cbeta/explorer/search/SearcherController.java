@@ -21,6 +21,7 @@ import javafx.scene.text.TextAlignment;
 import javafx.scene.text.TextFlow;
 import javafx.util.Callback;
 import org.appxi.cbeta.explorer.AppContext;
+import org.appxi.cbeta.explorer.DisplayHelper;
 import org.appxi.cbeta.explorer.dao.Piece;
 import org.appxi.cbeta.explorer.dao.PieceRepository;
 import org.appxi.cbeta.explorer.dao.PiecesRepository;
@@ -52,12 +53,16 @@ public class SearcherController extends WorkbenchMainViewController {
     private final EventHandler<ProgressEvent> handleEventOnIndexingToBlocking = this::handleEventOnIndexingToBlocking;
 
     public SearcherController(String viewId, WorkbenchApplication application) {
-        super(viewId, "搜索", application);
+        super(viewId, application);
+        this.setTitles(null);
     }
 
     @Override
-    public Node createToolIconGraphic(boolean sideToolOrElseViewTool) {
-        return null;
+    protected void setTitles(String appendText) {
+        String title = "搜索";
+        if (null != appendText)
+            title = title.concat("搜索：").concat(appendText.isBlank() ? "*" : appendText);
+        super.setTitles(title);
     }
 
     @Override
@@ -173,15 +178,18 @@ public class SearcherController extends WorkbenchMainViewController {
     }
 
     @Override
-    protected void onViewportShowing(boolean firstTime) {
+    public void onViewportShowing(boolean firstTime) {
         if (null != inputView) {
             inputView.input.requestFocus();
         }
     }
 
     @Override
-    protected void onViewportClosing() {
-        super.onViewportClosing();
+    public void onViewportHiding() {
+    }
+
+    @Override
+    public void onViewportClosing(boolean selected) {
         getEventBus().removeEventHandler(ProgressEvent.INDEXING, handleEventOnIndexingToBlocking);
     }
 
@@ -228,7 +236,7 @@ public class SearcherController extends WorkbenchMainViewController {
         }
         if (null == blockingView)
             blockingView = new BlockingView();
-        setTitles("搜索：".concat(inputText.isBlank() ? "*" : inputText));
+        setTitles(inputText);
         getViewport().getChildren().add(blockingView);
         // 使用线程，避免UI阻塞假死
         new Thread(() -> handleSearchingImpl(inputText)).start();
@@ -321,7 +329,7 @@ public class SearcherController extends WorkbenchMainViewController {
         if (null == highlightPage)
             return new Label();
 
-        final HanLang displayHan = AppContext.getDisplayHanLang();
+        final HanLang displayHan = DisplayHelper.getDisplayHan();
         final ListView<Piece> resultPageView = new ListViewExt<>((event, item) -> getEventBus().fireEvent(new SearchedEvent(item)));
         resultPageView.setCellFactory(v -> new ListCell<>() {
             final VBox cardBox;
@@ -361,6 +369,7 @@ public class SearcherController extends WorkbenchMainViewController {
             protected void updateItem(Piece item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty) {
+                    updatedItem = null;
                     setGraphic(null);
                     return;
                 }

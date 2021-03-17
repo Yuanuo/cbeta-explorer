@@ -2,9 +2,9 @@ package org.appxi.cbeta.explorer;
 
 import org.appxi.cbeta.explorer.book.BookDataPlaceController;
 import org.appxi.cbeta.explorer.book.BookListController;
-import org.appxi.cbeta.explorer.home.AboutController;
 import org.appxi.cbeta.explorer.bookdata.BookmarksController;
 import org.appxi.cbeta.explorer.bookdata.FavoritesController;
+import org.appxi.cbeta.explorer.home.AboutController;
 import org.appxi.cbeta.explorer.prefs.PreferencesController;
 import org.appxi.cbeta.explorer.recent.RecentController;
 import org.appxi.cbeta.explorer.search.LookupController;
@@ -20,7 +20,7 @@ import java.util.List;
 public class WorkbenchRootController extends WorkbenchPrimaryController {
 
     public WorkbenchRootController(WorkbenchApplication application) {
-        super("ROOT-WORKBENCH", "Workbench", application);
+        super("ROOT-WORKBENCH", application);
     }
 
     @Override

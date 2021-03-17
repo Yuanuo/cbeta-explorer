@@ -23,14 +23,14 @@ class LookupInMemory implements LookupProvider {
             final Collection<CbetaBook> books = new ArrayList<>(BookList.books.getDataMap().values());
             books.parallelStream().forEachOrdered(book -> DATABASE.add(new LookupItem(
                     book.path.startsWith("toc/"),
-                    book.id, book.title,
+                    book.id, book.numberVols, book.title,
                     null, null,
                     book.authorInfo, null)));
             books.parallelStream().forEachOrdered(book -> {
                 final Collection<LookupItem> items = new ArrayList<>();
                 final boolean stdBook = book.path.startsWith("toc/");
                 CbetaHelper.walkTocChaptersByXmlSAX(book, (href, text) -> items.add(new LookupItem(
-                        stdBook, book.id, book.title,
+                        stdBook, book.id, book.numberVols, book.title,
                         href, text,
                         null, null)));
                 DATABASE.addAll(items);

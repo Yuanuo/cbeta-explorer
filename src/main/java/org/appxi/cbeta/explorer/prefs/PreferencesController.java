@@ -6,7 +6,7 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import org.appxi.cbeta.explorer.AppContext;
+import org.appxi.cbeta.explorer.DisplayHelper;
 import org.appxi.cbeta.explorer.event.GenericEvent;
 import org.appxi.holder.RawHolder;
 import org.appxi.holder.StringHolder;
@@ -29,16 +29,17 @@ import java.util.stream.DoubleStream;
 
 public class PreferencesController extends WorkbenchSideToolController {
     public PreferencesController(WorkbenchApplication application) {
-        super("PREFERENCES", "设置", application);
+        super("PREFERENCES", application);
+        this.setTitles("设置");
+        this.viewIcon.set(new MaterialIconView(MaterialIcon.TUNE));
     }
 
     @Override
-    public Node createToolIconGraphic(boolean sideToolOrElseViewTool) {
-        return new MaterialIconView(MaterialIcon.TUNE);
+    public void setupInitialize() {
     }
 
     @Override
-    public void onViewportShow(boolean firstTime) {
+    public void onViewportShowing(boolean firstTime) {
         final List<Node> nodes = new ArrayList<>();
 
         buildThemeConfig(nodes);
@@ -56,7 +57,7 @@ public class PreferencesController extends WorkbenchSideToolController {
         dialogPane.setContent(scrollPane);
 
         final Alert alert = new Alert(Alert.AlertType.NONE);
-        alert.setTitle(viewName);
+        alert.setTitle(viewTitle.get());
         alert.setDialogPane(dialogPane);
         FxHelper.withTheme(getApplication(), alert).show();
     }
@@ -98,12 +99,12 @@ public class PreferencesController extends WorkbenchSideToolController {
         if (nodes.size() > 0)
             nodes.add(createSeparator());
         //
-        nodes.add(createGroupLabel("以 简体/繁体 显示内容"));
+        nodes.add(createGroupLabel("以 简体/繁体 显示经名标题、阅读视图等经藏数据"));
 
-        final StringHolder currentLang = new StringHolder(AppContext.getDisplayHanLang().lang);
+        final StringHolder currentLang = new StringHolder(DisplayHelper.getDisplayHan().lang);
         final ToggleGroup btnGroup = new ToggleGroup();
 
-        Arrays.asList(HanLang.hans, HanLang.hant, HanLang.hantHK, HanLang.hantTW).forEach(t -> {
+        Arrays.asList(HanLang.hans, HanLang.hantTW).forEach(t -> {
             final RadioButton btn = new RadioButton(t.text);
             btn.setToggleGroup(btnGroup);
             btn.setUserData(t);
@@ -121,6 +122,7 @@ public class PreferencesController extends WorkbenchSideToolController {
             if (currentLang.value.equals(selHan.lang))
                 return;
             currentLang.value = selHan.lang;
+            DisplayHelper.setDisplayHan(selHan);
             UserPrefs.prefs.setProperty("display.han", selHan.lang);
             getEventBus().fireEvent(new GenericEvent(GenericEvent.DISPLAY_HAN_CHANGED, selHan));
         }));
@@ -140,7 +142,7 @@ public class PreferencesController extends WorkbenchSideToolController {
         );
         nodes.add(zoomLevels);
 
-        final RawHolder<Double> currentZoom = new RawHolder<>(AppContext.getDisplayZoomLevel());
+        final RawHolder<Double> currentZoom = new RawHolder<>(DisplayHelper.getDisplayZoom());
         if (!zoomLevels.getItems().contains(currentZoom.value))
             currentZoom.value = 1.6;
         zoomLevels.setValue(currentZoom.value);

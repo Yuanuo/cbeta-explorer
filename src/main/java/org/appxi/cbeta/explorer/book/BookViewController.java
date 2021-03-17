@@ -16,7 +16,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import netscape.javascript.JSObject;
-import org.appxi.cbeta.explorer.AppContext;
+import org.appxi.cbeta.explorer.DisplayHelper;
 import org.appxi.cbeta.explorer.bookdata.BookdataController;
 import org.appxi.cbeta.explorer.bookdata.BookmarksController;
 import org.appxi.cbeta.explorer.bookdata.FavoritesController;
@@ -80,21 +80,31 @@ public class BookViewController extends WorkbenchMainViewController {
     private final BlockingView blockingView = new BlockingView();
 
     public BookViewController(CbetaBook book, WorkbenchApplication application) {
-        super(book.id, book.title, application);
+        super(book.id, application);
         this.book = book;
         this.bookDocument = new BookDocumentEx(book);
+        this.setTitles();
     }
 
-    @Override
-    public String createToolTooltipText() {
-        if (StringHelper.isBlank(book.authorInfo))
-            return book.title;
-        return book.title.concat("\n").concat(book.authorInfo);
-    }
+    private void setTitles() {
+        String viewTitle = DisplayHelper.displayText(book.title);
+        String viewTooltip = viewTitle;
+        String mainTitle = viewTitle;
 
-    @Override
-    public Node createToolIconGraphic(boolean sideToolOrElseViewTool) {
-        return null;
+        if (book.numberVols > 0) {
+            viewTooltip = StringHelper.concat(viewTooltip, "（", book.numberVols, "卷）");
+            mainTitle = StringHelper.concat(mainTitle, "（", book.numberVols, "卷）");
+        }
+
+        if (StringHelper.isNotBlank(book.authorInfo)) {
+            String authorInfo = DisplayHelper.displayText(book.authorInfo);
+            viewTooltip = viewTooltip.concat("\n").concat(authorInfo);
+            mainTitle = mainTitle.concat(" by ").concat(authorInfo);
+        }
+
+        this.viewTitle.set(viewTitle);
+        this.viewTooltip.set(viewTooltip);
+        this.appTitle.set(mainTitle);
     }
 
     @Override
@@ -191,7 +201,7 @@ public class BookViewController extends WorkbenchMainViewController {
 
             @Override
             protected String getHeaderText() {
-                return "快速跳转本书目录";
+                return "快捷跳转本书目录";
             }
 
             @Override
@@ -272,7 +282,7 @@ public class BookViewController extends WorkbenchMainViewController {
                     }
                     title = StringHelper.concat("转到 >>> 本经：", book.id, " ", title,
                             (lineOrVolume ? "，行号：" : "，卷号：").concat(chapter));
-                    result.add(new Chapter(specialMarker, chapter, title, null, null));
+                    result.add(new Chapter(specialMarker, chapter, DisplayHelper.displayText(title), null, null));
                 } else {
                     result.add(new Chapter(specialMarker, null, "??? 使用说明：请使用以下几种格式", null, null));
                     result.add(new Chapter(specialMarker, null, "格式1：#p0001a01  表示：转到本经行号p0001a01处", null, null));
@@ -425,7 +435,7 @@ public class BookViewController extends WorkbenchMainViewController {
                 inputText = inputText.substring(1).strip();
             } else {
                 // 页内查找以显示文字为准，此处转换以匹配目标文字
-                inputText = ChineseConvertors.convert(inputText.strip(), null, AppContext.getDisplayHanLang());
+                inputText = ChineseConvertors.convert(inputText.strip(), null, DisplayHelper.getDisplayHan());
             }
             return inputText;
         });
@@ -445,7 +455,7 @@ public class BookViewController extends WorkbenchMainViewController {
         if (null == this.webViewer)
             return;
 
-        byte[] allBytes = (":root {--zoom: " + AppContext.getDisplayZoomLevel() + " !important;}").getBytes();
+        byte[] allBytes = (":root {--zoom: " + DisplayHelper.getDisplayZoom() + " !important;}").getBytes();
         if (null != webTheme && !webTheme.stylesheets.isEmpty()) {
             for (String webStyle : webTheme.stylesheets) {
                 try {
@@ -527,14 +537,9 @@ public class BookViewController extends WorkbenchMainViewController {
     }
 
     @Override
-    protected String getMainTitle() {
-        return StringHelper.isBlank(book.authorInfo) ? book.title : book.title.concat(" -- ").concat(book.authorInfo);
-    }
-
-    @Override
-    protected void onViewportShowing(boolean firstTime) {
+    public void onViewportShowing(boolean firstTime) {
         if (firstTime) {
-            // 此处逻辑没问题，但首次加载时会卡，暂时没有有次的办法
+            // 此处逻辑没问题，但首次加载时会卡，暂时没有有效的办法
             getViewport().getChildren().add(blockingView);
             getEventBus().addEventHandler(ApplicationEvent.STOPPING, handleApplicationEventStopping);
             // 在线程中执行，使不造成一个空白的阻塞
@@ -544,11 +549,11 @@ public class BookViewController extends WorkbenchMainViewController {
                 this.handleThemeChanged(null);
                 this.webViewer.setContextMenuBuilder(this::handleWebViewContextMenu);
                 // init tree
-                this.bookBasic.onViewportShow(true);
+                this.bookBasic.onViewportShowing(true);
                 openChapter(null);
 
-                this.bookmarks.onViewportShow(true);
-                this.favorites.onViewportShow(true);
+                this.bookmarks.onViewportShowing(true);
+                this.favorites.onViewportShowing(true);
             })).start();
         } else {
             getEventBus().fireEvent(new BookEvent(BookEvent.VIEW, book, openedChapter));
@@ -556,15 +561,13 @@ public class BookViewController extends WorkbenchMainViewController {
     }
 
     @Override
-    protected void onViewportHiding() {
-        super.onViewportHiding();
+    public void onViewportHiding() {
         saveUserExperienceData();
         getEventBus().fireEvent(new BookEvent(BookEvent.HIDE, this.book, openedChapter));
     }
 
     @Override
-    protected void onViewportClosing() {
-        super.onViewportClosing();
+    public void onViewportClosing(boolean selected) {
         saveUserExperienceData();
         getEventBus().removeEventHandler(ThemeEvent.CHANGED, handleThemeChanged);
         getEventBus().removeEventHandler(ApplicationEvent.STOPPING, handleApplicationEventStopping);
@@ -574,6 +577,7 @@ public class BookViewController extends WorkbenchMainViewController {
     }
 
     private void handleDisplayHanChanged(GenericEvent event) {
+        setTitles();
         if (null == this.webViewer)
             return;
         saveUserExperienceData();
@@ -610,13 +614,8 @@ public class BookViewController extends WorkbenchMainViewController {
             getViewport().getChildren().add(blockingView);
         openedChapter = chapter;
         final long st = System.currentTimeMillis();
-        final HanLang displayHan = AppContext.getDisplayHanLang();
-        final String htmlDoc = bookDocument.getVolumeHtmlDocument(openedChapter.path, displayHan,
-                body -> ChineseConvertors.convert(
-                        StringHelper.concat("<body><article>", body.html(), "</article></body>"),
-                        HanLang.hantTW,
-                        displayHan
-                ),
+        final String htmlDoc = bookDocument.getVolumeHtmlDocument(openedChapter.path, DisplayHelper.getDisplayHan(),
+                body -> DisplayHelper.displayText(StringHelper.concat("<body><article>", body.html(), "</article></body>")),
                 WebIncl.getIncludePaths()
         );
         webViewer.setOnLoadSucceedAction(we -> {
@@ -686,7 +685,7 @@ public class BookViewController extends WorkbenchMainViewController {
                 // 如果有选中文字，则按查找选中文字处理
                 final String selText = webViewer.executeScript("getValidSelectionText()");
                 final String textToSearch = null == selText ? null :
-                        AppContext.getDisplayHanLang() != HanLang.hantTW ? selText : "!".concat(selText);
+                        DisplayHelper.getDisplayHan() != HanLang.hantTW ? selText : "!".concat(selText);
                 getEventBus().fireEvent(event.getCode() == KeyCode.G
                         ? SearcherEvent.ofLookup(textToSearch) // LOOKUP
                         : SearcherEvent.ofSearch(textToSearch) // SEARCH
@@ -741,12 +740,12 @@ public class BookViewController extends WorkbenchMainViewController {
         copy.setOnAction(event -> Clipboard.getSystemClipboard().setContent(Map.of(DataFormat.PLAIN_TEXT, validText)));
         //
         String textTip = null == validText ? "" : "：".concat(StringHelper.trimChars(validText, 8));
-        String textForSearch = null == validText ? null : AppContext.getDisplayHanLang() != HanLang.hantTW ? validText : "!".concat(validText);
+        String textForSearch = null == validText ? null : DisplayHelper.getDisplayHan() != HanLang.hantTW ? validText : "!".concat(validText);
 
         MenuItem search = new MenuItem("全文检索".concat(textTip));
         search.setOnAction(event -> getEventBus().fireEvent(SearcherEvent.ofSearch(textForSearch)));
 
-        MenuItem lookup = new MenuItem("快速检索".concat(textTip));
+        MenuItem lookup = new MenuItem("快捷检索".concat(textTip));
         lookup.setOnAction(event -> getEventBus().fireEvent(SearcherEvent.ofLookup(textForSearch)));
 
         MenuItem finder = new MenuItem("页内查找".concat(textTip));
@@ -852,7 +851,7 @@ public class BookViewController extends WorkbenchMainViewController {
          * 用于将输入文字转换成与实际显示的相同，以方便页内查找
          */
         public String convertToDisplayHan(String input) {
-            return ChineseConvertors.convert(input, null, AppContext.getDisplayHanLang());
+            return ChineseConvertors.convert(input, null, DisplayHelper.getDisplayHan());
         }
     }
 

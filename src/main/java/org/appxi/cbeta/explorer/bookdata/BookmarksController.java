@@ -2,7 +2,6 @@ package org.appxi.cbeta.explorer.bookdata;
 
 import de.jensd.fx.glyphs.materialicons.MaterialIcon;
 import de.jensd.fx.glyphs.materialicons.MaterialIconView;
-import javafx.scene.Node;
 import org.appxi.cbeta.explorer.dao.BookdataType;
 import org.appxi.javafx.workbench.WorkbenchApplication;
 import org.appxi.tome.model.Book;
@@ -14,11 +13,8 @@ public class BookmarksController extends BookdataController {
     }
 
     public BookmarksController(WorkbenchApplication application, Book filterByBook) {
-        super("BOOKMARKS", "书签", application, BookdataType.bookmark, filterByBook);
-    }
-
-    @Override
-    public Node createToolIconGraphic(boolean sideToolOrElseViewTool) {
-        return new MaterialIconView(MaterialIcon.BOOKMARK);
+        super("BOOKMARKS", application, BookdataType.bookmark, filterByBook);
+        this.setTitles("书签");
+        this.viewIcon.set(new MaterialIconView(MaterialIcon.BOOKMARK));
     }
 }

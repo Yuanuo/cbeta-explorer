@@ -3,12 +3,12 @@ package org.appxi.cbeta.explorer.bookdata;
 import com.j256.ormlite.stmt.Where;
 import de.jensd.fx.glyphs.materialicons.MaterialIcon;
 import de.jensd.fx.glyphs.materialicons.MaterialIconView;
-import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.scene.control.*;
 import javafx.scene.input.InputEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import org.appxi.cbeta.explorer.DisplayHelper;
 import org.appxi.cbeta.explorer.dao.Bookdata;
 import org.appxi.cbeta.explorer.dao.BookdataType;
 import org.appxi.cbeta.explorer.dao.DaoService;
@@ -37,9 +37,9 @@ public abstract class BookdataController extends WorkbenchSideViewController {
     public final Book filterByBook;
     protected ListView<Bookdata> listView;
 
-    public BookdataController(String viewId, String viewName, WorkbenchApplication application,
+    public BookdataController(String viewId, WorkbenchApplication application,
                               BookdataType dataType, Book filterByBook) {
-        super(viewId, viewName, application);
+        super(viewId, application);
         this.dataType = dataType;
         this.filterByBook = filterByBook;
     }
@@ -109,6 +109,7 @@ public abstract class BookdataController extends WorkbenchSideViewController {
             protected void updateItem(Bookdata item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty) {
+                    updatedItem = null;
                     setText(null);
                     setGraphic(null);
                     return;
@@ -118,9 +119,9 @@ public abstract class BookdataController extends WorkbenchSideViewController {
                 updatedItem = item;
                 textLabel.setText(item.data);
                 timeLabel.setText(DateHelper.format(item.updateAt));
-                if (null == filterByBook) {
+                if (null == filterByBook && null != bookLabel) {
                     CbetaBook book = BookList.getById(item.book);
-                    bookLabel.setText(null == book ? null : book.title);
+                    bookLabel.setText(null == book ? null : DisplayHelper.displayText(book.title));
                 }
                 setGraphic(cardBox);
             }
@@ -159,11 +160,15 @@ public abstract class BookdataController extends WorkbenchSideViewController {
     }
 
     @Override
-    public void onViewportShow(boolean firstTime) {
+    public void onViewportShowing(boolean firstTime) {
         if (firstTime) {
             attr(AK_FIRST_TIME, true);
             refreshListView();
         }
+    }
+
+    @Override
+    public void onViewportHiding() {
     }
 
     private void refreshListView() {
