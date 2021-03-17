@@ -68,6 +68,9 @@
 .place-inline::after {
     content: '）';
 }
+span.caesura::before {
+    content: '　';
+}
 
 div.p,
 p {
