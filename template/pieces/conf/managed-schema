@@ -461,7 +461,6 @@
     <fieldType name="text_cjk" class="solr.TextField" positionIncrementGap="100">
       <analyzer type="index">
         <tokenizer class="solr.StandardTokenizerFactory"/>
-        <filter class="solr.StopFilterFactory" words="stopwords.txt" />
         <!-- normalize width before bigram, as e.g. half-width dakuten combine  -->
         <filter class="solr.CJKWidthFilterFactory"/>
         <!-- for any non-CJK -->
@@ -470,7 +469,6 @@
       </analyzer>
       <analyzer type="query">
         <tokenizer class="solr.StandardTokenizerFactory"/>
-        <filter class="solr.StopFilterFactory" words="stopwords.txt" />
         <!-- normalize width before bigram, as e.g. half-width dakuten combine  -->
         <filter class="solr.CJKWidthFilterFactory"/>
         <!-- for any non-CJK -->
