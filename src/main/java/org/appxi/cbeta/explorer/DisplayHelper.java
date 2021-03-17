@@ -27,7 +27,7 @@ public abstract class DisplayHelper {
 
     public static double getDisplayZoom() {
         double zoomLevel = UserPrefs.prefs.getDouble("display.zoom", 1.6);
-        if (zoomLevel < 1.5 || zoomLevel > 3.0)
+        if (zoomLevel < 1.3 || zoomLevel > 3.0)
             zoomLevel = 1.6;
         return zoomLevel;
     }

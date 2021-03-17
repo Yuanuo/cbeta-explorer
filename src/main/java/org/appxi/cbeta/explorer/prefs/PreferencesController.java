@@ -3,11 +3,13 @@ package org.appxi.cbeta.explorer.prefs;
 import de.jensd.fx.glyphs.materialicons.MaterialIcon;
 import de.jensd.fx.glyphs.materialicons.MaterialIconView;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import org.appxi.cbeta.explorer.DisplayHelper;
 import org.appxi.cbeta.explorer.event.GenericEvent;
+import org.appxi.holder.IntHolder;
 import org.appxi.holder.RawHolder;
 import org.appxi.holder.StringHolder;
 import org.appxi.javafx.control.DialogPaneEx;
@@ -26,6 +28,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
+import java.util.stream.IntStream;
 
 public class PreferencesController extends WorkbenchSideToolController {
     public PreferencesController(WorkbenchApplication application) {
@@ -40,8 +43,12 @@ public class PreferencesController extends WorkbenchSideToolController {
 
     @Override
     public void onViewportShowing(boolean firstTime) {
+        final Alert alert = new Alert(Alert.AlertType.NONE);
+        alert.setTitle(viewTitle.get());
+
         final List<Node> nodes = new ArrayList<>();
 
+        buildPrimaryFontConfig(nodes, alert);
         buildThemeConfig(nodes);
         buildDisplayHanConfig(nodes);
         buildDisplayZoomConfig(nodes);
@@ -55,11 +62,38 @@ public class PreferencesController extends WorkbenchSideToolController {
         dialogPane.setStyle(dialogPane.getStyle().concat("-fx-padding: 1em;"));
         dialogPane.setPrefSize(480, 640);
         dialogPane.setContent(scrollPane);
-
-        final Alert alert = new Alert(Alert.AlertType.NONE);
-        alert.setTitle(viewTitle.get());
         alert.setDialogPane(dialogPane);
+
         FxHelper.withTheme(getApplication(), alert).show();
+    }
+
+    private void buildPrimaryFontConfig(List<Node> nodes, Alert alert) {
+        if (nodes.size() > 0)
+            nodes.add(createSeparator());
+        //
+        nodes.add(createGroupLabel("主界面字号"));
+
+        final ChoiceBox<Integer> fontSizes = new ChoiceBox<>();
+        fontSizes.getItems().setAll(IntStream.iterate(12, v -> v <= 30, v -> v + 2).boxed().collect(Collectors.toList()));
+        nodes.add(fontSizes);
+
+        final IntHolder currentSize = new IntHolder(UserPrefs.prefs.getInt("ui.font.size", 14));
+        if (!fontSizes.getItems().contains(currentSize.value))
+            currentSize.value = 14;
+        fontSizes.setValue(currentSize.value);
+
+        fontSizes.getSelectionModel().selectedItemProperty().addListener((o, ov, nv) -> {
+            if (currentSize.value.doubleValue() == nv)
+                return;
+            currentSize.value = nv;
+
+            final String oldFontStyle = application.getPrimaryFontStyle();
+            UserPrefs.prefs.setProperty("ui.font.size", currentSize.value);
+            getApplication().updatePrimaryFontStyle();
+            final String newFontStyle = application.getPrimaryFontStyle();
+            final Parent alertSceneRoot = alert.getDialogPane().getScene().getRoot();
+            alertSceneRoot.setStyle(alertSceneRoot.getStyle().replace(oldFontStyle, newFontStyle));
+        });
     }
 
     private void buildThemeConfig(List<Node> nodes) {
@@ -136,7 +170,7 @@ public class PreferencesController extends WorkbenchSideToolController {
 
         final ChoiceBox<Double> zoomLevels = new ChoiceBox<>();
         zoomLevels.getItems().setAll(
-                DoubleStream.iterate(1.5, v -> v <= 3.0,
+                DoubleStream.iterate(1.3, v -> v <= 3.0,
                         v -> new BigDecimal(v + .1).setScale(1, RoundingMode.HALF_UP).doubleValue())
                         .boxed().collect(Collectors.toList())
         );
