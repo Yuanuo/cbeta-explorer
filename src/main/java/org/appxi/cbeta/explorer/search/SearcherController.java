@@ -25,6 +25,7 @@ import org.appxi.cbeta.explorer.DisplayHelper;
 import org.appxi.cbeta.explorer.dao.Piece;
 import org.appxi.cbeta.explorer.dao.PieceRepository;
 import org.appxi.cbeta.explorer.dao.PiecesRepository;
+import org.appxi.cbeta.explorer.event.GenericEvent;
 import org.appxi.cbeta.explorer.event.ProgressEvent;
 import org.appxi.cbeta.explorer.event.SearchedEvent;
 import org.appxi.hanlp.convert.ChineseConvertors;
@@ -39,7 +40,6 @@ import org.appxi.javafx.workbench.WorkbenchApplication;
 import org.appxi.javafx.workbench.views.WorkbenchMainViewController;
 import org.appxi.tome.cbeta.Period;
 import org.appxi.util.StringHelper;
-import org.appxi.util.ext.HanLang;
 import org.springframework.data.solr.core.query.SolrPageRequest;
 import org.springframework.data.solr.core.query.result.FacetAndHighlightPage;
 import org.springframework.data.solr.core.query.result.HighlightEntry;
@@ -61,7 +61,7 @@ public class SearcherController extends WorkbenchMainViewController {
     protected void setTitles(String appendText) {
         String title = "搜索";
         if (null != appendText)
-            title = title.concat("搜索：").concat(appendText.isBlank() ? "*" : appendText);
+            title = title.concat("：").concat(appendText.isBlank() ? "*" : appendText);
         super.setTitles(title);
     }
 
@@ -135,6 +135,15 @@ public class SearcherController extends WorkbenchMainViewController {
 
         //
         getEventBus().addEventHandler(ProgressEvent.INDEXING, handleEventOnIndexingToBlocking);
+        //
+        getEventBus().addEventHandler(GenericEvent.DISPLAY_HAN_CHANGED, event -> {
+            facetCatalogView.refresh();
+            facetPeriodView.refresh();
+            facetTripitakaView.refresh();
+            facetAuthorView.refresh();
+            if (null != resultPageView)
+                resultPageView.refresh();
+        });
     }
 
     private void handleEventOnIndexingToBlocking(ProgressEvent event) {
@@ -227,6 +236,7 @@ public class SearcherController extends WorkbenchMainViewController {
     private PieceRepository repository;
     private Collection<String> categories;
     private FacetAndHighlightPage<Piece> facetAndHighlightPage;
+    private ListView<Piece> resultPageView;
 
     private void handleSearching(String inputText) {
         if (null != indexingView) {
@@ -329,8 +339,7 @@ public class SearcherController extends WorkbenchMainViewController {
         if (null == highlightPage)
             return new Label();
 
-        final HanLang displayHan = DisplayHelper.getDisplayHan();
-        final ListView<Piece> resultPageView = new ListViewExt<>((event, item) -> getEventBus().fireEvent(new SearchedEvent(item)));
+        resultPageView = new ListViewExt<>((event, item) -> getEventBus().fireEvent(new SearchedEvent(item)));
         resultPageView.setCellFactory(v -> new ListCell<>() {
             final VBox cardBox;
             final Label nameLabel, locationLabel, authorsLabel;
@@ -376,7 +385,7 @@ public class SearcherController extends WorkbenchMainViewController {
                 if (item == updatedItem)
                     return; //
                 updatedItem = item;
-                nameLabel.setText(ChineseConvertors.convert(item.title, HanLang.hantTW, displayHan));
+                nameLabel.setText(DisplayHelper.displayText(item.title));
                 locationLabel.setText(item.fields.get("location_s").concat("（").concat(item.fields.get("book_s")).concat("）"));
                 authorsLabel.setText(item.fields.get("authors_s"));
 
@@ -385,7 +394,7 @@ public class SearcherController extends WorkbenchMainViewController {
                 if (!highlights.isEmpty()) {
                     highlights.forEach(highlight -> {
                         highlight.getSnipplets().forEach(str -> {
-                            String[] strings = "…".concat(ChineseConvertors.convert(str, HanLang.hantTW, displayHan))
+                            String[] strings = "…".concat(DisplayHelper.displayText(str))
                                     .concat("…").split("§§hl#pre§§");
                             for (String string : strings) {
                                 String[] tmpArr = string.split("§§hl#end§§", 2);
@@ -454,7 +463,7 @@ public class SearcherController extends WorkbenchMainViewController {
 
         @Override
         public String toString() {
-            return "%s（%d）".formatted(label, count);
+            return "%s（%d）".formatted(DisplayHelper.displayText(label), count);
         }
     }
 
