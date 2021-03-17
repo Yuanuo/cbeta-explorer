@@ -3,6 +3,7 @@ package org.appxi.cbeta.explorer.search;
 import de.jensd.fx.glyphs.materialicons.MaterialIcon;
 import de.jensd.fx.glyphs.materialicons.MaterialIconView;
 import javafx.geometry.Pos;
+import javafx.scene.control.Labeled;
 import javafx.scene.input.*;
 import org.appxi.cbeta.explorer.DisplayHelper;
 import org.appxi.cbeta.explorer.event.BookEvent;
@@ -86,6 +87,11 @@ public class LookupController extends WorkbenchSideToolController {
         }
 
         @Override
+        protected void updateItemOnce(Labeled labeled, LookupItem item) {
+            labeled.setText(DisplayHelper.displayText(item.toString()));
+        }
+
+        @Override
         protected Collection<LookupItem> search(String searchText, String[] searchWords, int resultLimit) {
             return lookupProvider.search(searchText, searchWords, resultLimit);
         }
@@ -133,7 +139,7 @@ public class LookupController extends WorkbenchSideToolController {
                 }
                 title = StringHelper.concat("转到 >>> 经号：", bookId, "，经名：", title,
                         (lineOrVolume ? "，行号：" : "，卷号：").concat(chapter));
-                result.add(new LookupItem(lineOrVolume, bookId, -1, DisplayHelper.displayText(title), chapter, null, null, specialMarker));
+                result.add(new LookupItem(lineOrVolume, bookId, -1, title, chapter, null, null, specialMarker));
             } else {
                 result.add(new LookupItem(false, null, -1, "??? 使用说明：请使用以下几种格式", null, null, null, specialMarker));
                 result.add(new LookupItem(false, null, -1, "格式1：#T01n0001_p0001a01  表示：转到经号T0001的行号p0001a01处", null, null, null, specialMarker));

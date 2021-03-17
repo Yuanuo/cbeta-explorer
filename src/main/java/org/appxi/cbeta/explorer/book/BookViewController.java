@@ -216,8 +216,8 @@ public class BookViewController extends WorkbenchMainViewController {
             @Override
             protected void updateItemOnce(Labeled labeled, Chapter item) {
                 labeled.setText(item.hasAttr(AK_INDEX)
-                        ? StringHelper.concat(item.attrStr(AK_INDEX), " / ", item.title)
-                        : item.title);
+                        ? StringHelper.concat(item.attrStr(AK_INDEX), " / ", DisplayHelper.displayText(item.title))
+                        : DisplayHelper.displayText(item.title));
             }
 
             @Override
