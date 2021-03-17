@@ -5,6 +5,7 @@ import de.jensd.fx.glyphs.materialicons.MaterialIconView;
 import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
+import org.appxi.cbeta.explorer.AppContext;
 import org.appxi.cbeta.explorer.DisplayHelper;
 import org.appxi.cbeta.explorer.book.BookViewController;
 import org.appxi.cbeta.explorer.event.BookEvent;
@@ -89,6 +90,7 @@ public class RecentController extends WorkbenchSideViewController {
             item.id = book.id;
             item.name = book.title;
             recentBooksMap.put(book.id, item);
+            AppContext.recentBooks.setProperty(book.id, "");
         } else item.updateAt = new Date();
     }
 
@@ -101,7 +103,7 @@ public class RecentController extends WorkbenchSideViewController {
     }
 
     private void loadRecentBooks() {
-        final Preferences recent = createRecentBooks(true);
+        final Preferences recent = AppContext.recentBooks = createRecentBooks(true);
         recent.getPropertyKeys().forEach(key -> {
             try {
                 final RecentBook rBook = new RecentBook();

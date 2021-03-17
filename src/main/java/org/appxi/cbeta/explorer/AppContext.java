@@ -3,6 +3,8 @@ package org.appxi.cbeta.explorer;
 import org.appxi.cbeta.explorer.event.StatusEvent;
 import org.appxi.javafx.desktop.ApplicationEvent;
 import org.appxi.javafx.helper.FxHelper;
+import org.appxi.prefs.Preferences;
+import org.appxi.prefs.PreferencesInMemory;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.core.io.Resource;
@@ -67,4 +69,6 @@ public abstract class AppContext {
 
     private AppContext() {
     }
+
+    public static Preferences recentBooks = new PreferencesInMemory();
 }

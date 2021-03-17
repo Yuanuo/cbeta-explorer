@@ -7,6 +7,7 @@ import javafx.event.Event;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import org.appxi.cbeta.explorer.AppContext;
 import org.appxi.cbeta.explorer.DisplayHelper;
 import org.appxi.cbeta.explorer.event.BookEvent;
 import org.appxi.cbeta.explorer.event.GenericEvent;
@@ -82,6 +83,7 @@ public class BookListController extends WorkbenchSideViewController {
         //
         this.treeView = new TreeViewExt<>((e, t) -> getEventBus().fireEvent(new BookEvent(BookEvent.OPEN, t.getValue())));
         this.treeView.setShowRoot(false);
+        this.treeView.getStyleClass().add("book-list");
         this.treeView.setCellFactory(v -> new TreeCell<>() {
             CbetaBook updatedItem;
 
@@ -104,8 +106,14 @@ public class BookListController extends WorkbenchSideViewController {
                 this.setText(DisplayHelper.displayText(text));
                 //
                 if (null != item.path && StringHelper.isNotBlank(item.authorInfo))
-                    this.setTooltip(new Tooltip(DisplayHelper.displayText(item.authorInfo)));
+                    this.setTooltip(new Tooltip(item.id.concat(" by ").concat(DisplayHelper.displayText(item.authorInfo))));
                 else this.setTooltip(null);
+                //
+                if (null != item.path && null != AppContext.recentBooks.getProperty(item.id)) {
+                    this.getStyleClass().add("visited");
+                } else {
+                    this.getStyleClass().remove("visited");
+                }
             }
         });
         this.viewportVBox.getChildren().add(this.treeView);
@@ -154,6 +162,7 @@ public class BookListController extends WorkbenchSideViewController {
             return;
         }
         FxHelper.runLater(() -> {
+            Optional.ofNullable(this.treeView).ifPresent(TreeView::refresh);
             final BookViewController controller = new BookViewController(book, getApplication());
             controller.attr(Chapter.class, chapter);
             getPrimaryViewport().addWorkbenchViewAsMainView(controller, false);
