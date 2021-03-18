@@ -5,6 +5,7 @@ import de.jensd.fx.glyphs.materialicons.MaterialIconView;
 import javafx.geometry.Pos;
 import javafx.scene.control.Labeled;
 import javafx.scene.input.*;
+import org.appxi.cbeta.explorer.AppContext;
 import org.appxi.cbeta.explorer.DisplayHelper;
 import org.appxi.cbeta.explorer.event.BookEvent;
 import org.appxi.cbeta.explorer.event.SearcherEvent;
@@ -99,6 +100,11 @@ public class LookupController extends WorkbenchSideToolController {
         @Override
         protected void updateItemOnce(Labeled labeled, LookupItem item) {
             labeled.setText(DisplayHelper.displayText(item.toString()));
+            //
+            labeled.getStyleClass().remove("visited");
+            if (null != item.bookId() && null != AppContext.recentBooks.getProperty(item.bookId())) {
+                labeled.getStyleClass().add("visited");
+            }
         }
 
         @Override

@@ -4,6 +4,7 @@
     -fx-background-repeat: no-repeat;
 }
 
-.book-list .tree-cell.visited:filled {
+.tree-view .tree-cell.visited:filled,
+.list-view .list-cell.visited:filled {
     -fx-text-fill: #20b771;
 }
