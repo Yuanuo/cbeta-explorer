@@ -109,10 +109,9 @@ public class BookListController extends WorkbenchSideViewController {
                     this.setTooltip(new Tooltip(item.id.concat(" by ").concat(DisplayHelper.displayText(item.authorInfo))));
                 else this.setTooltip(null);
                 //
+                this.getStyleClass().remove("visited");
                 if (null != item.path && null != AppContext.recentBooks.getProperty(item.id)) {
                     this.getStyleClass().add("visited");
-                } else {
-                    this.getStyleClass().remove("visited");
                 }
             }
         });
