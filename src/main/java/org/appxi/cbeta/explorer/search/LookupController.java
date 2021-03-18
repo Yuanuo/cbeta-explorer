@@ -74,6 +74,16 @@ public class LookupController extends WorkbenchSideToolController {
         }
 
         @Override
+        protected int getPrefWidth() {
+            return 1080;
+        }
+
+        @Override
+        protected int getPrefHeight() {
+            return 640;
+        }
+
+        @Override
         protected String getHeaderText() {
             return "快捷检索";
         }

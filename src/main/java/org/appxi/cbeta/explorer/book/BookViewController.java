@@ -191,12 +191,12 @@ public class BookViewController extends WorkbenchMainViewController {
 
             @Override
             protected int getPrefWidth() {
-                return 1000;
+                return 960;
             }
 
             @Override
             protected int getPrefHeight() {
-                return 680;
+                return 640;
             }
 
             @Override
