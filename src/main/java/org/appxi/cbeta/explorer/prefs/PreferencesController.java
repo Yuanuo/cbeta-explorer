@@ -138,7 +138,7 @@ public class PreferencesController extends WorkbenchSideToolController {
         final StringHolder currentLang = new StringHolder(DisplayHelper.getDisplayHan().lang);
         final ToggleGroup btnGroup = new ToggleGroup();
 
-        Arrays.asList(HanLang.hans, HanLang.hantTW).forEach(t -> {
+        Arrays.asList(HanLang.hans, HanLang.hant, HanLang.hantHK, HanLang.hantTW).forEach(t -> {
             final RadioButton btn = new RadioButton(t.text);
             btn.setToggleGroup(btnGroup);
             btn.setUserData(t);
