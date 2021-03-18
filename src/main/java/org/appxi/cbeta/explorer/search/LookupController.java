@@ -5,6 +5,7 @@ import de.jensd.fx.glyphs.materialicons.MaterialIconView;
 import javafx.geometry.Pos;
 import javafx.scene.control.Labeled;
 import javafx.scene.input.*;
+import javafx.stage.Screen;
 import org.appxi.cbeta.explorer.AppContext;
 import org.appxi.cbeta.explorer.DisplayHelper;
 import org.appxi.cbeta.explorer.event.BookEvent;
@@ -76,11 +77,21 @@ public class LookupController extends WorkbenchSideToolController {
 
         @Override
         protected int getPrefWidth() {
+            double screenWidth = Screen.getPrimary().getBounds().getWidth();
+            if (screenWidth >= 1920)
+                return 1440;
+            if (screenWidth >= 1440)
+                return 1280;
             return 1080;
         }
 
         @Override
         protected int getPrefHeight() {
+            double screenHeight = Screen.getPrimary().getBounds().getHeight();
+            if (screenHeight >= 1080)
+                return 800;
+            if (screenHeight >= 900)
+                return 720;
             return 640;
         }
 

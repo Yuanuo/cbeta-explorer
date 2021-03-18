@@ -15,6 +15,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.stage.Screen;
 import netscape.javascript.JSObject;
 import org.appxi.cbeta.explorer.DisplayHelper;
 import org.appxi.cbeta.explorer.bookdata.BookdataController;
@@ -191,11 +192,19 @@ public class BookViewController extends WorkbenchMainViewController {
 
             @Override
             protected int getPrefWidth() {
+                double screenWidth = Screen.getPrimary().getBounds().getWidth();
+                if (screenWidth >= 1920)
+                    return 1080;
                 return 960;
             }
 
             @Override
             protected int getPrefHeight() {
+                double screenHeight = Screen.getPrimary().getBounds().getHeight();
+                if (screenHeight >= 1080)
+                    return 800;
+                if (screenHeight >= 900)
+                    return 720;
                 return 640;
             }
 
