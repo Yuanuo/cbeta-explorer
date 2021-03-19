@@ -43,19 +43,20 @@ public class BookDataPlaceController extends WorkbenchSideViewController {
             bookView = null;// always reset
             final WorkbenchViewController mainView = getPrimaryViewport().getSelectedMainViewController();
             if (mainView instanceof BookViewController bookView) {
+                setTitles(DisplayHelper.displayText(bookView.book.title));
                 if (null != this.viewportVBox) {
-                    setTitles(DisplayHelper.displayText(bookView.book.title));
                     this.viewportVBox.getChildren().setAll(bookView.sideViews);
                 } else this.bookView = bookView;
                 //FIXME 程序启动后的第一次在此默认显示此视图？
             } else {
-                viewTitle.set(null);
+                setTitles(null);
             }
         });
         final EventHandler<BookEvent> handleOnBookViewHideOrClose = event -> {
+            bookView = null;// always reset
+            setTitles(null);
             if (null != this.viewportVBox) {
                 this.viewportVBox.getChildren().clear();
-                viewTitle.set(null);
             }
         };
         getEventBus().addEventHandler(BookEvent.HIDE, handleOnBookViewHideOrClose);
