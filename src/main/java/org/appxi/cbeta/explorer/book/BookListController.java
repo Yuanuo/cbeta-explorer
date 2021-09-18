@@ -19,6 +19,8 @@ import org.appxi.javafx.control.SeparatorMenuItemEx;
 import org.appxi.javafx.control.ToolBarEx;
 import org.appxi.javafx.control.TreeViewExt;
 import org.appxi.javafx.desktop.ApplicationEvent;
+import org.appxi.javafx.glyphfont.MaterialIcon;
+import org.appxi.javafx.glyphfont.MaterialIconView;
 import org.appxi.javafx.helper.FxHelper;
 import org.appxi.javafx.helper.TreeHelper;
 import org.appxi.javafx.workbench.WorkbenchApplication;
@@ -29,8 +31,6 @@ import org.appxi.tome.cbeta.BookTreeMode;
 import org.appxi.tome.cbeta.CbetaBook;
 import org.appxi.tome.model.Chapter;
 import org.appxi.util.StringHelper;
-import org.appxi.javafx.glyphfont.MaterialIcon;
-import org.appxi.javafx.glyphfont.MaterialIconView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -108,9 +108,9 @@ public class BookListController extends WorkbenchSideViewController {
                 }
                 this.setText(DisplayHelper.displayText(text));
                 //
-                if (null != item.path && StringHelper.isNotBlank(item.authorInfo))
-                    this.setTooltip(new Tooltip(item.id.concat(" by ").concat(DisplayHelper.displayText(item.authorInfo))));
-                else this.setTooltip(null);
+                this.setTooltip(new Tooltip(this.getText().concat(StringHelper.isBlank(item.authorInfo) ? ""
+                        : "\n".concat(item.id).concat(" by ").concat(DisplayHelper.displayText(item.authorInfo))
+                )));
                 //
                 this.setGraphic(new MaterialIconView(this.getTreeItem().isLeaf() ? MaterialIcon.ARTICLE
                         : (this.getTreeItem().isExpanded() ? MaterialIcon.FOLDER_OPEN : MaterialIcon.FOLDER)));

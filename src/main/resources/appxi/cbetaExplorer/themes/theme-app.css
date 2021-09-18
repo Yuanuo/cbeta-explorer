@@ -4,7 +4,7 @@
     -fx-background-repeat: no-repeat;
 }
 .side-views {
-    -fx-min-width: 20em;
+    -fx-min-width: 10em;
 }
 
 .glyph-icon.dev {
