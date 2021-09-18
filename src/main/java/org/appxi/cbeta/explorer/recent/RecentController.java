@@ -45,7 +45,6 @@ public class RecentController extends WorkbenchSideViewController {
         getEventBus().addEventHandler(BookEvent.OPEN, event -> handleToSaveOrUpdateRecentBook(event.book));
         getEventBus().addEventHandler(BookEvent.CLOSE, event -> handleToSaveOrUpdateRecentBook(event.book));
         getEventBus().addEventHandler(ApplicationEvent.STOPPING, event -> {
-            UserPrefs.recents.save();
             saveRecentBooks();
             saveRecentViews();
         });
