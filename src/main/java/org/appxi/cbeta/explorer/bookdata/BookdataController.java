@@ -1,8 +1,8 @@
 package org.appxi.cbeta.explorer.bookdata;
 
 import com.j256.ormlite.stmt.Where;
-import org.controlsfx.glyphfont.MaterialIcon;
-import org.controlsfx.glyphfont.MaterialIconView;
+import org.appxi.javafx.glyphfont.MaterialIcon;
+import org.appxi.javafx.glyphfont.MaterialIconView;
 import javafx.beans.binding.Bindings;
 import javafx.scene.control.*;
 import javafx.scene.input.InputEvent;

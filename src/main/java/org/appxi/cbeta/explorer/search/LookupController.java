@@ -1,7 +1,7 @@
 package org.appxi.cbeta.explorer.search;
 
-import org.controlsfx.glyphfont.MaterialIcon;
-import org.controlsfx.glyphfont.MaterialIconView;
+import org.appxi.javafx.glyphfont.MaterialIcon;
+import org.appxi.javafx.glyphfont.MaterialIconView;
 import javafx.geometry.Pos;
 import javafx.scene.control.Labeled;
 import javafx.scene.input.*;

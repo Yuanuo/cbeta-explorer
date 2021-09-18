@@ -1,7 +1,7 @@
 package org.appxi.cbeta.explorer.recent;
 
-import org.controlsfx.glyphfont.MaterialIcon;
-import org.controlsfx.glyphfont.MaterialIconView;
+import org.appxi.javafx.glyphfont.MaterialIcon;
+import org.appxi.javafx.glyphfont.MaterialIconView;
 import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;

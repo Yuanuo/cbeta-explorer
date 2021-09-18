@@ -78,7 +78,7 @@ public abstract class AppContext {
     }
 
     public static Notifications toast(String msg) {
-        return Notifications.create(msg).owner(AppContext.app().getPrimaryStage());
+        return Notifications.create().text(msg).owner(AppContext.app().getPrimaryStage());
     }
 
     public static Preferences recentBooks = new PreferencesInMemory();

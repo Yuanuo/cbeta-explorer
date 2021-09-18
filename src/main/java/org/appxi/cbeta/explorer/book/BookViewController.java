@@ -48,8 +48,8 @@ import org.appxi.tome.model.Chapter;
 import org.appxi.util.NumberHelper;
 import org.appxi.util.StringHelper;
 import org.appxi.util.ext.HanLang;
-import org.controlsfx.glyphfont.MaterialIcon;
-import org.controlsfx.glyphfont.MaterialIconView;
+import org.appxi.javafx.glyphfont.MaterialIcon;
+import org.appxi.javafx.glyphfont.MaterialIconView;
 import org.json.JSONObject;
 
 import java.io.BufferedInputStream;

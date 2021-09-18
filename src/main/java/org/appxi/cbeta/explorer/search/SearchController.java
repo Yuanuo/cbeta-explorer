@@ -19,8 +19,8 @@ import org.appxi.javafx.workbench.views.WorkbenchSideToolController;
 import org.appxi.tome.cbeta.CbetaBook;
 import org.appxi.tome.model.Chapter;
 import org.appxi.util.DigestHelper;
-import org.controlsfx.glyphfont.MaterialIcon;
-import org.controlsfx.glyphfont.MaterialIconView;
+import org.appxi.javafx.glyphfont.MaterialIcon;
+import org.appxi.javafx.glyphfont.MaterialIconView;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;

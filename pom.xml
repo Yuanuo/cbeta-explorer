@@ -47,7 +47,7 @@
 		<dependency>
 			<groupId>org.controlsfx</groupId>
 			<artifactId>controlsfx</artifactId>
-			<version>17.0-SNAPSHOT</version>
+			<version>18.0-SNAPSHOT</version>
 			<exclusions>
 				<exclusion>
 					<groupId>*</groupId>

@@ -1,7 +1,7 @@
 package org.appxi.cbeta.explorer.prefs;
 
-import org.controlsfx.glyphfont.MaterialIcon;
-import org.controlsfx.glyphfont.MaterialIconView;
+import org.appxi.javafx.glyphfont.MaterialIcon;
+import org.appxi.javafx.glyphfont.MaterialIconView;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.*;

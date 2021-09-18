@@ -1,7 +1,7 @@
 package org.appxi.cbeta.explorer.bookdata;
 
-import org.controlsfx.glyphfont.MaterialIcon;
-import org.controlsfx.glyphfont.MaterialIconView;
+import org.appxi.javafx.glyphfont.MaterialIcon;
+import org.appxi.javafx.glyphfont.MaterialIconView;
 import org.appxi.cbeta.explorer.dao.BookdataType;
 import org.appxi.javafx.workbench.WorkbenchApplication;
 import org.appxi.tome.model.Book;
