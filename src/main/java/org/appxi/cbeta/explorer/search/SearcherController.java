@@ -1,7 +1,6 @@
 package org.appxi.cbeta.explorer.search;
 
-import de.jensd.fx.glyphs.materialicons.MaterialIcon;
-import de.jensd.fx.glyphs.materialicons.MaterialIconView;
+import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -30,16 +29,17 @@ import org.appxi.cbeta.explorer.event.ProgressEvent;
 import org.appxi.cbeta.explorer.event.SearchedEvent;
 import org.appxi.hanlp.convert.ChineseConvertors;
 import org.appxi.hanlp.pinyin.PinyinConvertors;
-import org.appxi.javafx.control.BlockingView;
 import org.appxi.javafx.control.BlockingViewEx;
 import org.appxi.javafx.control.ListViewExt;
 import org.appxi.javafx.control.TabPaneExt;
 import org.appxi.javafx.helper.FxHelper;
-import org.appxi.javafx.helper.ToastHelper;
 import org.appxi.javafx.workbench.WorkbenchApplication;
 import org.appxi.javafx.workbench.views.WorkbenchMainViewController;
+import org.appxi.tome.cbeta.CbetaBook;
 import org.appxi.tome.cbeta.Period;
 import org.appxi.util.StringHelper;
+import org.controlsfx.glyphfont.MaterialIcon;
+import org.controlsfx.glyphfont.MaterialIconView;
 import org.springframework.data.solr.core.query.SolrPageRequest;
 import org.springframework.data.solr.core.query.result.FacetAndHighlightPage;
 import org.springframework.data.solr.core.query.result.HighlightEntry;
@@ -71,9 +71,9 @@ public class SearcherController extends WorkbenchMainViewController {
 
     private BlockingViewEx indexingView;
     private InputView inputView;
-
+    private CbetaBook searchScope;
+    private Label searchScopeTipLabel;
     private TextField input;
-    private Button submit;
     private ListView<FacetFilter> facetCatalogView, facetPeriodView, facetTripitakaView, facetAuthorView;
     private BorderPane resultView;
     private Label resultInfo;
@@ -92,7 +92,8 @@ public class SearcherController extends WorkbenchMainViewController {
         input = new TextField();
         HBox.setHgrow(input, Priority.ALWAYS);
 
-        submit = new Button("搜");
+        final Button submit = new Button("搜");
+        submit.setTooltip(new Tooltip("模糊搜索"));
         submit.setOnAction(event -> this.search(""));
         input.addEventHandler(KeyEvent.KEY_RELEASED, event -> {
             if (event.getCode() == KeyCode.ENTER)
@@ -126,8 +127,12 @@ public class SearcherController extends WorkbenchMainViewController {
         resultInfo.setStyle(resultInfo.getStyle().concat("-fx-padding:.5em;"));
         resultInfo.getStyleClass().add("result-info");
 
-        final VBox vBox = new VBox(new HBox(input, submit), tabPane);
+        searchScopeTipLabel = new Label("在 全局 中搜索");
+        searchScopeTipLabel.setWrapText(true);
+
+        final VBox vBox = new VBox();
         vBox.setStyle(vBox.getStyle().concat("-fx-padding:.5em;-fx-spacing:.5em;"));
+        vBox.getChildren().addAll(new HBox(input, submit), searchScopeTipLabel, tabPane);
         splitPane.getItems().setAll(vBox, resultView);
         splitPane.setDividerPositions(.3);
 
@@ -207,12 +212,25 @@ public class SearcherController extends WorkbenchMainViewController {
         return null != inputView;
     }
 
+    SearcherController setSearchScope(CbetaBook searchScope) {
+        this.searchScope = searchScope;
+        FxHelper.runLater(() -> {
+            this.searchScopeTipLabel.setText(null != searchScope ?
+                    "在 ".concat(searchScope.title).concat(" 中搜索") : "在 全局 中搜索");
+            if (null != inputView)
+                inputView.scopeLabel.setText(this.searchScopeTipLabel.getText());
+        });
+        return this;
+    }
+
     void search(String text) {
         if (null == text)
             return;
         if (null != inputView) {
-            getViewport().getChildren().remove(inputView);
-            inputView = null;
+            Platform.runLater(() -> {
+                getViewport().getChildren().remove(inputView);
+                inputView = null;
+            });
             input.setText(text);
         }
         // 允许搜索空字符串，一般情况下用户无法入手时，可通过此处默认显示的搜索结果入门
@@ -232,7 +250,8 @@ public class SearcherController extends WorkbenchMainViewController {
         handleSearching(inputText);
     }
 
-    private BlockingView blockingView;
+    private Runnable blockingHandler;
+    //    private BlockingView blockingView;
     private PieceRepository repository;
     private Collection<String> categories;
     private FacetAndHighlightPage<Piece> facetAndHighlightPage;
@@ -241,15 +260,12 @@ public class SearcherController extends WorkbenchMainViewController {
     private void handleSearching(String inputText) {
         if (null != indexingView) {
             // 正在索引时不执行搜索
-            ToastHelper.toast(getApplication(), "正在准备数据，请稍后再试");
+            FxHelper.runLater(() -> AppContext.toast("正在准备数据，请稍后再试").showWarning());
             return;
         }
-        if (null == blockingView)
-            blockingView = new BlockingView();
         setTitles(inputText);
-        getViewport().getChildren().add(blockingView);
         // 使用线程，避免UI阻塞假死
-        new Thread(() -> handleSearchingImpl(inputText)).start();
+        blockingHandler = FxHelper.manualBlocking(getViewport(), () -> handleSearchingImpl(inputText));
     }
 
     private void handleSearchingImpl(String inputText) {
@@ -268,7 +284,9 @@ public class SearcherController extends WorkbenchMainViewController {
         }
         searchedText = inputText;
         inputQuery = inputText;
-        facetAndHighlightPage = repository.query(IndexingHelper.PROJECT, inputQuery, categories, facet, new SolrPageRequest(0, PAGE_SIZE));
+        facetAndHighlightPage = repository.search(IndexingHelper.PROJECT,
+                null == searchScope ? null : List.of(searchScope.id != null ? searchScope.id : searchScope.attr("path")),
+                inputQuery, categories, facet, new SolrPageRequest(0, PAGE_SIZE));
 
         // update facet ui
         final List<FacetFilter> facetTripitakaList = new ArrayList<>(), facetCatalogList = new ArrayList<>(),
@@ -282,6 +300,7 @@ public class SearcherController extends WorkbenchMainViewController {
             facetAndHighlightPage.getFacetResultPages().forEach(facetResultPage -> {
                 facetResultPage.getContent().forEach(entry -> {
                     String value = entry.getValue();
+                    if (value.startsWith("nav/")) return;
                     long count = entry.getValueCount();
 
                     for (String k : listMap.keySet()) {
@@ -321,7 +340,7 @@ public class SearcherController extends WorkbenchMainViewController {
                 resultView.setCenter(new Label("未找到匹配项，请调整关键词并重试！"));
                 resultInfo.setText("");
             }
-            getViewport().getChildren().remove(blockingView);
+            if (null != blockingHandler) blockingHandler.run();
         };
         FxHelper.runLater(runnable);
     }
@@ -334,7 +353,9 @@ public class SearcherController extends WorkbenchMainViewController {
             highlightPage = facetAndHighlightPage;
         } else {
             // query for next page
-            highlightPage = repository.query(IndexingHelper.PROJECT, inputQuery, categories, false, new SolrPageRequest(pageIdx, PAGE_SIZE));
+            highlightPage = repository.search(IndexingHelper.PROJECT,
+                    null == searchScope ? null : List.of(searchScope.id != null ? searchScope.id : searchScope.attr("path")),
+                    inputQuery, categories, false, new SolrPageRequest(pageIdx, PAGE_SIZE));
         }
         if (null == highlightPage)
             return new Label();
@@ -386,7 +407,15 @@ public class SearcherController extends WorkbenchMainViewController {
                     return; //
                 updatedItem = item;
                 nameLabel.setText(DisplayHelper.displayText(item.title));
-                locationLabel.setText(item.fields.get("location_s").concat("（").concat(item.fields.get("book_s")).concat("）"));
+                locationLabel.setText(null);
+                if (item.categories != null && !item.categories.isEmpty()) {
+                    final String navPrefix = "nav/".concat(AppContext.bookTreeMode.name()).concat("/");
+                    item.categories.stream().filter(s -> s.startsWith(navPrefix)).findFirst()
+                            .ifPresent(s -> locationLabel.setText(s.substring(navPrefix.length())));
+                }
+                if (locationLabel.getText() == null || locationLabel.getText().isBlank())
+                    locationLabel.setText(item.fields.get("location_s").concat("（").concat(item.fields.get("book_s")).concat("）"));
+
                 authorsLabel.setText(item.fields.get("authors_s"));
 
                 List<HighlightEntry.Highlight> highlights = highlightPage.getHighlights(item);
@@ -418,9 +447,7 @@ public class SearcherController extends WorkbenchMainViewController {
                         });
                     });
                 } else {
-                    String text = item.contents.get("content_txt_cjk_substr");
-                    if (null == text)
-                        text = "暂无数据";
+                    String text = null == item.contents ? "暂无数据" : item.contents.get("content_txt_cjk_substr");
                     texts.add(new Text(StringHelper.trimChars(text, 200)));
                 }
                 texts.forEach(t -> t.getStyleClass().add("texts"));
@@ -469,6 +496,7 @@ public class SearcherController extends WorkbenchMainViewController {
 
     static class InputView extends VBox {
         final TextField input;
+        final Label scopeLabel;
 
         InputView(Consumer<String> enterAction) {
             super();
@@ -489,6 +517,10 @@ public class SearcherController extends WorkbenchMainViewController {
             input.setPrefColumnCount(50);
             input.setPrefHeight(40);
 
+            scopeLabel = new Label("在 全局 中搜索");
+            scopeLabel.setTextAlignment(TextAlignment.CENTER);
+            scopeLabel.setWrapText(true);
+
             final Button submit = new Button("搜索");
             submit.setOnAction(event -> enterAction.accept(input.getText()));
             input.addEventHandler(KeyEvent.KEY_RELEASED, event -> {
@@ -506,26 +538,19 @@ public class SearcherController extends WorkbenchMainViewController {
                     提示：
 
                     默认不区分简繁体输入！以感叹号开始则强制区分
-
-                    精确搜索请使用（半角）双引号包含关键词！
-
+                    默认为分词搜索，精确搜索请使用（半角）双引号包含关键词！
                     输入任意字、词、句开始搜索
-
                     未输入关键词将显示所有结果
-
                     在搜索结果左侧过滤器中双击任一项可排除其余而单选过滤
-
                     在搜索结果列表中双击打开，单击高亮关键词将“尝试”打开并定位到该处
-
                     基于关键词搜索，输入字符限定长度为20，太长亦无意义
-
                     快捷键（Ctrl + H）开启此视图！可同时开启多个搜索视图！
                     """);
             tipLabel.setTextAlignment(TextAlignment.CENTER);
             tipLabel.setWrapText(true);
             tipLabel.setStyle(tipLabel.getStyle().concat("-fx-padding:5em 1em;"));
 
-            vBox.getChildren().setAll(input, buttonsBox, tipLabel);
+            vBox.getChildren().setAll(input, scopeLabel, buttonsBox, tipLabel);
             hBox.getChildren().setAll(vBox);
             this.getChildren().setAll(hBox);
         }

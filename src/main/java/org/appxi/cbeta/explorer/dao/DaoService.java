@@ -1,7 +1,7 @@
 package org.appxi.cbeta.explorer.dao;
 
 import com.j256.ormlite.dao.Dao;
-import com.j256.ormlite.logger.Log;
+import com.j256.ormlite.logger.Level;
 import com.j256.ormlite.logger.Logger;
 import org.appxi.javafx.helper.FxHelper;
 
@@ -13,7 +13,7 @@ public abstract class DaoService {
 
     public static void setupInitialize() {
         if (FxHelper.productionMode)
-            Logger.setGlobalLogLevel(Log.Level.WARNING);
+            Logger.setGlobalLogLevel(Level.WARNING);
         getBookdataDao();
     }
 

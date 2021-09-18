@@ -1,7 +1,7 @@
 package org.appxi.cbeta.explorer.home;
 
-import de.jensd.fx.glyphs.materialicons.MaterialIcon;
-import de.jensd.fx.glyphs.materialicons.MaterialIconView;
+import org.controlsfx.glyphfont.MaterialIcon;
+import org.controlsfx.glyphfont.MaterialIconView;
 import javafx.geometry.Pos;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Label;

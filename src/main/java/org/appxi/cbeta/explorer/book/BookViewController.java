@@ -1,7 +1,5 @@
 package org.appxi.cbeta.explorer.book;
 
-import de.jensd.fx.glyphs.materialicons.MaterialIcon;
-import de.jensd.fx.glyphs.materialicons.MaterialIconView;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.collections.ObservableList;
@@ -17,6 +15,8 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Screen;
 import netscape.javascript.JSObject;
+import org.apache.commons.io.FilenameUtils;
+import org.appxi.cbeta.explorer.AppContext;
 import org.appxi.cbeta.explorer.DisplayHelper;
 import org.appxi.cbeta.explorer.bookdata.BookdataController;
 import org.appxi.cbeta.explorer.bookdata.BookmarksController;
@@ -33,7 +33,6 @@ import org.appxi.holder.IntHolder;
 import org.appxi.javafx.control.*;
 import org.appxi.javafx.desktop.ApplicationEvent;
 import org.appxi.javafx.helper.FxHelper;
-import org.appxi.javafx.helper.ToastHelper;
 import org.appxi.javafx.helper.TreeHelper;
 import org.appxi.javafx.theme.Theme;
 import org.appxi.javafx.theme.ThemeEvent;
@@ -44,10 +43,13 @@ import org.appxi.prefs.UserPrefs;
 import org.appxi.tome.cbeta.BookDocument;
 import org.appxi.tome.cbeta.BookDocumentEx;
 import org.appxi.tome.cbeta.CbetaBook;
+import org.appxi.tome.cbeta.CbetaHelper;
 import org.appxi.tome.model.Chapter;
-import org.appxi.util.DevtoolHelper;
+import org.appxi.util.NumberHelper;
 import org.appxi.util.StringHelper;
 import org.appxi.util.ext.HanLang;
+import org.controlsfx.glyphfont.MaterialIcon;
+import org.controlsfx.glyphfont.MaterialIconView;
 import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
@@ -162,7 +164,7 @@ public class BookViewController extends WorkbenchMainViewController {
         button.setGraphic(new MaterialIconView(MaterialIcon.IMPORT_CONTACTS));
         button.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
         button.setTooltip(new Tooltip("显示本书相关数据（目录、书签等）"));
-        button.setOnAction(event -> this.getPrimaryViewport().selectSideTool(BookDataPlaceController.getInstance().viewId));
+        button.setOnAction(event -> this.getPrimaryViewport().selectSideTool(BookDataPlaceController.getInstance().viewId.get()));
         this.toolbar.addLeft(button);
     }
 
@@ -420,7 +422,7 @@ public class BookViewController extends WorkbenchMainViewController {
 
     private void addTool_Bookmark() {
         final Button button = new Button();
-        button.setGraphic(new MaterialIconView(MaterialIcon.BOOKMARK_BORDER));
+        button.setGraphic(new MaterialIconView(MaterialIcon.BOOKMARK_OUTLINE));
         button.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
         button.setTooltip(new Tooltip("添加书签"));
         button.setOnAction(event -> this.handleEventToCreateBookdata(BookdataType.bookmark));
@@ -636,7 +638,7 @@ public class BookViewController extends WorkbenchMainViewController {
             //
             webViewer.widthProperty().removeListener(handleWebViewBodyResize);
             webViewer.widthProperty().addListener(handleWebViewBodyResize);
-            DevtoolHelper.LOG.info("load htmlDocFile used time: " + (System.currentTimeMillis() - st) + ", " + htmlDoc);
+            System.out.println("load htmlDocFile used time: " + (System.currentTimeMillis() - st) + ", " + htmlDoc);
             getViewport().getChildren().remove(blockingView);
             getEventBus().fireEvent(new BookEvent(BookEvent.VIEW, book));
         });
@@ -744,9 +746,67 @@ public class BookViewController extends WorkbenchMainViewController {
         selText = null == selText ? null : selText.strip().replace('\n', ' ');
         final String validText = StringHelper.isBlank(selText) ? null : selText;
         //
-        MenuItem copy = new MenuItem("复制");
+        MenuItem copy = new MenuItem("复制文字");
         copy.setDisable(null == validText);
         copy.setOnAction(event -> Clipboard.getSystemClipboard().setContent(Map.of(DataFormat.PLAIN_TEXT, validText)));
+        //
+        MenuItem copyRef = new MenuItem("复制为引用");
+        copyRef.setDisable(null == validText || !book.path.startsWith("toc/"));
+        copyRef.setOnAction(event -> {
+            try {
+                String refInfoStr = webViewer.executeScript("getValidSelectionReferenceInfo2()");
+                String[] refInfo = refInfoStr.split("\\|", 3);
+                if (refInfo.length < 2) return;
+                if (refInfo[0].isBlank()) return;
+                if (refInfo[1].isBlank() || refInfo[1].length() < 6) refInfo[1] = refInfo[1];
+
+                // 《長阿含經》卷1：「玄旨非言不傳」(CBETA 2021.Q3, T01, no. 1, p. 1a5-6)
+                final StringBuilder buff = new StringBuilder();
+                buff.append("《").append(this.book.title).append("》卷");
+                String serial = "00";
+                if (this.openedChapter.path.matches(".*_\\d+\\.xml")) {
+                    String str = FilenameUtils.getBaseName(this.openedChapter.path);
+                    str = str.substring(str.lastIndexOf('_') + 1);
+                    int vol = NumberHelper.toInt(str, 0);
+                    buff.append(vol);
+                    for (CbetaBook.SerialVol sv : book.serialVols) {
+                        if (vol >= sv.startVol() && vol <= sv.endVol()) {
+                            serial = sv.serial();
+                            break;
+                        }
+                    }
+                } else {
+                    buff.append("00");
+                }
+
+                buff.append("：「");
+                buff.append(null == validText ? "" : validText);
+                buff.append("」(CBETA ").append(CbetaHelper.indexVer()).append(", ");
+                buff.append(book.tripitakaId).append(serial);
+                buff.append(", no. ").append(book.number.replaceAll("^0+", "")).append(", p. ");
+                // span#p0154b10|span#p0154b15
+                if (refInfo[0].matches("span#p\\d+[a-z]\\d+")) {
+                    String[] refStartInfo = refInfo[0].substring(6).replaceFirst("([a-z])", "@$1@").split("@", 3);
+                    String[] refEndInfo = refInfo[1].substring(6).replaceFirst("([a-z])", "@$1@").split("@", 3);
+                    buff.append(refStartInfo[0].replaceAll("^0+", ""))
+                            .append(refStartInfo[1])
+                            .append(refStartInfo[2].replaceAll("^0+", ""));
+                    if (!refStartInfo[1].equals(refEndInfo[1]) || !refStartInfo[2].equals(refEndInfo[2])) {
+                        buff.append("-");
+                        if (!refStartInfo[1].equals(refEndInfo[1])) buff.append(refEndInfo[1]);
+                        buff.append(refEndInfo[2].replaceAll("^0+", ""));
+                    }
+                } else {
+                    buff.append("000");
+                }
+                //
+                buff.append(")");
+                Clipboard.getSystemClipboard().setContent(Map.of(DataFormat.PLAIN_TEXT, buff.toString()));
+                AppContext.toast("已复制到剪贴板").showInformation();
+            } catch (Throwable t) {
+                t.printStackTrace(); // for debug
+            }
+        });
         //
         String textTip = null == validText ? "" : "：".concat(StringHelper.trimChars(validText, 8));
         String textForSearch = null == validText ? null : DisplayHelper.getDisplayHan() != HanLang.hantTW ? validText : "!".concat(validText);
@@ -754,7 +814,14 @@ public class BookViewController extends WorkbenchMainViewController {
         MenuItem search = new MenuItem("全文检索".concat(textTip));
         search.setOnAction(event -> getEventBus().fireEvent(SearcherEvent.ofSearch(textForSearch)));
 
-        MenuItem lookup = new MenuItem("快捷检索".concat(textTip));
+        MenuItem searchInAbs = new MenuItem("全文检索（精确检索）".concat(textTip));
+        searchInAbs.setOnAction(event -> getEventBus().fireEvent(
+                SearcherEvent.ofSearch(null == textForSearch ? "" : "\"".concat(textForSearch).concat("\""))));
+
+        MenuItem searchInBook = new MenuItem("全文检索（检索本书）".concat(textTip));
+        searchInBook.setOnAction(event -> getEventBus().fireEvent(SearcherEvent.ofSearch(textForSearch, book)));
+
+        MenuItem lookup = new MenuItem("快捷检索（经名、作译者等）".concat(textTip));
         lookup.setOnAction(event -> getEventBus().fireEvent(SearcherEvent.ofLookup(textForSearch)));
 
         MenuItem finder = new MenuItem("页内查找".concat(textTip));
@@ -771,9 +838,9 @@ public class BookViewController extends WorkbenchMainViewController {
 
 
         //
-        return new ContextMenu(copy,
+        return new ContextMenu(copy, copyRef,
                 new SeparatorMenuItem(),
-                search, lookup, finder,
+                search, searchInAbs, searchInBook, lookup, finder,
                 new SeparatorMenuItem(),
                 dictionary,
                 new SeparatorMenuItem(),
@@ -809,7 +876,7 @@ public class BookViewController extends WorkbenchMainViewController {
                 if (ButtonType.YES == FxHelper.withTheme(getApplication(), alert).showAndWait().orElse(null)) {
                     dataHandle.removeData(data);
                     getEventBus().fireEvent(new BookdataEvent(BookdataEvent.REMOVED, data));
-                    ToastHelper.toast(getApplication(), "已删除".concat(dataType.title).concat("！"));
+                    FxHelper.runLater(() -> AppContext.toast("已删除".concat(dataType.title).concat("！")).showInformation());
                     // TODO update html?
                 }
                 return;
@@ -842,7 +909,7 @@ public class BookViewController extends WorkbenchMainViewController {
                 //
                 dataHandle.createData(data);
                 getEventBus().fireEvent(new BookdataEvent(BookdataEvent.CREATED, data));
-                ToastHelper.toast(getApplication(), "已添加".concat(dataType.title).concat("！"));
+                FxHelper.runLater(() -> AppContext.toast("已添加".concat(dataType.title).concat("！")).showInformation());
             }
         } catch (Exception e) {
             FxHelper.alertError(getApplication(), e);

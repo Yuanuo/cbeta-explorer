@@ -32,7 +32,7 @@ function getScrollTop1Element() {
 
 function getScrollTop1Selector($ele = null) {
     $ele = $ele || getScrollTop1Element();
-    return $ele.cssSelectorEx();
+    return $ele && $ele.cssSelectorEx();
 }
 
 function getScrollTop1AnchorInfo(outMapOrElseStr = true) {
@@ -122,10 +122,14 @@ function getValidSelectionAnchorInfo(outMapOrElseStr = true) {
     if (!validSelection) return null;
     const selected = validSelection.toString().trim();
     if (selected.length < 1) return null;
-    const parentEle = validSelection.anchorNode.nodeType === 3
-        ? $(validSelection.anchorNode.parentElement) : $(validSelection.anchorNode);
-    let selector = parentEle.cssSelectorEx();
-    if (!selector) selector = parentEle.parent().cssSelectorEx();
+    const startEle = validSelection.baseNode.nodeType === 3
+        ? $(validSelection.baseNode.previousElementSibling || validSelection.baseNode.parentElement)
+        : $(validSelection.baseNode);
+    const endEle = validSelection.anchorNode.nodeType === 3
+        ? $(validSelection.anchorNode.nextElementSibling || validSelection.anchorNode.parentElement)
+        : $(validSelection.anchorNode);
+    let selector = endEle.cssSelectorEx();
+    if (!selector) selector = endEle.parent().cssSelectorEx();
     if (!selector) return null;
     const map = {
         "anchor": selector,
@@ -133,6 +137,62 @@ function getValidSelectionAnchorInfo(outMapOrElseStr = true) {
         "rangy": rangy.serializeSelection()
     };
     return outMapOrElseStr ? map : JSON.stringify(map);
+}
+
+function getValidSelectionReferenceInfo(outMapOrElseStr = true) {
+    const validSelection = getValidSelection();
+    if (!validSelection) return null;
+    const selected = validSelection.toString().trim();
+    if (selected.length < 1) return null;
+    let startLine, endLine;
+    if (validSelection.baseNode.nodeType !== 3) {
+        let tmp = $(validSelection.baseNode);
+        if (tmp.is("span.lb[id]")) startLine = tnp;
+    }
+    if (!startLine && validSelection.baseNode.nodeType === 3) {
+        let tmp = $(validSelection.baseNode.previousElementSibling);
+        if (tmp.is("span.lb[id]")) startLine = tmp;
+    }
+    /*  */
+    if (validSelection.baseNode == validSelection.extentNode) endLine = startLine;
+    else {
+        if (validSelection.extentNode.nodeType !== 3) {
+            let tmp = $(validSelection.extentNode);
+            if (tmp.is("span.lb[id]")) endLine = tnp;
+        }
+        if (!endLine && validSelection.extentNode.nodeType === 3) {
+            let tmp = $(validSelection.extentNode.previousElementSibling);
+            if (tmp.is("span.lb[id]")) endLine = tmp;
+        }
+    }
+    /*  */
+    if (!startLine || !endLine) {
+        let baseNodeHandled = false, extentNodeHandled = false;
+        let previousLine;
+        $('body > article').traverse(function (node) {
+            if (node.nodeType !== 3 && $(node).is("span.lb[id]")) previousLine = $(node);
+            if (!baseNodeHandled) baseNodeHandled = validSelection.baseNode === node;
+            if (baseNodeHandled) {
+                if (!startLine) startLine = previousLine;
+                if (!extentNodeHandled) extentNodeHandled = validSelection.extentNode === node;
+                if (extentNodeHandled && !endLine) endLine = previousLine;
+            }
+            return baseNodeHandled && extentNodeHandled;
+        });
+    }
+    if (!startLine) return null;
+    const map = {
+        "start": startLine.cssSelectorEx(),
+        "end": endLine.cssSelectorEx(),
+        "text": selected,
+        "rangy": rangy.serializeSelection()
+    };
+    return outMapOrElseStr ? map : JSON.stringify(map);
+}
+
+function getValidSelectionReferenceInfo2() {
+    const map = getValidSelectionReferenceInfo(true);
+    return map == null ? "||" : map.start + "|" + map.end + "|" + map.text;
 }
 
 /* ************************************************************************************************************************************* */

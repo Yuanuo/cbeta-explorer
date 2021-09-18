@@ -3,7 +3,6 @@ package org.appxi.cbeta.explorer.search;
 import org.appxi.cbeta.explorer.model.BookList;
 import org.appxi.tome.cbeta.CbetaBook;
 import org.appxi.tome.cbeta.CbetaHelper;
-import org.appxi.util.DevtoolHelper;
 import org.appxi.util.ext.FiPredicateX3;
 
 import java.util.*;
@@ -36,8 +35,8 @@ class LookupInMemory implements LookupProvider {
                 DATABASE.addAll(items);
                 items.clear();
             });
-            DevtoolHelper.LOG.info("init lookup items used time: " + (System.currentTimeMillis() - st));
-            DevtoolHelper.LOG.info("lookup items size: " + DATABASE.size());
+//            DevtoolHelper.LOG.info("init lookup items used time: " + (System.currentTimeMillis() - st));
+//            DevtoolHelper.LOG.info("lookup items size: " + DATABASE.size());
         }).whenComplete((o, err) -> {
             if (null != err)
                 err.printStackTrace();

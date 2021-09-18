@@ -10,24 +10,40 @@ import org.springframework.data.solr.core.query.result.FacetAndHighlightPage;
 import org.springframework.data.solr.repository.SolrCrudRepository;
 
 import java.util.Collection;
+import java.util.stream.Collectors;
 
 @NoRepositoryBean
 public interface PieceRepository extends SolrCrudRepository<Piece, String> {
 
     void deleteAllByProjectAndVersion(String project, String version);
 
-    default FacetAndHighlightPage<Piece> query(String project, final String input,
-                                               Collection<String> categories, boolean facet, Pageable pageable) {
+    default FacetAndHighlightPage<Piece> search(String project, Collection<String> scopes,
+                                                final String input,
+                                                Collection<String> categories, boolean facet, Pageable pageable) {
         final SimpleFacetAndHighlightQuery query = new SimpleFacetAndHighlightQuery();
         query.setDefType("edismax");
         query.setDefaultOperator(Query.Operator.AND);
         query.setPageRequest(pageable);
         query.addProjectionOnFields("id", "score", "path_s", "type_s", "title_s",
-                "field_book_s", "field_authors_s", "field_location_s", "field_anchor_s",
+                "field_book_s", "field_authors_s", "field_location_s", "field_anchor_s", "category_ss",
                 "content_txt_cjk_substr");
 
         if (null != project)
             query.addFilterQuery(new SimpleFilterQuery(Criteria.where("project_s").is(project)));
+
+        //
+        if (null != scopes && !scopes.isEmpty()) {
+            scopes.forEach(s -> {
+                if (s.startsWith("nav/")) {
+                    query.addFilterQuery(new SimpleFilterQuery(
+                            new SimpleStringCriteria("category_ss:" + IndexHelper.wrapWhitespace(s) + "*")));
+                } else {
+                    query.addFilterQuery(new SimpleFilterQuery(
+                            new SimpleStringCriteria("field_book_s:" + s)));
+                }
+            });
+        }
+        //
         query.addFilterQuery(new SimpleFilterQuery(Criteria.where("type_s").is("article")));
 
         final String queryString;
@@ -39,7 +55,9 @@ public interface PieceRepository extends SolrCrudRepository<Piece, String> {
         query.addCriteria(new SimpleStringCriteria(queryString));
 
         if (null != categories && !categories.isEmpty()) {
-            query.addFilterQuery(new SimpleFilterQuery(Criteria.where("category_ss").is(categories)));
+            query.addFilterQuery(new SimpleFilterQuery(new SimpleStringCriteria("category_ss:(" +
+                    categories.stream().map(IndexHelper::wrapWhitespace).collect(Collectors.joining(" OR "))
+                    + ")")));
         }
 
         if (facet) {

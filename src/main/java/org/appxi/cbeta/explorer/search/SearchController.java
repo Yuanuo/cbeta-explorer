@@ -1,8 +1,9 @@
 package org.appxi.cbeta.explorer.search;
 
-import de.jensd.fx.glyphs.materialicons.MaterialIcon;
-import de.jensd.fx.glyphs.materialicons.MaterialIconView;
+import javafx.application.Platform;
 import javafx.geometry.Pos;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Tab;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
@@ -18,6 +19,8 @@ import org.appxi.javafx.workbench.views.WorkbenchSideToolController;
 import org.appxi.tome.cbeta.CbetaBook;
 import org.appxi.tome.model.Chapter;
 import org.appxi.util.DigestHelper;
+import org.controlsfx.glyphfont.MaterialIcon;
+import org.controlsfx.glyphfont.MaterialIconView;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
@@ -35,15 +38,27 @@ public class SearchController extends WorkbenchSideToolController {
     public void setupInitialize() {
         // 响应快捷键 Ctrl+H 事件，以打开搜索视图
         getPrimaryScene().getAccelerators().put(new KeyCodeCombination(KeyCode.H, KeyCombination.SHORTCUT_DOWN),
-                () -> openSearcherWithText(null));
+                () -> openSearcherWithText(null, null));
         // 响应SEARCH Event事件，以打开搜索视图
-        getEventBus().addEventHandler(SearcherEvent.SEARCH, event -> openSearcherWithText(event.text));
+        getEventBus().addEventHandler(SearcherEvent.SEARCH, event -> openSearcherWithText(event.text, event.scope));
         // 尝试建立/重建全文索引
-        getEventBus().addEventHandler(StatusEvent.BEANS_READY,
-                event -> CompletableFuture.runAsync(new IndexingTask(application)).whenComplete((o, err) -> {
-                    if (null != err) FxHelper.alertError(getApplication(), err);
-                })
-        );
+        getEventBus().addEventHandler(StatusEvent.BEANS_READY, event -> {
+            if (IndexingHelper.indexedIsValid()) return;
+            Platform.runLater(() -> {
+                Alert alert = new Alert(Alert.AlertType.CONFIRMATION, """
+                        检测到数据变化或基于新的功能特性，
+                        全文检索功能需要更新索引数据，否则无法正常使用全文检索功能！
+                        （可以不更新索引只使用阅读功能！）
+                                            
+                        是否继续更新索引？
+                        """);
+                FxHelper.withTheme(getApplication(), alert).showAndWait().filter(v -> v == ButtonType.OK).ifPresent(v -> {
+                    CompletableFuture.runAsync(new IndexingTask(application)).whenComplete((o, err) -> {
+                        if (null != err) FxHelper.alertError(getApplication(), err);
+                    });
+                });
+            });
+        });
         // 响应搜索结果打开事件
         getEventBus().addEventHandler(SearchedEvent.OPEN, event -> {
             if (null == event.piece)
@@ -69,20 +84,21 @@ public class SearchController extends WorkbenchSideToolController {
 
     @Override
     public void onViewportShowing(boolean firstTime) {
-        openSearcherWithText(null);
+        openSearcherWithText(null, null);
     }
 
-    private void openSearcherWithText(String text) {
+    private void openSearcherWithText(String text, CbetaBook scope) {
         // 优先查找可用的搜索视图，以避免打开太多未使用的搜索视图
         SearcherController searcher = findReusableSearcher(
                 () -> new SearcherController("SEARCHER-".concat(DigestHelper.uid()), getApplication())
         );
         FxHelper.runLater(() -> {
-            if (!getPrimaryViewport().existsMainView(searcher.viewId)) {
+            if (!getPrimaryViewport().existsMainView(searcher.viewId.get())) {
                 getPrimaryViewport().addWorkbenchViewAsMainView(searcher, false);
                 searcher.setupInitialize();
             }
-            getPrimaryViewport().selectMainView(searcher.viewId);
+            getPrimaryViewport().selectMainView(searcher.viewId.get());
+            searcher.setSearchScope(scope);
             searcher.search(text);
         });
     }

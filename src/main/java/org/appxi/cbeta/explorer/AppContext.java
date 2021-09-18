@@ -5,6 +5,8 @@ import org.appxi.javafx.desktop.ApplicationEvent;
 import org.appxi.javafx.helper.FxHelper;
 import org.appxi.prefs.Preferences;
 import org.appxi.prefs.PreferencesInMemory;
+import org.appxi.tome.cbeta.BookTreeMode;
+import org.controlsfx.control.Notifications;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.core.io.Resource;
@@ -70,5 +72,16 @@ public abstract class AppContext {
     private AppContext() {
     }
 
+    public static void runBlocking(Runnable runnable) {
+        if (null != application)
+            FxHelper.runBlocking(application.getPrimaryViewport(), runnable);
+    }
+
+    public static Notifications toast(String msg) {
+        return Notifications.create(msg).owner(AppContext.app().getPrimaryStage());
+    }
+
     public static Preferences recentBooks = new PreferencesInMemory();
+
+    public static BookTreeMode bookTreeMode = BookTreeMode.catalog;
 }

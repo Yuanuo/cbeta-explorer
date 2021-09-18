@@ -1,7 +1,7 @@
 package org.appxi.cbeta.explorer.recent;
 
-import de.jensd.fx.glyphs.materialicons.MaterialIcon;
-import de.jensd.fx.glyphs.materialicons.MaterialIconView;
+import org.controlsfx.glyphfont.MaterialIcon;
+import org.controlsfx.glyphfont.MaterialIconView;
 import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
@@ -45,6 +45,7 @@ public class RecentController extends WorkbenchSideViewController {
         getEventBus().addEventHandler(BookEvent.OPEN, event -> handleToSaveOrUpdateRecentBook(event.book));
         getEventBus().addEventHandler(BookEvent.CLOSE, event -> handleToSaveOrUpdateRecentBook(event.book));
         getEventBus().addEventHandler(ApplicationEvent.STOPPING, event -> {
+            UserPrefs.recents.save();
             saveRecentBooks();
             saveRecentViews();
         });
@@ -53,6 +54,7 @@ public class RecentController extends WorkbenchSideViewController {
         final RawHolder<WorkbenchMainViewController> swapRecentViewSelected = new RawHolder<>();
         final List<WorkbenchMainViewController> swapRecentViews = new ArrayList<>();
         getEventBus().addEventHandler(ApplicationEvent.STARTING, event -> FxHelper.runLater(() -> {
+            UserPrefs.recents = new PreferencesInProperties(UserPrefs.confDir().resolve(".recents"));
             final Preferences recent = createRecentViews(true);
             WorkbenchMainViewController addedController = null;
             for (String key : recent.getPropertyKeys()) {
@@ -76,7 +78,7 @@ public class RecentController extends WorkbenchSideViewController {
             if (!swapRecentViews.isEmpty()) {
                 swapRecentViews.forEach(ViewController::setupInitialize);
                 if (null != swapRecentViewSelected.value)
-                    FxHelper.runLater(() -> getPrimaryViewport().selectMainView(swapRecentViewSelected.value.viewId));
+                    FxHelper.runLater(() -> getPrimaryViewport().selectMainView(swapRecentViewSelected.value.viewId.get()));
             }
         }).start());
         getEventBus().addEventHandler(GenericEvent.DISPLAY_HAN_CHANGED,

@@ -14,7 +14,7 @@ module appxi.cbetaExplorer {
     requires appxi.hanlp.convert;
     requires appxi.hanlp.pinyin;
     requires org.jsoup;
-    requires de.jensd.fx.fontawesomefx.materialicons;
+    requires org.controlsfx.controls;
 
     requires java.sql;
     requires static com.h2database;

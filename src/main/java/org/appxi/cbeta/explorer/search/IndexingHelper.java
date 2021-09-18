@@ -1,5 +1,7 @@
 package org.appxi.cbeta.explorer.search;
 
+import org.appxi.prefs.Preferences;
+import org.appxi.prefs.PreferencesInProperties;
 import org.appxi.prefs.UserPrefs;
 import org.appxi.tome.cbeta.*;
 import org.appxi.tome.model.Chapter;
@@ -12,9 +14,10 @@ import org.jsoup.select.Elements;
 
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public abstract class IndexingHelper {
-    private static final String VERSION = "21.03.04.1";
+    private static final String VERSION = "21.09.18.1";
 
     public static final String PROJECT = "cbeta";
 
@@ -253,18 +256,45 @@ public abstract class IndexingHelper {
     private IndexingHelper() {
     }
 
+    private static Preferences indexedConf;
+
+    private static synchronized Preferences getIndexedConf() {
+        if (null != indexedConf)
+            return indexedConf;
+
+        indexedConf = new PreferencesInProperties(UserPrefs.confDir().resolve(".indexed"));
+        return indexedConf;
+    }
 
     public static String currentVersion() {
         return DigestHelper.crc32c(String.valueOf(CbetaHelper.getDataTimeNewest()), VERSION);
     }
 
     public static String indexedVersion() {
-        return UserPrefs.prefs.getString("cbeta.indexed", null);
+        String ver = getIndexedConf().getString("ver", null);
+        if (null == ver) {
+            ver = (String) UserPrefs.prefs.removeProperty("cbeta.indexed");
+            // upgrade from old app version
+            if (null != ver) {
+                indexedConf.setProperty("ver", ver);
+                indexedConf.save();
+            }
+        }
+        return ver;
+    }
+
+    public static void indexedVersion(String version) {
+        getIndexedConf().setProperty("ver", version).save();
     }
 
     public static boolean indexedIsValid() {
         final String indexedVersion = IndexingHelper.indexedVersion();
         final String currentVersion = IndexingHelper.currentVersion();
         return Objects.equals(indexedVersion, currentVersion);
+    }
+
+    public static String titledPath(Node<CbetaBook> book) {
+        return book.paths().stream().filter(n1 -> n1.value != null).map(n1 -> n1.value.title)
+                .collect(Collectors.joining("/"));
     }
 }

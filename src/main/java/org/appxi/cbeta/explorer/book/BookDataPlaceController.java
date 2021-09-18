@@ -1,7 +1,7 @@
 package org.appxi.cbeta.explorer.book;
 
-import de.jensd.fx.glyphs.materialicons.MaterialIcon;
-import de.jensd.fx.glyphs.materialicons.MaterialIconView;
+import org.controlsfx.glyphfont.MaterialIcon;
+import org.controlsfx.glyphfont.MaterialIconView;
 import javafx.event.EventHandler;
 import org.appxi.cbeta.explorer.DisplayHelper;
 import org.appxi.cbeta.explorer.event.BookEvent;

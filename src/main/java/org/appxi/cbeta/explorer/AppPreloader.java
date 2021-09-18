@@ -6,39 +6,43 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
 public class AppPreloader extends Preloader {
     private Stage primaryStage;
-    private BorderPane rootPane;
+    private VBox rootPane;
     private ProgressBar progressBar;
+    private Button hacker;
 
     @Override
     public void start(Stage primaryStage) throws Exception {
         this.primaryStage = primaryStage;
 
-        rootPane = new BorderPane();
         final ImageView imageView = new ImageView();
         imageView.setImage(new Image(getClass().getResourceAsStream("/appxi/cbetaExplorer/images/splash.jpg")));
-        rootPane.setCenter(imageView);
         progressBar = new ProgressBar(0);
-        progressBar.setPrefWidth(800);
-        rootPane.setBottom(progressBar);
+        progressBar.setPrefWidth(799);
 
         //
-        final Button button = new Button();
-        button.setText("");
-        button.setMaxSize(1, 1);
-        button.setMinSize(1, 1);
-        button.setPrefSize(1, 1);
-        rootPane.setTop(button);
-        button.setOnAction(event -> CbetaxHelper.setDataDirectory(primaryStage));
+        hacker = new Button();
+        hacker.setMaxSize(.1, .1);
+        hacker.setMinSize(.1, .1);
+        hacker.setPrefSize(.1, .1);
+        hacker.setVisible(false);
+        hacker.setOnAction(event -> CbetaxHelper.setDataDirectory(primaryStage));
         //
+        HBox.setHgrow(progressBar, Priority.ALWAYS);
+        final HBox bottomBar = new HBox(hacker, progressBar);
+        bottomBar.getStyleClass().add("black-bg");
+        rootPane = new VBox(imageView, bottomBar);
 
         primaryStage.initStyle(StageStyle.TRANSPARENT);
         primaryStage.setScene(new Scene(rootPane));
+        primaryStage.getScene().getStylesheets().add(getClass().getResource("/appxi/cbetaExplorer/themes/preloader.css").toExternalForm());
         primaryStage.centerOnScreen();
         primaryStage.show();
     }
@@ -49,7 +53,7 @@ public class AppPreloader extends Preloader {
         percent = percent > 1 ? 1 : percent;
         progressBar.setProgress(percent);
         if (percent == 0.111) {
-            ((Button) rootPane.getTop()).fire();
+            hacker.fire();
         }
     }
 

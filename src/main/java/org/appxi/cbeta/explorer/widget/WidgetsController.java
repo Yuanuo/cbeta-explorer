@@ -1,7 +1,7 @@
 package org.appxi.cbeta.explorer.widget;
 
-import de.jensd.fx.glyphs.materialicons.MaterialIcon;
-import de.jensd.fx.glyphs.materialicons.MaterialIconView;
+import org.controlsfx.glyphfont.MaterialIcon;
+import org.controlsfx.glyphfont.MaterialIconView;
 import javafx.scene.control.Accordion;
 import javafx.scene.control.TitledPane;
 import javafx.scene.layout.Priority;
@@ -22,7 +22,7 @@ public class WidgetsController extends WorkbenchSideViewController {
     public WidgetsController(WorkbenchApplication application) {
         super("WIDGETS", application);
         this.setTitles("工具", "辅助工具集");
-        this.viewIcon.set(new MaterialIconView(MaterialIcon.WIDGETS));
+        this.viewIcon.set(new MaterialIconView(MaterialIcon.NOW_WIDGETS));
     }
 
     @Override

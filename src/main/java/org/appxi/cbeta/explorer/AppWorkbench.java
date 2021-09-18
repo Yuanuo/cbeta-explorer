@@ -1,20 +1,19 @@
 package org.appxi.cbeta.explorer;
 
+import javafx.application.Platform;
+import javafx.scene.web.WebView;
 import org.appxi.cbeta.explorer.dao.DaoHelper;
 import org.appxi.cbeta.explorer.dao.DaoService;
 import org.appxi.cbeta.explorer.model.BookList;
 import org.appxi.hanlp.convert.ChineseConvertors;
+import org.appxi.javafx.desktop.ApplicationEvent;
 import org.appxi.javafx.helper.FxHelper;
 import org.appxi.javafx.workbench.WorkbenchApplication;
 import org.appxi.javafx.workbench.WorkbenchPrimaryController;
 import org.appxi.prefs.UserPrefs;
-import org.appxi.util.DateHelper;
-import org.appxi.util.FileHelper;
 
 import java.net.URL;
-import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
@@ -29,16 +28,10 @@ public class AppWorkbench extends WorkbenchApplication {
         super.init();
         //
         Locale.setDefault(Locale.SIMPLIFIED_CHINESE);
-        // 由于在配置文件中不能使用动态变量作为路径，故在此设置日志文件路径
-        if (FxHelper.productionMode) {
-            final Path logFile = UserPrefs.dataDir().resolve(".logs")
-                    .resolve(DateHelper.format(new Date()).replaceAll("[\s:]", "-").concat(".log"));
-            FileHelper.makeParents(logFile);
-            System.setProperty("org.slf4j.simpleLogger.logFile", logFile.toString());
-        }
         // 在此设置数据库基本环境，以供后续的功能正常使用
         DaoHelper.setupDatabaseService(UserPrefs.dataDir().resolve(".db"));
         initThemes();
+        eventBus.addEventHandler(ApplicationEvent.STARTED, event -> Platform.runLater(WebView::new));
         CompletableFuture.runAsync(() -> {
             BookList.books.getDataMap();
             DaoService.setupInitialize();

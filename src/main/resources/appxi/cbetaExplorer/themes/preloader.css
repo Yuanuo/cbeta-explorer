@@ -1,0 +1,14 @@
+.black-bg {
+    -fx-background-color: black;
+}
+.progress-bar {
+    -fx-pref-height: 6px;
+}
+.progress-bar .track {
+    -fx-background-color: black;
+    -fx-background-radius: 0;
+}
+.progress-bar .bar {
+    -fx-background-radius: 0;
+    -fx-background-insets: 0;
+}

@@ -1,10 +1,10 @@
 package org.appxi.cbeta.explorer.book;
 
-import de.jensd.fx.glyphs.materialicons.MaterialIcon;
-import de.jensd.fx.glyphs.materialicons.MaterialIconView;
 import javafx.collections.ObservableList;
 import javafx.event.Event;
 import javafx.scene.control.*;
+import javafx.scene.input.ContextMenuEvent;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import org.appxi.cbeta.explorer.AppContext;
@@ -28,9 +28,11 @@ import org.appxi.prefs.UserPrefs;
 import org.appxi.tome.cbeta.BookTreeMode;
 import org.appxi.tome.cbeta.CbetaBook;
 import org.appxi.tome.model.Chapter;
-import org.appxi.util.DevtoolHelper;
 import org.appxi.util.StringHelper;
+import org.controlsfx.glyphfont.MaterialIcon;
+import org.controlsfx.glyphfont.MaterialIconView;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -94,6 +96,7 @@ public class BookListController extends WorkbenchSideViewController {
                     updatedItem = null;
                     this.setText(null);
                     this.setTooltip(null);
+                    this.setGraphic(null);
                     return;
                 }
                 if (item == updatedItem)
@@ -109,19 +112,76 @@ public class BookListController extends WorkbenchSideViewController {
                     this.setTooltip(new Tooltip(item.id.concat(" by ").concat(DisplayHelper.displayText(item.authorInfo))));
                 else this.setTooltip(null);
                 //
+                this.setGraphic(new MaterialIconView(this.getTreeItem().isLeaf() ? MaterialIcon.ARTICLE
+                        : (this.getTreeItem().isExpanded() ? MaterialIcon.FOLDER_OPEN : MaterialIcon.FOLDER)));
+                //
                 this.getStyleClass().remove("visited");
                 if (null != item.path && null != AppContext.recentBooks.getProperty(item.id)) {
                     this.getStyleClass().add("visited");
                 }
             }
         });
+
+        // dynamic context-menu
+        this.treeView.setOnContextMenuRequested(this::handleEventOnContextMenuRequested);
+        // hide context-menu
+        this.treeView.setOnMousePressed(event -> {
+            if (event.getButton() != MouseButton.SECONDARY) {
+                if (null != contextMenu && contextMenu.isShowing())
+                    contextMenu.hide();
+            }
+        });
+        //
         this.viewportVBox.getChildren().add(this.treeView);
+    }
+
+    private ContextMenu contextMenu;
+
+    private void handleEventOnContextMenuRequested(ContextMenuEvent event) {
+        final TreeItem<CbetaBook> selectedItem = this.treeView.getSelectionModel().getSelectedItem();
+        final List<MenuItem> menuItems = new ArrayList<>(16);
+        //
+        if (null != selectedItem) {
+            final CbetaBook book = selectedItem.getValue();
+
+            // view
+            MenuItem menuItem = new MenuItem("查看");
+            menuItem.setGraphic(new MaterialIconView(MaterialIcon.VISIBILITY));
+            menuItem.setOnAction(event1 -> getEventBus().fireEvent(new BookEvent(BookEvent.OPEN, book)));
+            menuItems.add(menuItem);
+
+            // search in this
+            menuItem = new MenuItem("从这里搜索");
+            menuItem.setGraphic(new MaterialIconView(MaterialIcon.FIND_IN_PAGE));
+            menuItem.setOnAction(event1 -> {
+                if (null == book.id) {
+                    final StringBuilder buff = new StringBuilder();
+                    TreeHelper.walkParents(selectedItem, n -> {
+                        if (n == null || n.getValue() == null) return true;
+                        buff.insert(0, "/".concat(n.getValue().title));
+                        return false;
+                    });
+                    buff.insert(0, "nav/".concat(UserPrefs.prefs.getString("cbeta.nav", "catalog")));
+                    book.attr("path", buff.toString());
+                }
+                getEventBus().fireEvent(SearcherEvent.ofSearch(null, book));
+            });
+            menuItems.add(menuItem);
+        }
+
+        //
+        event.consume();
+        if (null != contextMenu && contextMenu.isShowing())
+            contextMenu.hide();
+        contextMenu = new ContextMenu(menuItems.toArray(new MenuItem[0]));
+        contextMenu.show(this.treeView, event.getScreenX(), event.getScreenY());
     }
 
     @Override
     public void setupInitialize() {
         getEventBus().addEventHandler(BookEvent.OPEN, event -> handleEventToOpenBook(event, event.book, event.chapter));
         //
+        AppContext.bookTreeMode = BookTreeMode.valueOf(UserPrefs.prefs.getString("cbeta.nav", "catalog"));
         treeViewModeGroup.selectedToggleProperty().addListener((o, ov, nv) -> {
             if (null == nv) return;
             new Thread(() -> {
@@ -131,9 +191,10 @@ public class BookListController extends WorkbenchSideViewController {
                 UserPrefs.prefs.setProperty("cbeta.nav", mode);
                 //
                 final TreeItem<CbetaBook> rootItem = bookTree.getDataTree();
+                AppContext.bookTreeMode = bookTree.getMode();
                 rootItem.setExpanded(true);
                 FxHelper.runLater(() -> treeView.setRoot(rootItem));
-                DevtoolHelper.LOG.info("load booklist views used times: " + (System.currentTimeMillis() - st));
+//                DevtoolHelper.LOG.info("load booklist views used times: " + (System.currentTimeMillis() - st));
             }).start();
         });
         getEventBus().addEventHandler(StatusEvent.BOOKS_READY, event -> {
@@ -156,7 +217,7 @@ public class BookListController extends WorkbenchSideViewController {
         event.consume();
         final BookViewController viewController = (BookViewController) getPrimaryViewport().findMainViewController(book.id);
         if (null != viewController) {
-            getPrimaryViewport().selectMainView(viewController.viewId);
+            getPrimaryViewport().selectMainView(viewController.viewId.get());
             FxHelper.runLater(() -> viewController.openChapter(chapter));
             return;
         }
@@ -166,7 +227,7 @@ public class BookListController extends WorkbenchSideViewController {
             controller.attr(Chapter.class, chapter);
             getPrimaryViewport().addWorkbenchViewAsMainView(controller, false);
             controller.setupInitialize();
-            getPrimaryViewport().selectMainView(controller.viewId);
+            getPrimaryViewport().selectMainView(controller.viewId.get());
         });
     }
 
