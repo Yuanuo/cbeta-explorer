@@ -143,12 +143,14 @@ public class BookListController extends WorkbenchSideViewController {
         //
         if (null != selectedItem) {
             final CbetaBook book = selectedItem.getValue();
-
+            MenuItem menuItem;
             // view
-            MenuItem menuItem = new MenuItem("查看");
-            menuItem.setGraphic(new MaterialIconView(MaterialIcon.VISIBILITY));
-            menuItem.setOnAction(event1 -> getEventBus().fireEvent(new BookEvent(BookEvent.OPEN, book)));
-            menuItems.add(menuItem);
+            if (book.id != null && book.path != null) {
+                menuItem = new MenuItem("查看");
+                menuItem.setGraphic(new MaterialIconView(MaterialIcon.VISIBILITY));
+                menuItem.setOnAction(event1 -> getEventBus().fireEvent(new BookEvent(BookEvent.OPEN, book)));
+                menuItems.add(menuItem);
+            }
 
             // search in this
             menuItem = new MenuItem("从这里搜索");
@@ -214,6 +216,7 @@ public class BookListController extends WorkbenchSideViewController {
     }
 
     private void handleEventToOpenBook(Event event, CbetaBook book, Chapter chapter) {
+        if (book.id == null || book.path == null) return;
         event.consume();
         final BookViewController viewController = (BookViewController) getPrimaryViewport().findMainViewController(book.id);
         if (null != viewController) {
