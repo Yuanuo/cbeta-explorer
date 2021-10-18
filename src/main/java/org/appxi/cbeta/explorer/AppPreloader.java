@@ -123,7 +123,7 @@ public class AppPreloader extends Preloader {
                                     .get()
                     ).showAndWait();
             if (optional.isEmpty() || optional.get().userData() == null) {
-                System.exit(-1);
+                System.exit(0);
                 return;
             }
             // 4，提示并让用户选择数据包
