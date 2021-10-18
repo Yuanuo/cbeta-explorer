@@ -13,6 +13,7 @@ import org.springframework.data.solr.core.SolrTemplate;
 import org.springframework.data.solr.repository.config.EnableSolrRepositories;
 
 import java.nio.file.Path;
+import java.util.Set;
 
 @Configuration
 @EnableSolrRepositories("org.appxi.cbeta.explorer.dao")
@@ -22,10 +23,9 @@ class SpringConfig {
         final Path solrHome = UserPrefs.dataDir().resolve(".solr");
         final Path confHome = FxHelper.appDir().resolve("template");
 
-        System.setProperty("solr.allowPaths", solrHome.toString());
-
         final NodeConfig config = new NodeConfig.NodeConfigBuilder(Piece.REPO, solrHome)
                 .setConfigSetBaseDirectory(confHome.toString())
+                .setAllowPaths(Set.of(Path.of("_ALL_"), solrHome))
                 .build();
 
         final EmbeddedSolrServer solrClient = new EmbeddedSolrServer(config, Piece.REPO);
