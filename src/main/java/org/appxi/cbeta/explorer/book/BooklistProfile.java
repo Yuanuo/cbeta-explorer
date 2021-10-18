@@ -63,7 +63,8 @@ public class BooklistProfile {
     }
 
     public boolean loadProfile() {
-        return loadProfile(Profile.valueBy(profileMgr.getString("profile", null)), true);
+        final String profile = profileMgr.getString("profile", "");
+        return !profile.isBlank() && loadProfile(Profile.valueBy(profile), true);
     }
 
     private boolean loadProfile(final Profile profile, boolean silent) {
