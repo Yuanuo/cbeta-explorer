@@ -136,7 +136,7 @@ public class BooklistProfile {
                     : optional.get().userData();
 
             if (profile == null)
-                System.exit(-1);
+                AppContext.app().stop();
         }
     }
 
