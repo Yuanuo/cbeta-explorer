@@ -1,22 +1,19 @@
-package org.appxi.cbeta.explorer.model;
+package org.appxi.cbeta.explorer.book;
 
+import appxi.cbeta.Book;
+import appxi.cbeta.Chapter;
+import appxi.cbeta.ChapterTreeParser;
 import javafx.scene.control.TreeItem;
+import org.appxi.cbeta.explorer.AppContext;
 import org.appxi.javafx.control.TreeViewExt;
 import org.appxi.javafx.helper.TreeHelper;
-import org.appxi.tome.cbeta.CbetaBook;
-import org.appxi.tome.cbeta.ChapterTreeParser;
-import org.appxi.tome.model.Chapter;
 import org.appxi.util.ext.Node;
 
 import java.util.Comparator;
 
 public class ChapterTree extends ChapterTreeParser<TreeItem<Chapter>> {
-    public ChapterTree(CbetaBook book) {
-        super(book, new TreeItem<>(new Chapter()), new TreeItem<>(new Chapter()), null);
-    }
-
-    public ChapterTree(CbetaBook book, TreeItem<Chapter> tocChapters, TreeItem<Chapter> volChapters) {
-        super(book, tocChapters, volChapters, null);
+    public ChapterTree(Book book) {
+        super(AppContext.bookcase(), book, new TreeItem<>(new Chapter()), new TreeItem<>(new Chapter()), null);
     }
 
     @Override
@@ -36,21 +33,21 @@ public class ChapterTree extends ChapterTreeParser<TreeItem<Chapter>> {
         tree.getChildren().sort(Comparator.comparing(item -> item.getValue().path));
     }
 
-    public static void parseBookChaptersToTree(CbetaBook book, TreeViewExt<Chapter> tocTree, TreeViewExt<Chapter> volTree) {
+    public static void parseBookChaptersToTree(Book book, TreeViewExt<Chapter> tocTree, TreeViewExt<Chapter> volTree) {
         final ChapterTree chapterTree = new ChapterTree(book);
         tocTree.setRoot(chapterTree.getTocChapters());
         volTree.setRoot(chapterTree.getVolChapters());
         // 由于原数据中卷次列表并不一定连续，其中有修复填补的部分，在其显示文字上加上“暂无”可能对用户更友好
-        TreeHelper.walkLeafs(volTree.getRoot(), t -> {
-            if (t.getValue() != null && "title".equals(t.getValue().type))
-                t.getValue().title = t.getValue().title.concat("（暂无）");
+        TreeHelper.filterLeafs(volTree.getRoot(), (treeItem, itemValue) -> {
+            if (itemValue != null && "title".equals(itemValue.type))
+                itemValue.title = itemValue.title.concat("（暂无）");
             return false;
         });
     }
 
 
-    public static void buildBookChaptersToTree(CbetaBook book, TreeViewExt<Chapter> tocTree, TreeViewExt<Chapter> volTree) {
-        final org.appxi.tome.cbeta.ChapterTree chapterTree = org.appxi.tome.cbeta.ChapterTree.getOrInitBookChapters(book);
+    public static void buildBookChaptersToTree(Book book, TreeViewExt<Chapter> tocTree, TreeViewExt<Chapter> volTree) {
+        final appxi.cbeta.ChapterTree chapterTree = appxi.cbeta.ChapterTree.getOrInitBookChapters(AppContext.bookcase(), book);
         buildBookChaptersToTree(chapterTree.getTocChapters(), tocTree);
         buildBookChaptersToTree(chapterTree.getVolChapters(), volTree);
     }

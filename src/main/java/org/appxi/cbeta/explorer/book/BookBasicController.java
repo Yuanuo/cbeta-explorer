@@ -1,5 +1,7 @@
 package org.appxi.cbeta.explorer.book;
 
+import appxi.cbeta.Book;
+import appxi.cbeta.Chapter;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Accordion;
 import javafx.scene.control.Label;
@@ -8,7 +10,6 @@ import javafx.scene.control.TreeItem;
 import javafx.scene.input.InputEvent;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import org.appxi.cbeta.explorer.model.ChapterTree;
 import org.appxi.holder.RawHolder;
 import org.appxi.javafx.control.TreeViewEx;
 import org.appxi.javafx.control.TreeViewExt;
@@ -16,8 +17,6 @@ import org.appxi.javafx.helper.TreeHelper;
 import org.appxi.javafx.workbench.WorkbenchApplication;
 import org.appxi.javafx.workbench.views.WorkbenchSideViewController;
 import org.appxi.prefs.UserPrefs;
-import org.appxi.tome.cbeta.CbetaBook;
-import org.appxi.tome.model.Chapter;
 import org.appxi.util.DigestHelper;
 import org.appxi.util.StringHelper;
 
@@ -26,7 +25,7 @@ import java.util.Objects;
 import java.util.function.Predicate;
 
 public class BookBasicController extends WorkbenchSideViewController {
-    final BookViewController bookView;
+    final BookXmlViewer bookView;
 
     Accordion accordion;
     TitledPane tocsPane, volsPane, infoPane;
@@ -34,7 +33,7 @@ public class BookBasicController extends WorkbenchSideViewController {
 
     TreeItem<Chapter> selectedTreeItem;
 
-    public BookBasicController(WorkbenchApplication application, BookViewController bookView) {
+    public BookBasicController(WorkbenchApplication application, BookXmlViewer bookView) {
         super("BOOK-BASIC", application);
         this.bookView = bookView;
     }
@@ -77,7 +76,7 @@ public class BookBasicController extends WorkbenchSideViewController {
     public void onViewportHiding() {
     }
 
-    public Chapter selectChapter(CbetaBook book, Chapter chapter) {
+    public Chapter selectChapter(Book book, Chapter chapter) {
         if (null != selectedTreeItem && selectedTreeItem.getValue() == chapter)
             return selectedTreeItem.getValue();
 
@@ -93,17 +92,17 @@ public class BookBasicController extends WorkbenchSideViewController {
             if (path.startsWith("p")) {
                 final String pathExpr = "#".concat(path);
                 RawHolder<Chapter> found = new RawHolder<>(), prev = new RawHolder<>();
-                TreeHelper.walkLeafs(tocsTree.getRoot(), itm -> {
-                    if (null == itm.getValue() || null == itm.getValue().start) return false;
-                    int compared = itm.getValue().start.toString().compareToIgnoreCase(pathExpr);
+                TreeHelper.filterLeafs(tocsTree.getRoot(), (treeItem, itemValue) -> {
+                    if (null == itemValue || null == itemValue.anchor) return false;
+                    int compared = itemValue.anchor.toString().compareToIgnoreCase(pathExpr);
                     if (compared > 0) {
-                        found.value = null != prev.value ? prev.value : itm.getValue();
+                        found.value = null != prev.value ? prev.value : itemValue;
                         return true;
                     } else if (compared == 0) {
-                        found.value = itm.getValue();
+                        found.value = itemValue;
                         return true;
                     }
-                    prev.value = itm.getValue();
+                    prev.value = itemValue;
                     return false;
                 });
                 if (null != found.value) {
@@ -123,7 +122,7 @@ public class BookBasicController extends WorkbenchSideViewController {
         if (null != chapter && null != chapter.path) {
             Predicate<TreeItem<Chapter>> findByPath = itm ->
                     itm.isLeaf() && chapter.path.equals(itm.getValue().path)
-                            && (null == chapter.start || chapter.start.equals(itm.getValue().start));
+                            && (null == chapter.anchor || chapter.anchor.equals(itm.getValue().anchor));
             detectAvailTarget(targetPane, targetTree, targetTreeItem, findByPath);
         }
         if (null == targetTreeItem.value) {
@@ -135,7 +134,7 @@ public class BookBasicController extends WorkbenchSideViewController {
                         if (null == itm.getValue() || null == itm.getValue().path)
                             return false;
                         final String oldStyleId = DigestHelper.crc32c(
-                                itm.getValue().path.concat(null == itm.getValue().start ? "" : itm.getValue().start.toString()),
+                                itm.getValue().path.concat(null == itm.getValue().anchor ? "" : itm.getValue().anchor.toString()),
                                 itm.getValue().title,
                                 Charset.forName("GBK"));
                         return lastChapterId.equals(book.id.concat("-").concat(oldStyleId));

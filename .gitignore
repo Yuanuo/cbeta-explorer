@@ -14,8 +14,4 @@
 
 # more
 /.cached
-/.config
-/.hanlp-cache/
-/.hanlp-data/
-/.tome-cache
 bak/

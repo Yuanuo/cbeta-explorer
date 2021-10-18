@@ -1,130 +1,159 @@
 package org.appxi.cbeta.explorer.search;
 
+import appxi.cbeta.*;
 import javafx.application.Platform;
 import javafx.event.EventHandler;
+import javafx.scene.control.TreeItem;
 import org.appxi.cbeta.explorer.AppContext;
+import org.appxi.cbeta.explorer.book.BooklistProfile;
 import org.appxi.cbeta.explorer.dao.PiecesRepository;
 import org.appxi.cbeta.explorer.event.ProgressEvent;
+import org.appxi.holder.BoolHolder;
 import org.appxi.holder.IntHolder;
-import org.appxi.holder.StringHolder;
 import org.appxi.javafx.desktop.ApplicationEvent;
 import org.appxi.javafx.desktop.DesktopApplication;
 import org.appxi.javafx.helper.FxHelper;
+import org.appxi.javafx.helper.TreeHelper;
+import org.appxi.prefs.Preferences;
+import org.appxi.prefs.PreferencesInProperties;
 import org.appxi.prefs.UserPrefs;
-import org.appxi.tome.BookHelper;
-import org.appxi.tome.cbeta.BookMap;
-import org.appxi.tome.cbeta.BookTree;
-import org.appxi.tome.cbeta.BookTreeMode;
-import org.appxi.tome.cbeta.Tripitaka;
+import org.appxi.search.solr.Piece;
+import org.appxi.util.StringHelper;
+import org.springframework.data.solr.core.SolrTemplate;
 
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
-public class IndexingTask implements Runnable {
-    private final EventHandler<ApplicationEvent> handleEventToBreaking = this::handleEventToBreaking;
-
-    final DesktopApplication application;
-
-    public IndexingTask(DesktopApplication application) {
-        this.application = application;
-    }
-
-    private boolean breaking;
-
+record IndexingTask(DesktopApplication application) implements Runnable {
     @Override
     public void run() {
-        if (IndexingHelper.indexedIsValid())
-            return; // no need to reindex
+        final PiecesRepository repository = AppContext.getBean(PiecesRepository.class);
+        if (null == repository) return;
 
-        final String indexedVersion = IndexingHelper.indexedVersion();
-        final String currentVersion = IndexingHelper.currentVersion();
-
-        final PiecesRepository repository = AppContext.beans().getBean(PiecesRepository.class);
-        if (null != indexedVersion) {
-            // delete old version
-            repository.deleteAllByProjectAndVersion(IndexingHelper.PROJECT, indexedVersion);
-        }
-
-        StringHolder indexingPos = new StringHolder(UserPrefs.prefs.getString("indexing.pos", null));
-        final String indexingVer = UserPrefs.prefs.getString("indexing.ver", null);
-        if (null != indexingVer && !indexingVer.equals(currentVersion)) {
-            // delete uncompleted
-            repository.deleteAllByProjectAndVersion(IndexingHelper.PROJECT, indexingVer);
-            indexingPos.value = null;
-        }
-        UserPrefs.prefs.setProperty("indexing.ver", currentVersion);
-
-        final BookMap books = new BookMap();
-        books.getDataMap();
-        final BookTree bookTree = new BookTree(books, BookTreeMode.simple);
-        bookTree.getDataTree();
-        final BookTree bookTreeAdvance = new BookTree(books, BookTreeMode.advance);
-        bookTreeAdvance.getDataTree();
-        final BookTree bookTreeCatalog = new BookTree(books, BookTreeMode.catalog);
-        bookTreeCatalog.getDataTree();
-
-        // collect max steps for progress
-        final IntHolder indexSteps = new IntHolder(0);
-        bookTree.getDataTree().traverse((level, node, book) -> indexSteps.value++);
-        //
+        final BoolHolder breaking = new BoolHolder(false);
+        final EventHandler<ApplicationEvent> handleEventToBreaking = event -> breaking.value = true;
         application.eventBus.addEventHandler(ApplicationEvent.STOPPING, handleEventToBreaking);
+        AppContext.app().eventBus.fireEvent(new ProgressEvent(ProgressEvent.INDEXING, -1, 1, ""));
         try {
-            final IntHolder indexStep = new IntHolder(0);
-            bookTree.getDataTree().traverse((level, node, book) -> {
-                indexStep.value++;
-                if (null == book || null == book.path)
-                    return;
-
-                if (breaking)
-                    throw new RuntimeException();
-                //
-                if (null != indexingPos.value) {
-                    if (Objects.equals(book.id, indexingPos.value)) {
-                        // reset it for next step
-                        indexingPos.value = null;
-                    }
-                    return;
-                }
-
-                try {
-                    Tripitaka tripitaka = null == book.tripitakaId ? null : books.tripitakaMap.getDataMap().get(book.tripitakaId);
-                    IndexingHelper.prepareBook(IndexingHelper.PROJECT, currentVersion, tripitaka, book, false);
-                    final Map<String, String> category = book.attr("category");
-                    category.put("nav/simple/".concat(IndexingHelper.titledPath(node)), "");
-                    Optional.ofNullable(bookTreeAdvance.getDataTree().findFirst(n -> n.value != null && Objects.equals(n.value.id, book.id)))
-                            .ifPresent(n -> category.put("nav/advance/".concat(IndexingHelper.titledPath(n)), ""));
-                    Optional.ofNullable(bookTreeCatalog.getDataTree().findFirst(n -> n.value != null && Objects.equals(n.value.id, book.id)))
-                            .ifPresent(n -> category.put("nav/catalog/".concat(IndexingHelper.titledPath(n)), ""));
-                    //
-                    BookHelper.prepareBook(book);
-                    //
-                    repository.saveCbetaBook(book);
-                    // release memory?
-                    book.chapters.children().clear();
-                } catch (Throwable e) {
-                    // 忽略过程中的任何错误，因为出错原因可能是程序逻辑或数据异常，除了升级或修复外此过程会一直出现错误，在此中断亦无意义
-                    if (!FxHelper.productionMode)
-                        e.printStackTrace();
-                }
-
-                UserPrefs.prefs.setProperty("indexing.pos", book.id);
-                AppContext.app().eventBus.fireEvent(new ProgressEvent(ProgressEvent.INDEXING, indexStep.value, indexSteps.value, book.title));
-            });
-
-            //
-            IndexingHelper.indexedVersion(currentVersion);
-            UserPrefs.prefs.removeProperty("indexing.ver");
-            UserPrefs.prefs.removeProperty("indexing.pos");
+            running(repository, breaking);
+        } finally {
             // unbind
             application.eventBus.removeEventHandler(ApplicationEvent.STOPPING, handleEventToBreaking);
-            //
-            Platform.runLater(() -> AppContext.toast("索引成功完成！").showInformation());
-        } catch (RuntimeException ignored) {
+            AppContext.app().eventBus.fireEvent(new ProgressEvent(ProgressEvent.INDEXING, 1, 1, ""));
         }
     }
 
-    private void handleEventToBreaking(ApplicationEvent event) {
-        this.breaking = true;
+    private void running(PiecesRepository repository, BoolHolder breaking) {
+        final BooklistProfile.Profile profile = AppContext.profile();
+        final TripitakaMap tripitakaMap = new TripitakaMap(AppContext.bookcase());
+        final BookMap bookMap = new BookMap(tripitakaMap);
+        boolean updated = false;
+        if (IndexedManager.isBookcaseIndexable()) {
+            repository.deleteAll();
+
+            final Booklist<TreeItem<Book>> buleiBooklist, simpleBooklist, advanceBooklist;
+            buleiBooklist = new BooklistProfile.BooklistTree(bookMap, BooklistProfile.Profile.bulei);
+            simpleBooklist = new BooklistProfile.BooklistTree(bookMap, BooklistProfile.Profile.simple);
+            advanceBooklist = new BooklistProfile.BooklistTree(bookMap, BooklistProfile.Profile.advance);
+
+            final IntHolder step = new IntHolder(0);
+            final IntHolder steps = new IntHolder(1);
+            TreeHelper.walkLeafs(buleiBooklist.tree(), (treeItem, book) -> steps.value++);
+            try {
+                final Map<String, String> simpleBookPaths = new HashMap<>(512);
+                TreeHelper.walkLeafs(simpleBooklist.tree(), (treeItem, book) -> {
+                    if (null == book || null == book.path) return;
+                    simpleBookPaths.put(book.id, "nav/simple/".concat(TreeHelper.path(treeItem)));
+                });
+                final Map<String, String> advanceBookPaths = new HashMap<>(512);
+                TreeHelper.walkLeafs(advanceBooklist.tree(), (treeItem, book) -> {
+                    if (null == book || null == book.path) return;
+                    advanceBookPaths.put(book.id, "nav/advance/".concat(TreeHelper.path(treeItem)));
+                });
+
+                Preferences cacheProfiles = new PreferencesInProperties(UserPrefs.confDir().resolve(".profiles"), false);
+                String cacheProfilesStr = StringHelper.join(",",
+                        new HashSet<>(Arrays.asList("bulei", "simple", "advance", profile.name())));
+                TreeHelper.walkLeafs(buleiBooklist.tree(), (treeItem, book) -> {
+                    step.value++;
+                    if (null == book || null == book.path) return;
+                    if (breaking.value) throw new RuntimeException();
+                    //
+                    try {
+                        Tripitaka tripitaka = null == book.tripitakaId ? null : tripitakaMap.data().get(book.tripitakaId);
+                        IndexingHelper.prepareBookBasic(null, null, tripitaka, book);
+                        IndexingHelper.prepareBookChapters(book);
+                        IndexingHelper.prepareBookContents(book, false);
+                        //
+                        final Map<String, String> category = book.attr("category");
+                        category.put("nav/bulei/".concat(TreeHelper.path(treeItem)), "");
+                        Optional.ofNullable(simpleBookPaths.get(book.id)).ifPresent(v -> category.put(v, ""));
+                        Optional.ofNullable(advanceBookPaths.get(book.id)).ifPresent(v -> category.put(v, ""));
+
+                        category.put("profile/bulei", "");
+                        category.put("profile/simple", "");
+                        category.put("profile/advance", "");
+                        category.put("profile/".concat(profile.name()), "");
+                        //
+                        BookHelper.prepareBook(book);
+                        List<Piece> pieces = IndexingHelper.buildBookToPieces(book);
+                        if (!pieces.isEmpty()) {
+                            repository.saveAll(pieces);
+                            pieces.forEach(p -> cacheProfiles.setProperty(p.id, book.id.concat("|").concat(cacheProfilesStr)));
+                        }
+                    } catch (Throwable e) {
+                        // 忽略过程中的任何错误，因为出错原因可能是程序逻辑或数据异常，除了升级或修复外此过程会一直出现错误，在此中断亦无意义
+                        if (!FxHelper.productionMode)
+                            e.printStackTrace();
+                    }
+                    AppContext.app().eventBus.fireEvent(new ProgressEvent(ProgressEvent.INDEXING, step.value, steps.value, book.title));
+                });
+                cacheProfiles.save();
+                updated = true;
+            } catch (RuntimeException e) {
+                if (breaking.value)
+                    e.printStackTrace();
+            }
+        } else if (IndexedManager.isBooklistIndexable()) {
+            SolrTemplate solrTemplate = AppContext.getBean(SolrTemplate.class);
+            if (null == solrTemplate) return;
+            AppContext.app().eventBus.fireEvent(new ProgressEvent(ProgressEvent.INDEXING, -1, 1, "正在更新。。。"));
+
+            final BooklistProfile.BooklistFilteredTree booklist;
+            booklist = new BooklistProfile.BooklistFilteredTree(bookMap, AppContext.profile());
+            try {
+                final HashSet<String> managedBooks = new HashSet<>(512);
+                TreeHelper.walkLeafs(booklist.tree(), (treeItem, book) -> managedBooks.add(book.id));
+
+                final Preferences cachedProfiles = new PreferencesInProperties(UserPrefs.confDir().resolve(".profiles"));
+                final List<Map.Entry<String, Map.Entry<String, Object>[]>> updates = new ArrayList<>(512);
+                cachedProfiles.getPropertyKeys().forEach(id -> {
+                    String[] info = cachedProfiles.getString(id, "").split("\\|", 2);
+                    if (info.length != 2) return;
+                    String bookId = info[0];
+                    Set<String> projects = new HashSet<>(Arrays.asList(info[1].split(",")));
+                    boolean changed;
+                    if (managedBooks.contains(bookId)) changed = projects.add(profile.name());
+                    else changed = projects.remove(profile.name());
+                    if (changed) {
+                        cachedProfiles.setProperty(id, bookId.concat("|").concat(StringHelper.join(",", projects)));
+//                        repository.updateInAtomicSet(solrTemplate, Piece.REPO, id, new AbstractMap.SimpleEntry<>("project_ss", projects));
+                        updates.add(new AbstractMap.SimpleEntry<String, Map.Entry<String, Object>[]>(
+                                id, new AbstractMap.SimpleEntry[]{
+                                new AbstractMap.SimpleEntry<String, Object>("project_ss", projects)
+                        }));
+                    }
+                });
+                repository.updateInAtomicsSet(solrTemplate, Piece.REPO, updates.toArray(new Map.Entry[0]));
+                cachedProfiles.save();
+                updated = true;
+            } catch (RuntimeException e) {
+                if (breaking.value)
+                    e.printStackTrace();
+            }
+        }
+        if (updated) {
+            IndexedManager.saveIndexedVersions();
+            Platform.runLater(() -> AppContext.toast("全文索引已更新！").showInformation());
+        }
     }
 }

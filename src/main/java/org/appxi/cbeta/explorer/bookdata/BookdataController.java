@@ -1,27 +1,25 @@
 package org.appxi.cbeta.explorer.bookdata;
 
+import appxi.cbeta.Book;
+import appxi.cbeta.Chapter;
 import com.j256.ormlite.stmt.Where;
-import org.appxi.javafx.glyphfont.MaterialIcon;
-import org.appxi.javafx.glyphfont.MaterialIconView;
 import javafx.beans.binding.Bindings;
 import javafx.scene.control.*;
 import javafx.scene.input.InputEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import org.appxi.cbeta.explorer.AppContext;
 import org.appxi.cbeta.explorer.DisplayHelper;
 import org.appxi.cbeta.explorer.dao.Bookdata;
 import org.appxi.cbeta.explorer.dao.BookdataType;
 import org.appxi.cbeta.explorer.dao.DaoService;
 import org.appxi.cbeta.explorer.event.BookEvent;
 import org.appxi.cbeta.explorer.event.BookdataEvent;
-import org.appxi.cbeta.explorer.model.BookList;
 import org.appxi.javafx.control.ListViewExt;
 import org.appxi.javafx.helper.FxHelper;
+import org.appxi.javafx.iconfont.MaterialIcon;
 import org.appxi.javafx.workbench.WorkbenchApplication;
 import org.appxi.javafx.workbench.views.WorkbenchSideViewController;
-import org.appxi.tome.cbeta.CbetaBook;
-import org.appxi.tome.model.Book;
-import org.appxi.tome.model.Chapter;
 import org.appxi.util.DateHelper;
 
 import java.sql.SQLException;
@@ -79,12 +77,12 @@ public abstract class BookdataController extends WorkbenchSideViewController {
                 textLabel = new Label();
                 textLabel.setWrapText(true);
 
-                timeLabel = new Label(null, new MaterialIconView(MaterialIcon.ACCESS_TIME, "1.35em"));
+                timeLabel = new Label(null, MaterialIcon.ACCESS_TIME.iconView());
                 timeLabel.setStyle(timeLabel.getStyle().concat(";-fx-font-size: 80%;-fx-opacity: .65;"));
 
                 // global mode
                 if (null == filterByBook) {
-                    bookLabel = new Label(null, new MaterialIconView(MaterialIcon.LOCATION_ON, "1.35em"));
+                    bookLabel = new Label(null, MaterialIcon.LOCATION_ON.iconView());
                     bookLabel.setStyle(bookLabel.getStyle().concat("-fx-opacity:.75;"));
                     HBox hBox = new HBox(timeLabel, bookLabel);
                     hBox.setStyle(hBox.getStyle().concat("-fx-spacing:.5em;"));
@@ -120,7 +118,7 @@ public abstract class BookdataController extends WorkbenchSideViewController {
                 textLabel.setText(item.data);
                 timeLabel.setText(DateHelper.format(item.updateAt));
                 if (null == filterByBook && null != bookLabel) {
-                    CbetaBook book = BookList.getById(item.book);
+                    Book book = AppContext.booklistProfile.getBook(item.book);
                     bookLabel.setText(null == book ? null : DisplayHelper.displayText(book.title));
                 }
                 setGraphic(cardBox);
@@ -150,10 +148,10 @@ public abstract class BookdataController extends WorkbenchSideViewController {
     protected void handleOnEnterOrDoubleClickAction(InputEvent inputEvent, Bookdata item) {
         if (null == item)
             return;
-        final CbetaBook book = BookList.getById(item.book);
+        final Book book = AppContext.booklistProfile.getBook(item.book);
         final Chapter chapter = new Chapter();
         chapter.path = item.volume;
-        chapter.start = item.anchor;
+        chapter.anchor = item.anchor;
         if (null != item.anchor)
             chapter.attr("position.selector", item.anchor);
         getEventBus().fireEvent(new BookEvent(BookEvent.OPEN, book, chapter));

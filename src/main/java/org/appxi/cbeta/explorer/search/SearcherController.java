@@ -1,5 +1,7 @@
 package org.appxi.cbeta.explorer.search;
 
+import appxi.cbeta.Book;
+import appxi.cbeta.Period;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
@@ -21,8 +23,6 @@ import javafx.scene.text.TextFlow;
 import javafx.util.Callback;
 import org.appxi.cbeta.explorer.AppContext;
 import org.appxi.cbeta.explorer.DisplayHelper;
-import org.appxi.cbeta.explorer.dao.Piece;
-import org.appxi.cbeta.explorer.dao.PieceRepository;
 import org.appxi.cbeta.explorer.dao.PiecesRepository;
 import org.appxi.cbeta.explorer.event.GenericEvent;
 import org.appxi.cbeta.explorer.event.ProgressEvent;
@@ -33,13 +33,11 @@ import org.appxi.javafx.control.BlockingViewEx;
 import org.appxi.javafx.control.ListViewExt;
 import org.appxi.javafx.control.TabPaneExt;
 import org.appxi.javafx.helper.FxHelper;
+import org.appxi.javafx.iconfont.MaterialIcon;
 import org.appxi.javafx.workbench.WorkbenchApplication;
 import org.appxi.javafx.workbench.views.WorkbenchMainViewController;
-import org.appxi.tome.cbeta.CbetaBook;
-import org.appxi.tome.cbeta.Period;
+import org.appxi.search.solr.Piece;
 import org.appxi.util.StringHelper;
-import org.appxi.javafx.glyphfont.MaterialIcon;
-import org.appxi.javafx.glyphfont.MaterialIconView;
 import org.springframework.data.solr.core.query.SolrPageRequest;
 import org.springframework.data.solr.core.query.result.FacetAndHighlightPage;
 import org.springframework.data.solr.core.query.result.HighlightEntry;
@@ -50,7 +48,7 @@ import java.util.stream.Collectors;
 
 public class SearcherController extends WorkbenchMainViewController {
     static final int PAGE_SIZE = 10;
-    private final EventHandler<ProgressEvent> handleEventOnIndexingToBlocking = this::handleEventOnIndexingToBlocking;
+    final EventHandler<ProgressEvent> handleEventOnIndexingToBlocking = this::handleEventOnIndexingToBlocking;
 
     public SearcherController(String viewId, WorkbenchApplication application) {
         super(viewId, application);
@@ -71,7 +69,7 @@ public class SearcherController extends WorkbenchMainViewController {
 
     private BlockingViewEx indexingView;
     private InputView inputView;
-    private CbetaBook searchScope;
+    private Book searchScope;
     private Label searchScopeTipLabel;
     private TextField input;
     private ListView<FacetFilter> facetCatalogView, facetPeriodView, facetTripitakaView, facetAuthorView;
@@ -154,12 +152,16 @@ public class SearcherController extends WorkbenchMainViewController {
     private void handleEventOnIndexingToBlocking(ProgressEvent event) {
         FxHelper.runLater(() -> {
             if (null == indexingView) {
-                indexingView = new BlockingViewEx("正在建立索引\n请等待索引任务完成后再搜索\n索引期间可正常使用阅读功能");
+                indexingView = new BlockingViewEx("""
+                        正在更新索引
+                        请等待索引任务完成后再搜索
+                        索引期间可正常使用阅读功能
+                        """);
                 getViewport().getChildren().add(indexingView);
             }
             indexingView.progressIndicator.setProgress((double) event.step / event.steps);
             indexingView.progressMessage.setText(event.message);
-            if (event.step >= event.steps) {
+            if (event.isFinished()) {
                 getViewport().getChildren().remove(indexingView);
                 indexingView = null;
             }
@@ -212,7 +214,7 @@ public class SearcherController extends WorkbenchMainViewController {
         return null != inputView;
     }
 
-    SearcherController setSearchScope(CbetaBook searchScope) {
+    SearcherController setSearchScope(Book searchScope) {
         this.searchScope = searchScope;
         FxHelper.runLater(() -> {
             this.searchScopeTipLabel.setText(null != searchScope ?
@@ -251,13 +253,15 @@ public class SearcherController extends WorkbenchMainViewController {
     }
 
     private Runnable blockingHandler;
-    //    private BlockingView blockingView;
-    private PieceRepository repository;
+    private PiecesRepository repository;
     private Collection<String> categories;
     private FacetAndHighlightPage<Piece> facetAndHighlightPage;
     private ListView<Piece> resultPageView;
 
     private void handleSearching(String inputText) {
+        // 此时如果还有索引没有准备好，则不做操作，也不提示，避免引发beans的初始化
+        if (IndexedManager.isBookcaseIndexable() || IndexedManager.isBooklistIndexable())
+            return;
         if (null != indexingView) {
             // 正在索引时不执行搜索
             FxHelper.runLater(() -> AppContext.toast("正在准备数据，请稍后再试").showWarning());
@@ -270,7 +274,8 @@ public class SearcherController extends WorkbenchMainViewController {
 
     private void handleSearchingImpl(String inputText) {
         if (null == repository)
-            repository = AppContext.beans().getBean(PiecesRepository.class);
+            repository = AppContext.getBean(PiecesRepository.class);
+        if (null == repository) return;
 
         boolean facet = true;
         categories = new ArrayList<>();
@@ -284,9 +289,15 @@ public class SearcherController extends WorkbenchMainViewController {
         }
         searchedText = inputText;
         inputQuery = inputText;
-        facetAndHighlightPage = repository.search(IndexingHelper.PROJECT,
-                null == searchScope ? null : List.of(searchScope.id != null ? searchScope.id : searchScope.attr("path")),
+        facetAndHighlightPage = repository.search(AppContext.profile().name(),
+                null == searchScope ? null : List.of(searchScope.id != null ? searchScope.id : searchScope.attr("scope")),
                 inputQuery, categories, facet, new SolrPageRequest(0, PAGE_SIZE));
+        if (null == facetAndHighlightPage) {
+            FxHelper.runLater(() -> {
+                if (null != blockingHandler) blockingHandler.run();
+            });
+            return;
+        }
 
         // update facet ui
         final List<FacetFilter> facetTripitakaList = new ArrayList<>(), facetCatalogList = new ArrayList<>(),
@@ -346,6 +357,7 @@ public class SearcherController extends WorkbenchMainViewController {
     }
 
     private Node createResultPageView(int pageIdx) {
+        if (null == repository) return new Label();
         final long st = System.currentTimeMillis();
         final FacetAndHighlightPage<Piece> highlightPage;
         if (pageIdx == 0) {
@@ -353,12 +365,12 @@ public class SearcherController extends WorkbenchMainViewController {
             highlightPage = facetAndHighlightPage;
         } else {
             // query for next page
-            highlightPage = repository.search(IndexingHelper.PROJECT,
-                    null == searchScope ? null : List.of(searchScope.id != null ? searchScope.id : searchScope.attr("path")),
+            highlightPage = repository.search(AppContext.profile().name(),
+                    null == searchScope ? null : List.of(searchScope.id != null ? searchScope.id : searchScope.attr("scope")),
                     inputQuery, categories, false, new SolrPageRequest(pageIdx, PAGE_SIZE));
         }
         if (null == highlightPage)
-            return new Label();
+            return new Label();// avoid NPE
 
         resultPageView = new ListViewExt<>((event, item) -> getEventBus().fireEvent(new SearchedEvent(item)));
         resultPageView.setCellFactory(v -> new ListCell<>() {
@@ -371,11 +383,11 @@ public class SearcherController extends WorkbenchMainViewController {
                 nameLabel.getStyleClass().add("name");
                 nameLabel.setStyle(nameLabel.getStyle().concat("-fx-font-size: 120%;"));
 
-                locationLabel = new Label(null, new MaterialIconView(MaterialIcon.LOCATION_ON, "1.35em"));
+                locationLabel = new Label(null, MaterialIcon.LOCATION_ON.iconView());
                 locationLabel.getStyleClass().add("location");
                 locationLabel.setStyle(locationLabel.getStyle().concat("-fx-opacity:.75;"));
 
-                authorsLabel = new Label(null, new MaterialIconView(MaterialIcon.PEOPLE, "1.35em"));
+                authorsLabel = new Label(null, MaterialIcon.PEOPLE.iconView());
                 authorsLabel.getStyleClass().add("authors");
                 authorsLabel.setStyle(authorsLabel.getStyle().concat("-fx-opacity:.75;"));
 
@@ -409,14 +421,14 @@ public class SearcherController extends WorkbenchMainViewController {
                 nameLabel.setText(DisplayHelper.displayText(item.title));
                 locationLabel.setText(null);
                 if (item.categories != null && !item.categories.isEmpty()) {
-                    final String navPrefix = "nav/".concat(AppContext.bookTreeMode.name()).concat("/");
+                    final String navPrefix = "nav/".concat(AppContext.profile().template().name()).concat("/");
                     item.categories.stream().filter(s -> s.startsWith(navPrefix)).findFirst()
                             .ifPresent(s -> locationLabel.setText(s.substring(navPrefix.length())));
                 }
                 if (locationLabel.getText() == null || locationLabel.getText().isBlank())
-                    locationLabel.setText(item.fields.get("location_s").concat("（").concat(item.fields.get("book_s")).concat("）"));
+                    locationLabel.setText(item.field("location_s").concat("（").concat(item.field("book_s")).concat("）"));
 
-                authorsLabel.setText(item.fields.get("authors_s"));
+                authorsLabel.setText(item.field("author_txt_aio"));
 
                 List<HighlightEntry.Highlight> highlights = highlightPage.getHighlights(item);
                 List<Node> texts = new ArrayList<>();
@@ -428,11 +440,13 @@ public class SearcherController extends WorkbenchMainViewController {
                             for (String string : strings) {
                                 String[] tmpArr = string.split("§§hl#end§§", 2);
                                 if (tmpArr.length == 1) {
-                                    texts.add(new Text(tmpArr[0]));
+                                    final Text text1 = new Text(tmpArr[0]);
+                                    text1.getStyleClass().add("plaintext");
+                                    texts.add(text1);
                                 } else {
                                     final Text hlText = new Text(tmpArr[0]);
                                     hlText.getStyleClass().add("highlight");
-                                    hlText.setStyle(hlText.getStyle().concat("-fx-font-weight:bold; -fx-cursor:hand;"));
+                                    hlText.setStyle(hlText.getStyle().concat("-fx-cursor:hand;"));
                                     hlText.setOnMouseReleased(event -> {
                                         if (event.getButton() == MouseButton.PRIMARY) {
                                             event.consume();
@@ -440,17 +454,18 @@ public class SearcherController extends WorkbenchMainViewController {
                                         }
                                     });
                                     texts.add(hlText);
-                                    texts.add(new Text(tmpArr[1]));
+                                    final Text text1 = new Text(tmpArr[1]);
+                                    text1.getStyleClass().add("plaintext");
+                                    texts.add(text1);
                                 }
                             }
                             texts.add(new Text("\n"));
                         });
                     });
                 } else {
-                    String text = null == item.contents ? "暂无数据" : item.contents.get("content_txt_cjk_substr");
+                    String text = item.text("text_txt_aio_sub");
                     texts.add(new Text(StringHelper.trimChars(text, 200)));
                 }
-                texts.forEach(t -> t.getStyleClass().add("texts"));
                 textFlow.getChildren().setAll(texts.toArray(new Node[0]));
                 setGraphic(cardBox);
             }

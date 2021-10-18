@@ -1,5 +1,9 @@
 package org.appxi.cbeta.explorer.widget;
 
+import appxi.cbeta.Book;
+import appxi.cbeta.BookMap;
+import appxi.cbeta.Booklist;
+import appxi.cbeta.TripitakaMap;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
@@ -8,14 +12,13 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
-import org.appxi.cbeta.explorer.model.BookList;
+import org.appxi.cbeta.explorer.AppContext;
+import org.appxi.cbeta.explorer.book.BooklistProfile;
 import org.appxi.holder.IntHolder;
 import org.appxi.holder.RawHolder;
 import org.appxi.javafx.helper.FxHelper;
+import org.appxi.javafx.helper.TreeHelper;
 import org.appxi.javafx.workbench.WorkbenchViewController;
-import org.appxi.tome.cbeta.BookTree;
-import org.appxi.tome.cbeta.BookTreeMode;
-import org.appxi.tome.cbeta.CbetaBook;
 import org.appxi.util.DigestHelper;
 import org.appxi.util.FileHelper;
 import org.appxi.util.StringHelper;
@@ -23,7 +26,8 @@ import org.appxi.util.StringHelper;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.stream.Collectors;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.zip.ZipFile;
 
 class ImplEpubRenamer extends Widget {
@@ -62,8 +66,11 @@ class ImplEpubRenamer extends Widget {
         Label targetTypeLabel = new Label("使用目录模式");
         targetTypeLabel.setStyle("-fx-padding: 1em 0;");
 
-        ComboBox<String> targetTypeBox = new ComboBox<>();
-        targetTypeBox.getItems().addAll(BookTreeMode.catalog.name(), BookTreeMode.simple.name(), BookTreeMode.advance.name());
+        ComboBox<BooklistProfile.Profile> targetTypeBox = new ComboBox<>();
+        targetTypeBox.getItems().addAll(
+                BooklistProfile.Profile.bulei,
+                BooklistProfile.Profile.simple,
+                BooklistProfile.Profile.advance);
         targetTypeBox.getSelectionModel().select(0);
 
         Label targetPathLabel = new Label("输出到文件夹");
@@ -103,8 +110,8 @@ class ImplEpubRenamer extends Widget {
                 applyBtnHBox);
     }
 
-    private String handleApplyAction(String sourcePath, String bookTreeMode, String targetPath) {
-        if (sourcePath.isBlank() || bookTreeMode.isBlank() || targetPath.isBlank())
+    private String handleApplyAction(String sourcePath, BooklistProfile.Profile profile, String targetPath) {
+        if (sourcePath.isBlank() || profile == null || targetPath.isBlank())
             return "未指定 输入文件 或 目录模式 或 输出目录";
 
         Path source = Path.of(sourcePath);
@@ -114,55 +121,59 @@ class ImplEpubRenamer extends Widget {
         FileHelper.makeDirs(target);
         if (!Files.isWritable(target))
             return "输出目录不正确";
-        BookTreeMode mode = BookTreeMode.valueOf(bookTreeMode);
-        final BookTree.WithMap bookTree = new BookTree.WithMap(BookList.books, mode);
-        bookTree.getDataTree();
+
+        final TripitakaMap tripitakaMap = new TripitakaMap(AppContext.bookcase());
+        final BookMap bookMap = new BookMap(tripitakaMap);
+        final Booklist<TreeItem<Book>> booklist = new BooklistProfile.BooklistTree(bookMap, profile);
+
+        final Map<String, TreeItem<Book>> booklistNodes = new HashMap<>(512);
+        TreeHelper.walkLeafs(booklist.tree(), (treeItem, book) -> {
+            if (null == book || null == book.path) return;
+            booklistNodes.put(book.id, treeItem);
+        });
 
         IntHolder totalNum = new IntHolder(0);
         IntHolder savedNum = new IntHolder(0);
         try (ZipFile zipFile = new ZipFile(source.toFile())) {
-            zipFile.stream()//
-                    .filter(entry -> entry.getName().endsWith(".epub"))//
-                    .forEach(entry -> {
-                        totalNum.value++;
-                        String bookPath = entry.getName().replace("\\", "/");
-                        bookPath = bookPath.substring(bookPath.indexOf("/") + 1);
+            zipFile.stream().filter(entry -> entry.getName().endsWith(".epub")).forEach(entry -> {
+                totalNum.value++;
+                String bookPath = entry.getName().replace("\\", "/");
+                bookPath = bookPath.substring(bookPath.indexOf("/") + 1);
 
-                        String bookName;
-                        String bookId = bookPath.substring(bookPath.lastIndexOf("/") + 1);
-                        bookPath = bookPath.substring(bookPath.lastIndexOf("/") + 1);
-                        bookId = bookId.substring(0, bookId.length() - 5);// remove ".epub"
-                        org.appxi.util.ext.Node<CbetaBook> bookNode = bookTree.getDataMap().get(bookId);
-                        if (null == bookNode)
-                            bookNode = bookTree.getDataMap().get(bookId + "a");
-                        if (null != bookNode) {
-                            bookPath = bookNode.parents().stream()//
-                                    .filter(n -> n.value != null)//
-                                    .map(n -> n.value.title).collect(Collectors.joining("/"));
-                            bookPath = bookPath.replaceAll("[<>:\"|?*]", "");
-                            // build name
-                            bookName = bookNode.value.title;
-                            if (StringHelper.isNotBlank(bookNode.value.authorInfo))
-                                bookName = bookName + " - " + bookNode.value.authorInfo.replace(" ", "");
-                            bookName = bookName.replaceAll("[<>:\"|?*]", "");
-                            if (bookName.length() > 200)
-                                bookName = bookName.substring(0, 200) + ",etc";
-                        } else {
-                            bookName = bookId;
-                        }
-                        try {
-                            Path targetFile = target.resolve(bookPath).resolve(bookName + ".epub");
-                            if (FileHelper.exists(targetFile))
-                                targetFile = target.resolve(bookPath).resolve(bookName + "(" + bookId + ")" + ".epub");
-                            if (FileHelper.exists(targetFile))
-                                targetFile = target.resolve(bookPath).resolve(bookName + "(" + DigestHelper.uid() + ")" + ".epub");
-                            FileHelper.makeParents(targetFile);
-                            Files.copy(zipFile.getInputStream(entry), targetFile);
-                            savedNum.value++;
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    });
+                String bookName;
+                String bookId = bookPath.substring(bookPath.lastIndexOf("/") + 1);
+                bookPath = bookPath.substring(bookPath.lastIndexOf("/") + 1);
+                bookId = bookId.substring(0, bookId.length() - 5);// remove ".epub"
+                TreeItem<Book> bookNode = booklistNodes.get(bookId);
+                if (null == bookNode)
+                    bookNode = booklistNodes.get(bookId + "a");
+                if (null != bookNode) {
+                    bookPath = TreeHelper.path(bookNode);
+                    bookPath = bookPath.substring(0, bookPath.lastIndexOf('/'));
+                    bookPath = bookPath.replaceAll("[<>:\"|?*]", "");
+                    // build name
+                    bookName = bookNode.getValue().title;
+                    if (StringHelper.isNotBlank(bookNode.getValue().authorInfo()))
+                        bookName = bookName + " - " + bookNode.getValue().authorInfo.replace(" ", "");
+                    bookName = bookName.replaceAll("[<>:\"|?*]", "");
+                    if (bookName.length() > 200)
+                        bookName = bookName.substring(0, 200) + ",etc";
+                } else {
+                    bookName = bookId;
+                }
+                try {
+                    Path targetFile = target.resolve(bookPath).resolve(bookName + ".epub");
+                    if (FileHelper.exists(targetFile))
+                        targetFile = target.resolve(bookPath).resolve(bookName + "(" + bookId + ")" + ".epub");
+                    if (FileHelper.exists(targetFile))
+                        targetFile = target.resolve(bookPath).resolve(bookName + "(" + DigestHelper.uid() + ")" + ".epub");
+                    FileHelper.makeParents(targetFile);
+                    Files.copy(zipFile.getInputStream(entry), targetFile);
+                    savedNum.value++;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }

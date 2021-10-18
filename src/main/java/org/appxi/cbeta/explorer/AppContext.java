@@ -1,24 +1,26 @@
 package org.appxi.cbeta.explorer;
 
-import org.appxi.cbeta.explorer.event.StatusEvent;
-import org.appxi.javafx.desktop.ApplicationEvent;
+import appxi.cbeta.BookMap;
+import appxi.cbeta.Bookcase;
+import appxi.cbeta.TripitakaMap;
+import org.appxi.cbeta.explorer.book.BooklistProfile;
+import org.appxi.cbeta.explorer.dao.DaoService;
+import org.appxi.cbeta.explorer.event.GenericEvent;
+import org.appxi.hanlp.convert.ChineseConvertors;
+import org.appxi.javafx.control.Notifications;
 import org.appxi.javafx.helper.FxHelper;
 import org.appxi.prefs.Preferences;
 import org.appxi.prefs.PreferencesInMemory;
-import org.appxi.tome.cbeta.BookTreeMode;
-import org.controlsfx.control.Notifications;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 
-import java.io.IOException;
+import java.net.URL;
 
 public abstract class AppContext {
 
     private static AppWorkbench application;
-    private static AnnotationConfigApplicationContext beans;
-    private static final Object beansInit = new Object();
 
     static void setApplication(AppWorkbench app) {
         AppContext.application = AppContext.application == null ? app : AppContext.application;
@@ -28,6 +30,38 @@ public abstract class AppContext {
         return application;
     }
 
+    private static Bookcase bookcase;
+    private static BookMap bookMap;
+
+    static void setupInitialize(Bookcase bookcase) {
+        AppContext.bookcase = AppContext.bookcase == null ? bookcase : AppContext.bookcase;
+        AppContext.bookMap = bookMap == null ? new BookMap(new TripitakaMap(AppContext.bookcase)) : bookMap;
+//        // 如果以上执行出错，程序也尚未初始化完成，只有在基础数据正常时，再加载更多数据
+        new Thread(() -> {
+            AppContext.booksMap().data();
+            DaoService.setupInitialize();
+            ChineseConvertors.hans2HantTW("测试");
+//            beans();
+        }).start();
+    }
+
+    public static Bookcase bookcase() {
+        return bookcase;
+    }
+
+    public static BookMap booksMap() {
+        return bookMap;
+    }
+
+    public static final BooklistProfile booklistProfile = new BooklistProfile();
+
+    public static BooklistProfile.Profile profile() {
+        return booklistProfile.profile();
+    }
+
+    private static AnnotationConfigApplicationContext beans;
+    private static final Object beansInit = new Object();
+
     public static BeanFactory beans() {
         if (null != beans)
             return beans;
@@ -35,37 +69,29 @@ public abstract class AppContext {
             if (null != beans)
                 return beans;
             try {
-                beans = new AnnotationConfigApplicationContext(AppConfig.class) {
+                beans = new AnnotationConfigApplicationContext(SpringConfig.class) {
                     @Override
-                    public Resource[] getResources(String locationPattern) throws IOException {
-                        Resource[] result = super.getResources(locationPattern);
-                        if (result.length == 0 && locationPattern.equals("classpath*:org/appxi/cbeta/explorer/dao/**/*.class")) {
-                            result = new Resource[]{
-                                    new UrlResource(AppContext.class.getResource("/org/appxi/cbeta/explorer/dao/PiecesRepository.class"))
-                            };
+                    public Resource[] getResources(String locationPattern) {
+                        if ("classpath*:org/appxi/cbeta/explorer/dao/**/*.class".equals(locationPattern)) {
+                            URL url = AppContext.class.getResource("/org/appxi/cbeta/explorer/dao/PiecesRepository.class");
+                            return null == url ? new Resource[0] : new Resource[]{new UrlResource(url)};
                         }
-                        return result;
+                        return new Resource[0];
                     }
                 };
+                application.eventBus.fireEvent(new GenericEvent(GenericEvent.BEANS_READY));
             } catch (Throwable t) {
-                FxHelper.alertError(app(), t);
+                t.printStackTrace();
             }
         }
         return beans;
     }
 
-    static void setupInitialize() {
-        beans();
-        if (null != application) {
-            application.eventBus.addEventHandler(ApplicationEvent.STOPPING, event -> {
-                if (null != AppConfig.cachedSolrClient) {
-                    try {
-                        AppConfig.cachedSolrClient.close();
-                    } catch (Throwable ignored) {
-                    }
-                }
-            });
-            application.eventBus.fireEvent(new StatusEvent(StatusEvent.BEANS_READY));
+    public static <T> T getBean(Class<T> requiredType) {
+        try {
+            return beans().getBean(requiredType);
+        } catch (Throwable ignore) {
+            return null;
         }
     }
 
@@ -77,11 +103,9 @@ public abstract class AppContext {
             FxHelper.runBlocking(application.getPrimaryViewport(), runnable);
     }
 
-    public static Notifications toast(String msg) {
-        return Notifications.create().text(msg).owner(AppContext.app().getPrimaryStage());
+    public static Notifications.Notification.Builder toast(String msg) {
+        return Notifications.of().description(msg).owner(AppContext.app().getPrimaryStage());
     }
 
     public static Preferences recentBooks = new PreferencesInMemory();
-
-    public static BookTreeMode bookTreeMode = BookTreeMode.catalog;
 }

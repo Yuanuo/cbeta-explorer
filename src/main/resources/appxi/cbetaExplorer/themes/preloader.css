@@ -1,3 +1,6 @@
+.root {
+    -fx-font-size: 1.25em;
+}
 .black-bg {
     -fx-background-color: black;
 }

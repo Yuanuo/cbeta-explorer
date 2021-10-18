@@ -8,13 +8,12 @@ module appxi.cbetaExplorer {
     requires jdk.jsobject;
 
     requires appxi.shared;
-    requires appxi.tome;
+    requires appxi.cbeta;
     requires appxi.javafx;
     requires appxi.timeago;
     requires appxi.hanlp.convert;
     requires appxi.hanlp.pinyin;
     requires org.jsoup;
-    requires org.controlsfx.controls;
 
     requires java.sql;
     requires static com.h2database;
@@ -22,7 +21,8 @@ module appxi.cbetaExplorer {
     requires static ormlite.jdbc;
     requires static org.json;
 
-    requires static appxi.preset.solr.aio;
+    requires appxi.search.solr;
+    requires static appxi.search.solr.aio;
     requires static spring.core;
     requires static spring.context;
     requires static spring.beans;
@@ -42,8 +42,10 @@ module appxi.cbetaExplorer {
     requires java.management;
     requires java.naming;
 
-    opens org.appxi.cbeta.explorer; // for application launch
-    opens org.appxi.cbeta.explorer.bak; // for debug
+    exports org.appxi.cbeta.explorer; // for application launch
+
+    opens org.appxi.cbeta.explorer;
     opens org.appxi.cbeta.explorer.book; // for javafx
     opens org.appxi.cbeta.explorer.dao; // for ormlite, spring
+    opens appxi.cbetaExplorer.themes;
 }

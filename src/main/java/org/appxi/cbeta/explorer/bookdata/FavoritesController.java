@@ -1,10 +1,9 @@
 package org.appxi.cbeta.explorer.bookdata;
 
-import org.appxi.javafx.glyphfont.MaterialIcon;
-import org.appxi.javafx.glyphfont.MaterialIconView;
+import appxi.cbeta.Book;
 import org.appxi.cbeta.explorer.dao.BookdataType;
+import org.appxi.javafx.iconfont.MaterialIcon;
 import org.appxi.javafx.workbench.WorkbenchApplication;
-import org.appxi.tome.model.Book;
 
 public class FavoritesController extends BookdataController {
 
@@ -15,6 +14,6 @@ public class FavoritesController extends BookdataController {
     public FavoritesController(WorkbenchApplication application, Book filterByBook) {
         super("FAVORITES", application, BookdataType.favorite, filterByBook);
         this.setTitles("收藏");
-        this.viewIcon.set(new MaterialIconView(MaterialIcon.STAR));
+        this.viewIcon.set(MaterialIcon.STAR.iconView());
     }
 }

@@ -1,7 +1,5 @@
-package org.appxi.cbeta.explorer.prefs;
+package org.appxi.cbeta.explorer.home;
 
-import org.appxi.javafx.glyphfont.MaterialIcon;
-import org.appxi.javafx.glyphfont.MaterialIconView;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
@@ -14,6 +12,8 @@ import org.appxi.holder.RawHolder;
 import org.appxi.holder.StringHolder;
 import org.appxi.javafx.control.DialogPaneEx;
 import org.appxi.javafx.helper.FxHelper;
+import org.appxi.javafx.iconfont.FontIconView;
+import org.appxi.javafx.iconfont.MaterialIcon;
 import org.appxi.javafx.theme.Theme;
 import org.appxi.javafx.workbench.WorkbenchApplication;
 import org.appxi.javafx.workbench.views.WorkbenchSideToolController;
@@ -34,7 +34,7 @@ public class PreferencesController extends WorkbenchSideToolController {
     public PreferencesController(WorkbenchApplication application) {
         super("PREFERENCES", application);
         this.setTitles("设置");
-        this.viewIcon.set(new MaterialIconView(MaterialIcon.TUNE));
+        this.viewIcon.set(MaterialIcon.TUNE.iconView());
     }
 
     @Override
@@ -109,7 +109,7 @@ public class PreferencesController extends WorkbenchSideToolController {
             btn.setToggleGroup(themeBtnGroup);
             btn.setUserData(t);
 
-            final MaterialIconView icon = new MaterialIconView(MaterialIcon.LENS, "2em");
+            final FontIconView icon = MaterialIcon.LENS.iconView("2em");
             icon.setFill(Color.valueOf(t.accentColor));
             btn.setGraphic(icon);
 

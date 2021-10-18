@@ -7,29 +7,46 @@
     -fx-min-width: 10em;
 }
 
-.glyph-icon.dev {
-    -fx-font-size: 2em !important;
-}
-.glyph-icon.dev:hover{
+.font-icon.dev:hover{
     -fx-effect: dropshadow( three-pass-box , derive(-fx-text-fill,0%) , 0.01em, 0.0 , 0, 0);
 }
-.glyph-icon.dev:selected{
+.font-icon.dev:selected{
     -fx-effect: dropshadow( three-pass-box , derive(-fx-text-fill,0%) , 0.01em, 0.0 , 0, 0);
 }
 
-.tree-view .tree-cell.visited:filled,
-.list-view .list-cell.visited:filled {
-    -fx-text-fill: #20b771;
+.form .field-label {
+    -fx-min-width: 6em;
+    -fx-alignment: center;
 }
 
-.result-item .glyph-icon {
-    -fx-fill: derive(-fx-mid-text-color, 30%) !important;
+.notification-popup {
+    -fx-background-color: -fx-base;
+    -fx-background-radius: 6;
+    -fx-border-width: 1;
+    -fx-border-color: gray;
+    -fx-border-radius: 6;
+    -fx-effect: dropshadow( three-pass-box , #111333 , 0.75em, .1 , 2, 2);
+}
+.notification-popup > * {
+    -fx-padding: .5em;
+}
+.notification-popup .description .font-icon {
+    -fx-font-size: 3em;
+    -fx-fill: -fx-accent;
 }
 
-.notification-bar .pane {
-    -fx-background-color: grey;
+.card-chooser .card-view.focused {
+    -fx-border-color: -fx-accent;
+    -fx-border-radius: 3;
 }
-.notification-bar .pane .label {
-    -fx-text-fill: white;
-    -fx-font-size: 1.35em;
+.card-chooser .card-view .font-icon {
+    -fx-font-size: 3em;
+    -fx-opacity: .5;
+}
+.card-chooser .card-view .title {
+    -fx-font-weight: 700;
+}
+.card-chooser .card-view .description {
+    -fx-font-size: 85%;
+    -fx-opacity: .75;
 }

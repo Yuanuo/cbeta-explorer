@@ -1,8 +1,8 @@
 package org.appxi.cbeta.explorer.event;
 
+import appxi.cbeta.Book;
 import javafx.event.Event;
 import javafx.event.EventType;
-import org.appxi.tome.cbeta.CbetaBook;
 
 public class SearcherEvent extends Event {
     private static final long serialVersionUID = 248520055158248448L;
@@ -12,9 +12,9 @@ public class SearcherEvent extends Event {
     public static final EventType<SearcherEvent> SEARCH = new EventType<>(Event.ANY, "SEARCH");
 
     public final String text;
-    public final CbetaBook scope;
+    public final Book scope;
 
-    public SearcherEvent(EventType<SearcherEvent> eventType, String text, CbetaBook scope) {
+    public SearcherEvent(EventType<SearcherEvent> eventType, String text, Book scope) {
         super(eventType);
         this.text = text;
         this.scope = scope;
@@ -28,7 +28,7 @@ public class SearcherEvent extends Event {
         return new SearcherEvent(SEARCH, text, null);
     }
 
-    public static SearcherEvent ofSearch(String text, CbetaBook scope) {
+    public static SearcherEvent ofSearch(String text, Book scope) {
         return new SearcherEvent(SEARCH, text, scope);
     }
 }

@@ -1,11 +1,10 @@
 package org.appxi.cbeta.explorer.widget;
 
-import org.appxi.javafx.glyphfont.MaterialIcon;
-import org.appxi.javafx.glyphfont.MaterialIconView;
 import javafx.scene.control.Accordion;
 import javafx.scene.control.TitledPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import org.appxi.javafx.iconfont.MaterialIcon;
 import org.appxi.javafx.workbench.WorkbenchApplication;
 import org.appxi.javafx.workbench.views.WorkbenchSideViewController;
 import org.appxi.util.StringHelper;
@@ -22,7 +21,7 @@ public class WidgetsController extends WorkbenchSideViewController {
     public WidgetsController(WorkbenchApplication application) {
         super("WIDGETS", application);
         this.setTitles("工具", "辅助工具集");
-        this.viewIcon.set(new MaterialIconView(MaterialIcon.NOW_WIDGETS));
+        this.viewIcon.set(MaterialIcon.NOW_WIDGETS.iconView());
     }
 
     @Override

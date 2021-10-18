@@ -88,13 +88,14 @@ table {
     border-collapse: collapse;
     border-spacing: 0;
     empty-cells: show;
-    border: 1px solid;
+    border:2px solid !important;
     margin: 1rem auto;
 }
+table tr {
+    border-right: 3px solid  !important;
+}
 table td {
-    border-width: 0 0 0 1px;
-    border-left: 1px solid;
-    border-bottom: 1px solid;
+    border:2px solid  !important;
     margin: 0;
     overflow: visible;
     padding: .5rem 1rem !important;

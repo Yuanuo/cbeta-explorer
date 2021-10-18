@@ -1,10 +1,9 @@
 package org.appxi.cbeta.explorer.book;
 
-import org.appxi.javafx.glyphfont.MaterialIcon;
-import org.appxi.javafx.glyphfont.MaterialIconView;
 import javafx.event.EventHandler;
 import org.appxi.cbeta.explorer.DisplayHelper;
 import org.appxi.cbeta.explorer.event.BookEvent;
+import org.appxi.javafx.iconfont.MaterialIcon;
 import org.appxi.javafx.workbench.WorkbenchApplication;
 import org.appxi.javafx.workbench.WorkbenchViewController;
 import org.appxi.javafx.workbench.views.WorkbenchSideViewController;
@@ -16,7 +15,7 @@ public class BookDataPlaceController extends WorkbenchSideViewController {
         super("BOOK-DATA", application);
         instance = null == instance ? this : instance;
         this.setTitles(null);
-        this.viewIcon.set(new MaterialIconView(MaterialIcon.IMPORT_CONTACTS));
+        this.viewIcon.set(MaterialIcon.IMPORT_CONTACTS.iconView());
     }
 
     @Override
@@ -35,14 +34,14 @@ public class BookDataPlaceController extends WorkbenchSideViewController {
     protected void onViewportInitOnce() {
     }
 
-    private BookViewController bookView;
+    private BookXmlViewer bookView;
 
     @Override
     public void setupInitialize() {
         getEventBus().addEventHandler(BookEvent.VIEW, event -> {
             bookView = null;// always reset
             final WorkbenchViewController mainView = getPrimaryViewport().getSelectedMainViewController();
-            if (mainView instanceof BookViewController bookView) {
+            if (mainView instanceof BookXmlViewer bookView) {
                 setTitles(DisplayHelper.displayText(bookView.book.title));
                 if (null != this.viewportVBox) {
                     this.viewportVBox.getChildren().setAll(bookView.sideViews);

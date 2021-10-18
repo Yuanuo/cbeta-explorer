@@ -1,21 +1,20 @@
 package org.appxi.cbeta.explorer.recent;
 
-import org.appxi.javafx.glyphfont.MaterialIcon;
-import org.appxi.javafx.glyphfont.MaterialIconView;
+import appxi.cbeta.Book;
 import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import org.appxi.cbeta.explorer.AppContext;
 import org.appxi.cbeta.explorer.DisplayHelper;
-import org.appxi.cbeta.explorer.book.BookViewController;
+import org.appxi.cbeta.explorer.book.BookXmlViewer;
 import org.appxi.cbeta.explorer.event.BookEvent;
 import org.appxi.cbeta.explorer.event.GenericEvent;
-import org.appxi.cbeta.explorer.model.BookList;
 import org.appxi.holder.RawHolder;
 import org.appxi.javafx.control.TreeViewEx;
 import org.appxi.javafx.control.TreeViewExt;
 import org.appxi.javafx.desktop.ApplicationEvent;
 import org.appxi.javafx.helper.FxHelper;
+import org.appxi.javafx.iconfont.MaterialIcon;
 import org.appxi.javafx.views.ViewController;
 import org.appxi.javafx.workbench.WorkbenchApplication;
 import org.appxi.javafx.workbench.views.WorkbenchMainViewController;
@@ -24,7 +23,6 @@ import org.appxi.prefs.Preferences;
 import org.appxi.prefs.PreferencesInProperties;
 import org.appxi.prefs.UserPrefs;
 import org.appxi.timeago.TimeAgo;
-import org.appxi.tome.cbeta.CbetaBook;
 import org.appxi.util.NumberHelper;
 import org.appxi.util.StringHelper;
 
@@ -37,7 +35,7 @@ public class RecentController extends WorkbenchSideViewController {
     public RecentController(WorkbenchApplication application) {
         super("RECENT", application);
         this.setTitles("已读");
-        this.viewIcon.set(new MaterialIconView(MaterialIcon.HISTORY));
+        this.viewIcon.set(MaterialIcon.HISTORY.iconView());
     }
 
     @Override
@@ -50,17 +48,26 @@ public class RecentController extends WorkbenchSideViewController {
         });
         loadRecentBooks();
         //
-        final RawHolder<WorkbenchMainViewController> swapRecentViewSelected = new RawHolder<>();
-        final List<WorkbenchMainViewController> swapRecentViews = new ArrayList<>();
-        getEventBus().addEventHandler(ApplicationEvent.STARTING, event -> FxHelper.runLater(() -> {
-            UserPrefs.recents = new PreferencesInProperties(UserPrefs.confDir().resolve(".recents"));
+        getEventBus().addEventHandler(GenericEvent.PROFILE_READY, event -> FxHelper.runLater(() -> {
+            if (!(UserPrefs.recents instanceof PreferencesInProperties))
+                UserPrefs.recents = new PreferencesInProperties(UserPrefs.confDir().resolve(".recents"));
             final Preferences recent = createRecentViews(true);
+            final RawHolder<WorkbenchMainViewController> swapRecentViewSelected = new RawHolder<>();
+            final List<WorkbenchMainViewController> swapRecentViews = new ArrayList<>();
             WorkbenchMainViewController addedController = null;
             for (String key : recent.getPropertyKeys()) {
-                final CbetaBook book = BookList.getById(key);
-                if (null == book)
+                final Book book = AppContext.booklistProfile.getBook(key);
+                // 如果此书不存在于当前书单，则需要移除（如果存在）
+                if (null == book) {
+                    Optional.ofNullable(getPrimaryViewport().findMainViewTab(key))
+                            .ifPresent(tab -> getPrimaryViewport().removeMainView(tab));
                     continue;
-                addedController = new BookViewController(book, getApplication());
+                }
+                //
+                if (getPrimaryViewport().existsMainView(book.id))
+                    continue;
+                //
+                addedController = new BookXmlViewer(book, getApplication());
                 if (recent.getBoolean(key, false))
                     swapRecentViewSelected.value = addedController;
                 swapRecentViews.add(addedController);
@@ -72,19 +79,17 @@ public class RecentController extends WorkbenchSideViewController {
                 if (null == swapRecentViewSelected.value)
                     swapRecentViewSelected.value = addedController;
             }
-        }));
-        getEventBus().addEventHandler(ApplicationEvent.STARTED, event -> new Thread(() -> {
             if (!swapRecentViews.isEmpty()) {
                 swapRecentViews.forEach(ViewController::setupInitialize);
                 if (null != swapRecentViewSelected.value)
                     FxHelper.runLater(() -> getPrimaryViewport().selectMainView(swapRecentViewSelected.value.viewId.get()));
             }
-        }).start());
+        }));
         getEventBus().addEventHandler(GenericEvent.DISPLAY_HAN_CHANGED,
                 event -> Optional.ofNullable(this.treeView).ifPresent(TreeView::refresh));
     }
 
-    private void handleToSaveOrUpdateRecentBook(CbetaBook book) {
+    private void handleToSaveOrUpdateRecentBook(Book book) {
         RecentBook item = recentBooksMap.get(book.id);
         if (null == item) {
             item = new RecentBook();
@@ -135,7 +140,7 @@ public class RecentController extends WorkbenchSideViewController {
     private void saveRecentViews() {
         final Preferences recent = createRecentViews(false);
         getPrimaryViewport().getMainViewsTabs().forEach(tab -> {
-            if (tab.getUserData() instanceof BookViewController bookView) {
+            if (tab.getUserData() instanceof BookXmlViewer bookView) {
                 recent.setProperty(bookView.book.id, tab.isSelected());
             }
         });
@@ -154,7 +159,7 @@ public class RecentController extends WorkbenchSideViewController {
             this.treeView = new TreeViewExt<>((e, treeItem) -> {
                 if (!(treeItem.getValue() instanceof RecentBook rBook))
                     return;
-                final CbetaBook book = BookList.getById(rBook.id);
+                final Book book = AppContext.booklistProfile.getBook(rBook.id);
                 if (null != book)
                     getEventBus().fireEvent(new BookEvent(BookEvent.OPEN, book));
             });
@@ -177,11 +182,11 @@ public class RecentController extends WorkbenchSideViewController {
                     if (item instanceof String str) {
                         text = str;
                     } else if (item instanceof RecentBook rBook) {
-                        final CbetaBook book = BookList.getById(rBook.id);
+                        final Book book = AppContext.booklistProfile.getBook(rBook.id);
                         if (null != book) {
                             text = book.title;
-                            if (null != book.path && book.numberVols > 0) {
-                                text = StringHelper.concat(text, "（", book.numberVols, "卷）");
+                            if (null != book.path && book.volumes.size() > 0) {
+                                text = StringHelper.concat(text, "（", book.volumes.size(), "卷）");
                             }
                             text = DisplayHelper.displayText(text);
                         } else {

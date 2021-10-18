@@ -2,7 +2,7 @@ package org.appxi.cbeta.explorer.event;
 
 import javafx.event.Event;
 import javafx.event.EventType;
-import org.appxi.cbeta.explorer.dao.Piece;
+import org.appxi.search.solr.Piece;
 
 public class SearchedEvent extends Event {
     private static final long serialVersionUID = 4935195001127503170L;

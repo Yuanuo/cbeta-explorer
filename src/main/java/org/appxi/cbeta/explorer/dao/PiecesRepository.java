@@ -1,156 +1,83 @@
 package org.appxi.cbeta.explorer.dao;
 
-import org.appxi.tome.cbeta.CbetaBook;
-import org.appxi.tome.model.Book;
-import org.appxi.tome.model.Chapter;
+import org.appxi.cbeta.explorer.AppContext;
+import org.appxi.search.solr.Piece;
+import org.appxi.search.solr.PieceRepository;
 import org.appxi.util.StringHelper;
-import org.appxi.util.ext.Attributes;
-import org.appxi.util.ext.Node;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.solr.core.SolrTemplate;
+import org.springframework.data.solr.core.query.*;
+import org.springframework.data.solr.core.query.result.FacetAndHighlightPage;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.Collection;
+import java.util.stream.Collectors;
 
 @Repository
 public interface PiecesRepository extends PieceRepository {
+    default FacetAndHighlightPage<Piece> search(String profile, Collection<String> scopes,
+                                                final String input,
+                                                Collection<String> categories, boolean facet, Pageable pageable) {
+        final SimpleFacetAndHighlightQuery query = new SimpleFacetAndHighlightQuery();
+        query.setDefType("edismax");
+        query.setDefaultOperator(Query.Operator.AND);
+        query.setPageRequest(pageable);
+        query.addProjectionOnFields("id", "score", "field_file_s", "type_s", "title_s",
+                "field_book_s", "field_author_txt_aio", "field_location_s", "field_anchor_s", "category_ss",
+                "text_txt_aio_sub");
 
-    default void saveCbetaBook(CbetaBook book) {
-        final List<Piece> pieces = new ArrayList<>();
+        if (null != profile)
+            query.addFilterQuery(new SimpleFilterQuery(Criteria.where("project_ss").is(profile)));
+
         //
-        final Piece piece = Piece.of();
-        pieces.add(piece);
-        piece.project = book.attrStr("project");
-        piece.version = book.attrStr("version");
-        piece.id = book.id;
-        piece.path = book.path;
-        piece.type = "book";
-        piece.title = book.title;
-        //
-        piece.fields.put("book_s", book.id);
-        if (StringHelper.isNotBlank(book.authorInfo()))
-            piece.fields.put("authors_s", book.authorInfo);
-
-        String textFieldSuffix = book.attrStr("text.field.suffix");
-        if (null != textFieldSuffix) {
-            piece.fields.put("title_txt_".concat(textFieldSuffix), book.title);
-        }
-
-        if (StringHelper.isNotBlank(book.summary))
-            piece.fields.put("summary_s", book.summary);
-        //
-        if (StringHelper.isNotBlank(book.location))
-            piece.fields.put("location_s", book.location);
-        // chapters
-        InternalPiecesByCbetaBookBuilder.buildBookChapters(pieces, book, book.chapters);
-        //
-        if (book.hasAttr("priority"))
-            piece.priority = book.attr("priority");
-        if (book.hasAttr("sequence"))
-            piece.fields.put("sequence_s", book.attrStr("sequence"));
-        //
-        // add category
-        InternalPiecesByCbetaBookBuilder.buildBookCategories(piece, book.path, book);
-
-        // real save
-        if (!pieces.isEmpty()) {
-            saveAll(pieces);
-        }
-    }
-
-    class InternalPiecesByCbetaBookBuilder {
-        private static void buildBookChapters(List<Piece> pieces, Book book, Node<Chapter> chapterNode) {
-            if (null != chapterNode.parent()) {
-                final Chapter chapter = chapterNode.value;
-                if ("title".equals(chapter.type)) {
-                    // do nothing
-                } else if ("link".equals(chapter.type)) {
-                    // do nothing
-                } else if (!chapterNode.hasChildren()) {
-                    if (!chapter.hasParagraphs()) {
-                        System.out.println(chapter.title);
-                    } else {
-                        final boolean dataReplacedByParas = chapter.hasAttr("data", "para");
-                        final Piece piece = Piece.of();
-                        pieces.add(piece);
-                        piece.project = book.attrStr("project");
-                        piece.version = book.attrStr("version");
-                        piece.id = chapter.id;
-                        piece.path = chapter.path;
-                        piece.type = dataReplacedByParas ? "volume" : "article";
-                        piece.title = chapter.title;
-                        //
-                        piece.fields.put("book_s", book.id);
-                        if (chapter.start instanceof String anchor && StringHelper.isNotBlank(anchor))
-                            piece.fields.put("anchor_s", anchor);
-
-                        if (StringHelper.isNotBlank(book.authorInfo()))
-                            piece.fields.put("authors_s", book.authorInfo);
-
-                        String textFieldSuffix = chapter.attrStr("text.field.suffix");
-                        if (null == textFieldSuffix)
-                            textFieldSuffix = book.attrStr("text.field.suffix");
-                        if (null != textFieldSuffix) {
-                            piece.fields.put("title_txt_".concat(textFieldSuffix), chapter.title);
-                        }
-                        if (StringHelper.isNotBlank(chapter.description))
-                            piece.fields.put("summary_s", chapter.description);
-
-                        if (chapter.hasAttr("source"))
-                            piece.fields.put("source_s", chapter.attrStr("source"));
-                        else piece.fields.put("source_s", book.title);
-
-                        if (chapter.hasAttr("location"))
-                            piece.fields.put("location_s", chapter.attrStr("location"));
-                        else if (StringHelper.isNotBlank(book.location))
-                            piece.fields.put("location_s", book.location);
-                        else piece.fields.put("location_s", book.title);
-
-                        //
-                        if (!chapter.hasParagraphs()) {
-                            //
-                        } else if (dataReplacedByParas) {
-                            //
-                        } else if (chapter.hasParagraphs()) {
-                            final StringBuilder buf = new StringBuilder();
-                            chapter.paragraphs.forEach(paragraph -> {
-                                if (StringHelper.isNotBlank(paragraph.caption) && !paragraph.caption.equals(chapter.title))
-                                    buf.append(paragraph.caption).append("。");
-                                if (StringHelper.isNotBlank(paragraph.content))
-                                    buf.append(paragraph.content);
-                            });
-                            if (null != textFieldSuffix) {
-                                piece.contents.put("content_txt_".concat(textFieldSuffix), buf.toString());
-                            }
-                        }
-                        //
-                        if (chapter.hasAttr("priority"))
-                            piece.priority = chapter.attr("priority");
-                        if (chapter.hasAttr("sequence"))
-                            piece.fields.put("sequence_s", chapter.attrStr("sequence"));
-
-                        // add category
-                        buildBookCategories(piece, chapter.path, chapter, book);
-                    }
+        if (null != scopes && !scopes.isEmpty()) {
+            scopes.forEach(s -> {
+                if (s.startsWith("nav/")) {
+                    query.addFilterQuery(new SimpleFilterQuery(
+                            new SimpleStringCriteria("category_ss:" + PieceRepository.wrapWhitespace(s) + "*")));
+                } else {
+                    query.addFilterQuery(new SimpleFilterQuery(
+                            new SimpleStringCriteria("field_book_s:" + s)));
                 }
-            }
-            for (Node<Chapter> child : chapterNode.children())
-                buildBookChapters(pieces, book, child);
+            });
+        }
+        //
+        query.addFilterQuery(new SimpleFilterQuery(Criteria.where("type_s").is("article")));
+
+        final String queryString;
+        if (null == input || input.isBlank())
+            queryString = "text_txt_aio:*";
+        else if (input.contains(":"))
+            queryString = input;
+        else queryString = "text_txt_aio:($0) OR field_title_txt_aio:($0)^30".replace("$0", input);
+        query.addCriteria(new SimpleStringCriteria(queryString));
+
+        if (null != categories && !categories.isEmpty()) {
+            query.addFilterQuery(new SimpleFilterQuery(new SimpleStringCriteria("category_ss:(" +
+                    categories.stream().map(PieceRepository::wrapWhitespace).collect(Collectors.joining(" OR "))
+                    + ")")));
         }
 
-        private static void buildBookCategories(Piece piece, String path, Attributes... attrs) {
-            Map<String, String> category = null;
-            for (Attributes attr : attrs) {
-                category = attr.attr("category");
-                if (null != category)
-                    break;
-            }
-            if (null != category) {
-                category.forEach((k, v) -> {
-                    if (!piece.categories.contains(k))
-                        piece.categories.add(k);
-                });
-            }
+        if (facet) {
+            FacetOptions facetOptions = new FacetOptions();
+            facetOptions.addFacetOnField("category_ss").setFacetLimit(4000);
+            query.setFacetOptions(facetOptions);
+        }
+
+        if (StringHelper.isNotBlank(input)) {
+            HighlightOptions highlightOptions = new HighlightOptions();
+            highlightOptions.setSimplePrefix("§§hl#pre§§").setSimplePostfix("§§hl#end§§");
+            highlightOptions.setFragsize(100).setNrSnipplets(3);
+            highlightOptions.addField("text_txt_aio");
+            query.setHighlightOptions(highlightOptions);
+        }
+
+        try {
+            SolrTemplate solrTemplate = AppContext.getBean(SolrTemplate.class);
+            return null == solrTemplate ? null
+                    : solrTemplate.queryForFacetAndHighlightPage(Piece.REPO, query, Piece.class);
+        } catch (Throwable e) {
+            return null;
         }
     }
 }

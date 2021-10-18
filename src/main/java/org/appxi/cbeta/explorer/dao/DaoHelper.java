@@ -30,7 +30,7 @@ public abstract class DaoHelper {
         });
     }
 
-    public static ConnectionSource getConnSource() {
+    static ConnectionSource getConnSource() {
         if (null != connSource)
             return connSource;
         synchronized (databaseUrl) {

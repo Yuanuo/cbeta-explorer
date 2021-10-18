@@ -18,7 +18,7 @@ public class AppLauncher {
         // 由于在配置文件中不能使用动态变量作为路径，故在此设置日志文件路径
         if (FxHelper.productionMode) {
             final Path logFile = UserPrefs.dataDir().resolve(".logs")
-                    .resolve(DateHelper.format(new Date()).replaceAll("[\s:]", "-").concat(".log"));
+                    .resolve(DateHelper.format3(new Date()).concat(".log"));
             FileHelper.makeParents(logFile);
             System.setProperty("org.slf4j.simpleLogger.logFile", logFile.toString());
             //

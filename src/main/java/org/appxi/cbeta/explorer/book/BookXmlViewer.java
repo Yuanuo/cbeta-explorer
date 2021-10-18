@@ -1,5 +1,9 @@
 package org.appxi.cbeta.explorer.book;
 
+import appxi.cbeta.Book;
+import appxi.cbeta.BookDocument;
+import appxi.cbeta.BookDocumentEx;
+import appxi.cbeta.Chapter;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.collections.ObservableList;
@@ -34,22 +38,17 @@ import org.appxi.javafx.control.*;
 import org.appxi.javafx.desktop.ApplicationEvent;
 import org.appxi.javafx.helper.FxHelper;
 import org.appxi.javafx.helper.TreeHelper;
+import org.appxi.javafx.iconfont.FontIconView;
+import org.appxi.javafx.iconfont.MaterialIcon;
 import org.appxi.javafx.theme.Theme;
 import org.appxi.javafx.theme.ThemeEvent;
 import org.appxi.javafx.theme.ThemeSet;
 import org.appxi.javafx.workbench.WorkbenchApplication;
 import org.appxi.javafx.workbench.views.WorkbenchMainViewController;
 import org.appxi.prefs.UserPrefs;
-import org.appxi.tome.cbeta.BookDocument;
-import org.appxi.tome.cbeta.BookDocumentEx;
-import org.appxi.tome.cbeta.CbetaBook;
-import org.appxi.tome.cbeta.CbetaHelper;
-import org.appxi.tome.model.Chapter;
 import org.appxi.util.NumberHelper;
 import org.appxi.util.StringHelper;
 import org.appxi.util.ext.HanLang;
-import org.appxi.javafx.glyphfont.MaterialIcon;
-import org.appxi.javafx.glyphfont.MaterialIconView;
 import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
@@ -61,14 +60,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public class BookViewController extends WorkbenchMainViewController {
+public class BookXmlViewer extends WorkbenchMainViewController {
     private final EventHandler<ThemeEvent> handleThemeChanged = this::handleThemeChanged;
     private final EventHandler<ApplicationEvent> handleApplicationEventStopping = this::handleApplicationEventStopping;
     private final EventHandler<GenericEvent> handleDisplayHanChanged = this::handleDisplayHanChanged;
     private final EventHandler<GenericEvent> handleDisplayZoomChanged = this::handleDisplayZoomChanged;
     private final InvalidationListener handleWebViewBodyResize = this::handleWebViewBodyResize;
     private final BookDocument bookDocument;
-    public final CbetaBook book;
+    public final Book book;
 
     TabPane sideViews;
 
@@ -82,10 +81,10 @@ public class BookViewController extends WorkbenchMainViewController {
 
     private final BlockingView blockingView = new BlockingView();
 
-    public BookViewController(CbetaBook book, WorkbenchApplication application) {
+    public BookXmlViewer(Book book, WorkbenchApplication application) {
         super(book.id, application);
         this.book = book;
-        this.bookDocument = new BookDocumentEx(book);
+        this.bookDocument = new BookDocumentEx(AppContext.bookcase(), book);
         this.setTitles();
     }
 
@@ -94,9 +93,9 @@ public class BookViewController extends WorkbenchMainViewController {
         String viewTooltip = viewTitle;
         String mainTitle = viewTitle;
 
-        if (book.numberVols > 0) {
-            viewTooltip = StringHelper.concat(viewTooltip, "（", book.numberVols, "卷）");
-            mainTitle = StringHelper.concat(mainTitle, "（", book.numberVols, "卷）");
+        if (book.volumes.size() > 0) {
+            viewTooltip = StringHelper.concat(viewTooltip, "（", book.volumes.size(), "卷）");
+            mainTitle = StringHelper.concat(mainTitle, "（", book.volumes.size(), "卷）");
         }
 
         if (StringHelper.isNotBlank(book.authorInfo)) {
@@ -122,6 +121,7 @@ public class BookViewController extends WorkbenchMainViewController {
         borderPane.setCenter(this.webViewer);
 
         this.toolbar = new ToolBarEx();
+        this.toolbar.getStyleClass().add("flat-tool-bar");
         this.initToolbar(viewport);
         borderPane.setTop(this.toolbar);
         //
@@ -161,7 +161,7 @@ public class BookViewController extends WorkbenchMainViewController {
 
     private void addTool_SideControl() {
         final Button button = new Button();
-        button.setGraphic(new MaterialIconView(MaterialIcon.IMPORT_CONTACTS));
+        button.setGraphic(MaterialIcon.IMPORT_CONTACTS.iconView());
         button.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
         button.setTooltip(new Tooltip("显示本书相关数据（目录、书签等）"));
         button.setOnAction(event -> this.getPrimaryViewport().selectSideTool(BookDataPlaceController.getInstance().viewId.get()));
@@ -173,23 +173,23 @@ public class BookViewController extends WorkbenchMainViewController {
     private void addTool_Goto_PrevNext(StackPane viewport) {
         gotoPrev = new Button();
         gotoPrev.getStyleClass().add("goto-prev");
-        gotoPrev.setGraphic(new MaterialIconView(MaterialIcon.ARROW_BACK));
+        gotoPrev.setGraphic(MaterialIcon.ARROW_BACK.iconView());
         gotoPrev.setTooltip(new Tooltip("上一卷 (Ctrl+左方向键)"));
         gotoPrev.setDisable(true);
         gotoPrev.setOnAction(event -> openChapter((Chapter) gotoPrev.getUserData()));
 
         gotoNext = new Button();
         gotoNext.getStyleClass().add("goto-next");
-        gotoNext.setGraphic(new MaterialIconView(MaterialIcon.ARROW_FORWARD));
+        gotoNext.setGraphic(MaterialIcon.ARROW_FORWARD.iconView());
         gotoNext.setTooltip(new Tooltip("下一卷 (Ctrl+右方向键)"));
         gotoNext.setDisable(true);
         gotoNext.setOnAction(event -> openChapter((Chapter) gotoNext.getUserData()));
 
         gotoMenu = new Button();
         gotoMenu.getStyleClass().add("goto-menu");
-        gotoMenu.setGraphic(new MaterialIconView(MaterialIcon.NEAR_ME));
+        gotoMenu.setGraphic(MaterialIcon.NEAR_ME.iconView());
         gotoMenu.setTooltip(new Tooltip("转到 (Ctrl+T)"));
-        final LookupViewExt<Chapter> lookupView = new LookupViewExt<>(viewport) {
+        final LookupViewExt lookupView = new LookupViewExt(viewport) {
             private final Object AK_INDEX = new Object();
 
             @Override
@@ -225,47 +225,55 @@ public class BookViewController extends WorkbenchMainViewController {
             }
 
             @Override
-            protected void updateItemOnce(Labeled labeled, Chapter item) {
-                labeled.setText(item.hasAttr(AK_INDEX)
-                        ? StringHelper.concat(item.attrStr(AK_INDEX), " / ", DisplayHelper.displayText(item.title))
-                        : DisplayHelper.displayText(item.title));
+            protected void updateItemOnce(Labeled labeled, Object data) {
+                if (data instanceof String str) {
+                    labeled.setText(str.split("#", 2)[1]);
+                } else if (data instanceof Chapter item) {
+                    labeled.setText(item.hasAttr(AK_INDEX)
+                            ? StringHelper.concat(item.attrStr(AK_INDEX), " / ", DisplayHelper.displayText(item.title))
+                            : DisplayHelper.displayText(item.title));
+                } else super.updateItemOnce(labeled, data);
+            }
+
+            private void predicateByAsciiAndString(LookupRequest lookupRequest,
+                                                   String data, Chapter dataObject, List<LookupResultItem> result) {
+                lookupRequest.keywords().stream()
+                        .takeWhile(keyword -> {
+                            if (keyword.isFullAscii()) {
+                                String dataInAscii = DisplayHelper.prepareAscii(data);
+                                if (dataInAscii.contains(keyword.text())) return true;
+                            }
+                            return data.contains(keyword.text());
+                        })
+                        .findFirst()
+                        .ifPresent(s -> result.add(new LookupResultItem(dataObject, .5)));
             }
 
             @Override
-            protected Collection<Chapter> search(String searchText, String[] searchWords, int resultLimit) {
-                final Collection<Chapter> result = new ArrayList<>(resultLimit);
-
-                TreeHelper.walkLeafs(bookBasic.tocsTree.getRoot(), itm -> {
-                    String content = itm.getValue().title;
-                    if (null != content && (searchText.isEmpty() || content.contains(searchText))) {
-                        result.add(itm.getValue());
-                    }
-
-                    return result.size() > resultLimit;
+            protected List<LookupResultItem> lookupByKeywords(LookupRequest lookupRequest) {
+                final boolean isInputEmpty = lookupRequest.keywords().isEmpty();
+                final List<LookupResultItem> result = new ArrayList<>();
+                TreeHelper.filterLeafs(bookBasic.tocsTree.getRoot(), (treeItem, itemValue) -> {
+                    predicateByAsciiAndString(lookupRequest, itemValue.title, itemValue, result);
+                    return isInputEmpty && result.size() > lookupRequest.resultLimit();
                 });
-                if (result.size() < resultLimit) {
-                    final IntHolder index = new IntHolder(0);
-                    TreeHelper.walkLeafs(bookBasic.volsTree.getRoot(), itm -> {
-                        index.value++;
 
-                        String indexStr = StringHelper.padLeft(index.value, 3, '0');
-                        itm.getValue().attr(AK_INDEX, indexStr);
+                final IntHolder index = new IntHolder(0);
+                TreeHelper.filterLeafs(bookBasic.volsTree.getRoot(), (treeItem, itemValue) -> {
+                    index.value++;
 
-                        String content = StringHelper.concat(indexStr, " / ", itm.getValue().title);
-                        if (searchText.isEmpty() || content.contains(searchText)) {
-                            result.add(itm.getValue());
-                        }
+                    String indexStr = StringHelper.padLeft(index.value, 3, '0');
+                    itemValue.attr(AK_INDEX, indexStr);
 
-                        return result.size() > resultLimit;
-                    });
-                }
+                    String data = StringHelper.concat(indexStr, " / ", itemValue.title);
+                    predicateByAsciiAndString(lookupRequest, data, itemValue, result);
+                    return isInputEmpty && result.size() > lookupRequest.resultLimit();
+                });
                 return result;
             }
 
-            private final String specialMarker = "#";
-
             @Override
-            protected void convertSearchTermToCommands(String searchTerm, Collection<Chapter> result) {
+            protected void lookupByCommands(String searchTerm, Collection<Object> result) {
                 String chapter = null;
                 boolean lineOrVolume = true;
                 Matcher matcher;
@@ -293,30 +301,34 @@ public class BookViewController extends WorkbenchMainViewController {
                     }
                     title = StringHelper.concat("转到 >>> 本经：", book.id, " ", title,
                             (lineOrVolume ? "，行号：" : "，卷号：").concat(chapter));
-                    result.add(new Chapter(specialMarker, chapter, DisplayHelper.displayText(title), null, null));
+                    result.add(chapter.concat("#").concat(DisplayHelper.displayText(title)));
                 } else {
-                    result.add(new Chapter(specialMarker, null, "??? 使用说明：请使用以下几种格式", null, null));
-                    result.add(new Chapter(specialMarker, null, "格式1：#p0001a01  表示：转到本经行号p0001a01处", null, null));
-                    result.add(new Chapter(specialMarker, null, "格式2：#p. 1a1  表示：转到本经行号p0001a01处", null, null));
-                    result.add(new Chapter(specialMarker, null, "格式3：#1  表示：转到本经第001卷", null, null));
-                    result.add(new Chapter(specialMarker, null, "格式4：#001  表示：转到本经第001卷", null, null));
-                    result.add(new Chapter(specialMarker, null, "格式5：#0001a01  表示：转到本经行号p0001a01处", null, null));
+                    result.add("#??? 使用说明：请使用以下几种格式");
+                    result.add("#格式1：#p0001a01  表示：转到本经行号p0001a01处");
+                    result.add("#格式2：#p. 1a1  表示：转到本经行号p0001a01处");
+                    result.add("#格式3：#1  表示：转到本经第001卷");
+                    result.add("#格式4：#001  表示：转到本经第001卷");
+                    result.add("#格式5：#0001a01  表示：转到本经行号p0001a01处");
                 }
             }
 
             @Override
-            protected void handleEnterOrDoubleClickActionOnSearchResultList(InputEvent event, Chapter item) {
-                if (null == item.id)
-                    return;
-                Chapter chapter = item;
-                if (item.type == specialMarker) {
+            protected void handleEnterOrDoubleClickActionOnSearchResultList(InputEvent event, Object data) {
+                Chapter chapter = null;
+                if (data instanceof String str) {
+                    String[] arr = str.split("#", 2);
+                    if (arr[0].isEmpty()) return;
                     chapter = new Chapter();
                     chapter.id = "#";
-                    chapter.path = item.id;
+                    chapter.path = arr[0];
+                } else if (data instanceof Chapter item) {
+                    if (null == item.id) return;
+                    chapter = item;
                 }
-
-                hide();
-                openChapter(chapter);
+                if (null != chapter) {
+                    hide();
+                    openChapter(chapter);
+                }
             }
 
             @Override
@@ -325,7 +337,7 @@ public class BookViewController extends WorkbenchMainViewController {
                 webViewer.getViewer().requestFocus();
             }
         };
-        gotoMenu.setOnAction(event -> lookupView.show());
+        gotoMenu.setOnAction(event -> lookupView.show(null));
 
         //
         this.toolbar.addLeft(gotoPrev, gotoNext, gotoMenu);
@@ -333,10 +345,7 @@ public class BookViewController extends WorkbenchMainViewController {
 
     private void update_Goto_PrevNext() {
         final List<Chapter> list = new ArrayList<>();
-        TreeHelper.walkLeafs(bookBasic.volsTree.getRoot(), v -> {
-            list.add(v.getValue());
-            return false;
-        });
+        TreeHelper.walkLeafs(bookBasic.volsTree.getRoot(), (treeItem, itemValue) -> list.add(itemValue));
         Chapter prev = null, next = null;
         for (int i = 0; i < list.size(); i++) {
             Chapter item = list.get(i);
@@ -355,7 +364,7 @@ public class BookViewController extends WorkbenchMainViewController {
     }
 
     private void addTool_Themes() {
-        final Node themeMarker = new MaterialIconView(MaterialIcon.PALETTE);
+        final Node themeMarker = MaterialIcon.PALETTE.iconView();
         themeMarker.setId("web-theme-marker");
         themeMarker.getStyleClass().add("label");
         this.toolbar.addRight(themeMarker);
@@ -363,7 +372,7 @@ public class BookViewController extends WorkbenchMainViewController {
 
     private void addTool_WrapLines() {
         final ToggleButton button = new ToggleButton();
-        button.setGraphic(new MaterialIconView(MaterialIcon.WRAP_TEXT));
+        button.setGraphic(MaterialIcon.WRAP_TEXT.iconView());
         button.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
         button.setTooltip(new Tooltip("折行显示"));
         button.setOnAction(event -> webViewer.executeScript("handleOnWrapLines()"));
@@ -372,7 +381,7 @@ public class BookViewController extends WorkbenchMainViewController {
 
     private void addTool_WrapPages() {
         final ToggleButton button = new ToggleButton();
-        button.setGraphic(new MaterialIconView(MaterialIcon.VIEW_DAY));
+        button.setGraphic(MaterialIcon.VIEW_DAY.iconView());
         button.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
         button.setTooltip(new Tooltip("折页显示"));
         button.setOnAction(event -> webViewer.executeScript("handleOnWrapPages()"));
@@ -381,7 +390,7 @@ public class BookViewController extends WorkbenchMainViewController {
 
     private void addTool_FirstLetterIndent() {
         final ToggleButton button = new ToggleButton();
-        button.setGraphic(new MaterialIconView(MaterialIcon.FORMAT_INDENT_INCREASE));
+        button.setGraphic(MaterialIcon.FORMAT_INDENT_INCREASE.iconView());
         button.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
         button.setTooltip(new Tooltip("首行标点对齐"));
         button.setSelected(true);
@@ -422,7 +431,7 @@ public class BookViewController extends WorkbenchMainViewController {
 
     private void addTool_Bookmark() {
         final Button button = new Button();
-        button.setGraphic(new MaterialIconView(MaterialIcon.BOOKMARK_OUTLINE));
+        button.setGraphic(MaterialIcon.BOOKMARK_OUTLINE.iconView());
         button.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
         button.setTooltip(new Tooltip("添加书签"));
         button.setOnAction(event -> this.handleEventToCreateBookdata(BookdataType.bookmark));
@@ -431,7 +440,7 @@ public class BookViewController extends WorkbenchMainViewController {
 
     private void addTool_Favorite() {
         final Button button = new Button();
-        button.setGraphic(new MaterialIconView(MaterialIcon.STAR_BORDER));
+        button.setGraphic(MaterialIcon.STAR_BORDER.iconView());
         button.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
         button.setTooltip(new Tooltip("添加收藏"));
         button.setOnAction(event -> this.handleEventToCreateBookdata(BookdataType.favorite));
@@ -451,10 +460,10 @@ public class BookViewController extends WorkbenchMainViewController {
             return inputText;
         });
 
-        webViewFinder.prev.setGraphic(new MaterialIconView(MaterialIcon.ARROW_UPWARD));
+        webViewFinder.prev.setGraphic(MaterialIcon.ARROW_UPWARD.iconView());
         webViewFinder.prev.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
 
-        webViewFinder.next.setGraphic(new MaterialIconView(MaterialIcon.ARROW_DOWNWARD));
+        webViewFinder.next.setGraphic(MaterialIcon.ARROW_DOWNWARD.iconView());
         webViewFinder.next.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
 
         this.toolbar.addRight(webViewFinder);
@@ -528,7 +537,7 @@ public class BookViewController extends WorkbenchMainViewController {
             themeTool.setTooltip(new Tooltip(v.title));
             themeTool.getProperties().put(themeMarker, true);
 
-            final MaterialIconView icon = new MaterialIconView(MaterialIcon.LENS);
+            final FontIconView icon = MaterialIcon.LENS.iconView();
             icon.setFill(Color.valueOf(v.accentColor));
             themeTool.setGraphic(icon);
 
@@ -555,7 +564,7 @@ public class BookViewController extends WorkbenchMainViewController {
             getEventBus().addEventHandler(ApplicationEvent.STOPPING, handleApplicationEventStopping);
             // 在线程中执行，使不造成一个空白的阻塞
             new Thread(() -> FxHelper.runLater(() -> {
-                this.webViewer.getEngine().setUserDataDirectory(UserPrefs.confDir().toFile());
+                this.webViewer.getEngine().setUserDataDirectory(UserPrefs.cacheDir().toFile());
                 // apply theme
                 this.handleThemeChanged(null);
                 this.webViewer.setContextMenuBuilder(this::handleWebViewContextMenu);
@@ -663,15 +672,15 @@ public class BookViewController extends WorkbenchMainViewController {
                 }
             } else if (null != posChapter && posChapter.hasAttr("position.selector")) {
                 webViewer.executeScript(StringHelper.concat("setScrollTop1BySelectors(\"", posChapter.removeAttr("position.selector"), "\")"));
-            } else if (null != posChapter && null != posChapter.start) {
-                webViewer.executeScript("setScrollTop1BySelectors(\"".concat(posChapter.start.toString()).concat("\")"));
+            } else if (null != posChapter && null != posChapter.anchor) {
+                webViewer.executeScript("setScrollTop1BySelectors(\"".concat(posChapter.anchor).concat("\")"));
             } else {
                 final String selector = UserPrefs.recents.getString(book.id + ".selector", null);
                 final double percent = UserPrefs.recents.getDouble(book.id + ".percent", 0);
                 if (null != selector) {
                     webViewer.executeScript(StringHelper.concat("setScrollTop1BySelectors(\"", selector, "\")"));
-                } else if (null != openedChapter.start) {
-                    webViewer.executeScript("setScrollTop1BySelectors(\"".concat(openedChapter.start.toString()).concat("\")"));
+                } else if (null != openedChapter.anchor) {
+                    webViewer.executeScript("setScrollTop1BySelectors(\"".concat(openedChapter.anchor).concat("\")"));
                 }
             }
         } catch (Throwable ignored) {
@@ -758,7 +767,7 @@ public class BookViewController extends WorkbenchMainViewController {
                 String[] refInfo = refInfoStr.split("\\|", 3);
                 if (refInfo.length < 2) return;
                 if (refInfo[0].isBlank()) return;
-                if (refInfo[1].isBlank() || refInfo[1].length() < 6) refInfo[1] = refInfo[1];
+                if (refInfo[1].isBlank() || refInfo[1].length() < 6) refInfo[1] = refInfo[0];
 
                 // 《長阿含經》卷1：「玄旨非言不傳」(CBETA 2021.Q3, T01, no. 1, p. 1a5-6)
                 final StringBuilder buff = new StringBuilder();
@@ -769,19 +778,20 @@ public class BookViewController extends WorkbenchMainViewController {
                     str = str.substring(str.lastIndexOf('_') + 1);
                     int vol = NumberHelper.toInt(str, 0);
                     buff.append(vol);
-                    for (CbetaBook.SerialVol sv : book.serialVols) {
-                        if (vol >= sv.startVol() && vol <= sv.endVol()) {
-                            serial = sv.serial();
-                            break;
-                        }
-                    }
+                    serial = book.volumes.get(vol);
+//                    for (Book.SerialVol sv : book.vols) {
+//                        if (vol >= sv.startVol() && vol <= sv.endVol()) {
+//                            serial = sv.serial();
+//                            break;
+//                        }
+//                    }
                 } else {
                     buff.append("00");
                 }
 
                 buff.append("：「");
                 buff.append(null == validText ? "" : validText);
-                buff.append("」(CBETA ").append(CbetaHelper.indexVer()).append(", ");
+                buff.append("」(CBETA ").append(AppContext.bookcase().getQuarterlyVersion()).append(", ");
                 buff.append(book.tripitakaId).append(serial);
                 buff.append(", no. ").append(book.number.replaceAll("^0+", "")).append(", p. ");
                 // span#p0154b10|span#p0154b15

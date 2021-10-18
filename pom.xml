@@ -5,7 +5,7 @@
 
 	<groupId>org.appxi</groupId>
 	<artifactId>cbeta-explorer</artifactId>
-	<version>21.09.19</version>
+	<version>21.10.18</version>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -25,7 +25,7 @@
 		</dependency>
 		<dependency>
 			<groupId>org.appxi</groupId>
-			<artifactId>appxi-tome</artifactId>
+			<artifactId>appxi-cbeta</artifactId>
 			<version>[1.0.0,)</version>
 		</dependency>
 		<dependency>
@@ -45,17 +45,6 @@
 		</dependency>
 
 		<dependency>
-			<groupId>org.controlsfx</groupId>
-			<artifactId>controlsfx</artifactId>
-			<version>18.0-SNAPSHOT</version>
-			<exclusions>
-				<exclusion>
-					<groupId>*</groupId>
-					<artifactId>*</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		<dependency>
 			<groupId>org.json</groupId>
 			<artifactId>json</artifactId>
 			<version>20210307</version>
@@ -73,7 +62,7 @@
 		</dependency>
 		<dependency>
 			<groupId>org.appxi</groupId>
-			<artifactId>appxi-preset-search</artifactId>
+			<artifactId>appxi-search-solr</artifactId>
 			<version>[1.0.0,)</version>
 		</dependency>
 	</dependencies>

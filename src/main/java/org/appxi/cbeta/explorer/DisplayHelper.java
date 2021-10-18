@@ -1,6 +1,7 @@
 package org.appxi.cbeta.explorer;
 
 import org.appxi.hanlp.convert.ChineseConvertors;
+import org.appxi.hanlp.pinyin.PinyinConvertors;
 import org.appxi.prefs.UserPrefs;
 import org.appxi.timeago.TimeAgo;
 import org.appxi.util.ext.HanLang;
@@ -42,5 +43,11 @@ public abstract class DisplayHelper {
                     timeAgoI18N = TimeAgo.MessagesBuilder.start().withLocale("zh").build();
             }
         return timeAgoI18N;
+    }
+
+    public static String prepareAscii(String text) {
+        // 原始数据中的空格有多有少，此处需要保证仅有1个空格，以方便匹配用户输入的数据
+        return PinyinConvertors.convert(text, " ", false)
+                .replaceAll("\s+", " ").strip();
     }
 }

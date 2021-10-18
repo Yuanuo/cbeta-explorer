@@ -1,11 +1,11 @@
 package org.appxi.cbeta.explorer;
 
 import org.appxi.cbeta.explorer.book.BookDataPlaceController;
-import org.appxi.cbeta.explorer.book.BookListController;
+import org.appxi.cbeta.explorer.book.BooklistExplorer;
 import org.appxi.cbeta.explorer.bookdata.BookmarksController;
 import org.appxi.cbeta.explorer.bookdata.FavoritesController;
 import org.appxi.cbeta.explorer.home.AboutController;
-import org.appxi.cbeta.explorer.prefs.PreferencesController;
+import org.appxi.cbeta.explorer.home.PreferencesController;
 import org.appxi.cbeta.explorer.recent.RecentController;
 import org.appxi.cbeta.explorer.search.LookupController;
 import org.appxi.cbeta.explorer.search.SearchController;
@@ -26,7 +26,7 @@ public class WorkbenchRootController extends WorkbenchPrimaryController {
     @Override
     protected List<WorkbenchViewController> createViewControllers() {
         final List<WorkbenchViewController> result = new ArrayList<>();
-        result.add(new BookListController(getApplication()));
+        result.add(new BooklistExplorer(getApplication()));
         result.add(new BookDataPlaceController(getApplication()));
         result.add(new RecentController(getApplication()));
         result.add(new FavoritesController(getApplication()));

@@ -19,6 +19,6 @@ public class ProgressEvent extends Event {
     }
 
     public boolean isFinished() {
-        return this.step == steps;
+        return this.step >= steps;
     }
 }
