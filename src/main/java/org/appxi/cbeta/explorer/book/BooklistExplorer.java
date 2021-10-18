@@ -189,6 +189,9 @@ public class BooklistExplorer extends WorkbenchSideViewController {
                 event -> new Thread(() -> {
                     // 在启动过程中尝试加载booklistProfile，正常情况下会成功加载（如果过早加载成功，有的监听器可能不被执行！）
                     if (!AppContext.booklistProfile.loadProfile()) {
+                        try {
+                            Thread.sleep(100);
+                        } catch (Exception ignore) {}
                         // 如果未加载成功，此时则给予提示并让用户选择
                         Platform.runLater(() -> AppContext.booklistProfile.selectProfile(AppContext.profile()));
                     }
