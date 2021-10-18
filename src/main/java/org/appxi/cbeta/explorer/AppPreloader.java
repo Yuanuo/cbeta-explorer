@@ -57,7 +57,7 @@ public class AppPreloader extends Preloader {
         Optional.ofNullable(getClass().getResource("/appxi/cbetaExplorer/themes/theme-app.css"))
                 .ifPresent(v -> primaryStage.getScene().getStylesheets().add(v.toExternalForm()));
 
-        Optional.ofNullable(getClass().getResourceAsStream("/appxi/cbetaExplorer/icons/40x40.png"))
+        Optional.ofNullable(getClass().getResourceAsStream("/appxi/cbetaExplorer/icons/icon-32.png"))
                 .ifPresent(v -> primaryStage.getIcons().setAll(new Image(v)));
         primaryStage.centerOnScreen();
         primaryStage.show();
