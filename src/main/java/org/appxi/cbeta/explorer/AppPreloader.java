@@ -30,6 +30,7 @@ public class AppPreloader extends Preloader {
     @Override
     public void start(Stage primaryStage) throws Exception {
         AppPreloader.primaryStage = primaryStage;
+        primaryStage.setTitle(AppInfo.NAME);
 
         final ImageView imageView = new ImageView();
         Optional.ofNullable(getClass().getResourceAsStream("/appxi/cbetaExplorer/images/splash.jpg"))
