@@ -129,7 +129,6 @@ public class SearchController extends WorkbenchSideToolController {
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION, contentText);
             alert.setTitle("数据更新！");
             alert.setHeaderText(headerText);
-            alert.setWidth(640);
             FxHelper.withTheme(getApplication(), alert).showAndWait().filter(v -> v == ButtonType.OK)
                     .ifPresentOrElse(v -> {
                         indexingEvent = new ProgressEvent(ProgressEvent.INDEXING, -1, 1, "处理中。。。");
