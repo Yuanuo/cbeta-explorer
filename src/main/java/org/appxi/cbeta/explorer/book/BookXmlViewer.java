@@ -225,14 +225,14 @@ public class BookXmlViewer extends WorkbenchMainViewController {
             }
 
             @Override
-            protected void updateItemOnce(Labeled labeled, Object data) {
+            protected void updateItemLabel(Labeled labeled, Object data) {
                 if (data instanceof String str) {
                     labeled.setText(str.split("#", 2)[1]);
                 } else if (data instanceof Chapter item) {
                     labeled.setText(item.hasAttr(AK_INDEX)
                             ? StringHelper.concat(item.attrStr(AK_INDEX), " / ", DisplayHelper.displayText(item.title))
                             : DisplayHelper.displayText(item.title));
-                } else super.updateItemOnce(labeled, data);
+                } else super.updateItemLabel(labeled, data);
             }
 
             private void predicateByAsciiAndString(LookupRequest lookupRequest,

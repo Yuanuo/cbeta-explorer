@@ -4,7 +4,6 @@ import appxi.cbeta.Book;
 import appxi.cbeta.BookHelper;
 import org.appxi.cbeta.explorer.AppContext;
 import org.appxi.cbeta.explorer.DisplayHelper;
-import org.appxi.javafx.control.LookupView;
 import org.appxi.util.ext.FiFunctionX3;
 
 import java.util.*;
@@ -59,11 +58,11 @@ class LookupProvider implements LookupController.LookupProvider {
     }
 
     @Override
-    public List<LookupView.LookupResultItem> lookup(LookupViewExt.LookupRequest lookupRequest) {
+    public List<LookupViewExt.LookupResultItem> lookup(LookupViewExt.LookupRequest lookupRequest) {
         final boolean isInputEmpty = lookupRequest.keywords().isEmpty();
         final boolean isInputFullAscii = !isInputEmpty && lookupRequest.keywords().get(0).isFullAscii();
         final boolean isInputWithAscii = !isInputEmpty && lookupRequest.text().matches(".*[a-zA-Z0-9]+.*");
-        final List<LookupView.LookupResultItem> result = new ArrayList<>();
+        final List<LookupViewExt.LookupResultItem> result = new ArrayList<>();
 
         // 此处使用一些优化机制，比如如果输入中不包含中文时，再做匹配也是浪费资源和占用时间
         final FiFunctionX3<LookupViewExt.LookupRequest, Double, String, Double> predicate;
@@ -97,7 +96,7 @@ class LookupProvider implements LookupController.LookupProvider {
                 }
             }
             if (score > 0) {
-                result.add(new LookupView.LookupResultItem(data, score));
+                result.add(new LookupViewExt.LookupResultItem(data, score));
                 if (isInputEmpty && result.size() > lookupRequest.resultLimit()) break;
             }
         }

@@ -66,7 +66,7 @@ public class LookupController extends WorkbenchSideToolController {
         onViewportShowing(null);
     }
 
-    private LookupView lookupView;
+    private LookupViewExt lookupView;
 
     private void onViewportShowing(String text) {
         if (null == lookupView) {
@@ -106,14 +106,14 @@ public class LookupController extends WorkbenchSideToolController {
                 }
 
                 @Override
-                protected void updateItemOnce(Labeled labeled, Object data) {
+                protected void updateItemLabel(Labeled labeled, Object data) {
                     labeled.getStyleClass().remove("visited");
                     if (data instanceof LookupData item && !Objects.equals(item.extra(), "#")) {
                         if (null != item.bookId() && null != AppContext.recentBooks.getProperty(item.bookId())) {
                             labeled.getStyleClass().add("visited");
                         }
                         labeled.setText(item.toString());
-                        super.updateItemOnce(labeled, data);
+                        super.updateItemLabel(labeled, data);
                         if (labeled.getGraphic() instanceof TextFlow textFlow) {
                             textFlow.getChildren().forEach(text ->
                                     ((Text) text).setText(DisplayHelper.displayText(((Text) text).getText())));
@@ -217,7 +217,7 @@ public class LookupController extends WorkbenchSideToolController {
     interface LookupProvider {
         void setupInitialize();
 
-        List<LookupView.LookupResultItem> lookup(LookupViewExt.LookupRequest lookupRequest);
+        List<LookupViewExt.LookupResultItem> lookup(LookupViewExt.LookupRequest lookupRequest);
     }
 
     record LookupData(boolean stdBook, String bookId, int bookVols, String bookTitle,
