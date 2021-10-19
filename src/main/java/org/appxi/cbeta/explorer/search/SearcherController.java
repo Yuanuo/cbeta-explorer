@@ -464,7 +464,9 @@ public class SearcherController extends WorkbenchMainViewController {
                     });
                 } else {
                     String text = item.text("text_txt_aio_sub");
-                    texts.add(new Text(StringHelper.trimChars(text, 200)));
+                    final Text text1 = new Text(StringHelper.trimChars(text, 200));
+                    text1.getStyleClass().add("plaintext");
+                    texts.add(text1);
                 }
                 textFlow.getChildren().setAll(texts.toArray(new Node[0]));
                 setGraphic(cardBox);
