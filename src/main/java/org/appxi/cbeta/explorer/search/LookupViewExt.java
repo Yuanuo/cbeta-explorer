@@ -6,18 +6,14 @@ import javafx.scene.control.Labeled;
 import javafx.scene.layout.StackPane;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
+import org.appxi.cbeta.explorer.DisplayHelper;
 import org.appxi.hanlp.convert.ChineseConvertors;
 import org.appxi.javafx.control.LookupView;
-import org.appxi.util.StringHelper;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Stream;
+import java.util.*;
 
 public abstract class LookupViewExt extends LookupView<Object> {
-    private LookupRequest lookupRequest;
+    private Set<String> usedKeywords;
 
     public LookupViewExt(StackPane owner) {
         super(owner);
@@ -28,15 +24,15 @@ public abstract class LookupViewExt extends LookupView<Object> {
         String text = labeled.getText();
         if (null == text) text = null == item ? "<TEXT>" : item.toString();
         //
-        if (null != lookupRequest && !lookupRequest.keywords.isEmpty()) {
+        if (null != usedKeywords && !usedKeywords.isEmpty()) {
             List<String> lines = new ArrayList<>(List.of(text));
-            for (LookupKeyword keyword : lookupRequest.keywords()) {
+            for (String keyword : usedKeywords) {
                 for (int i = 0; i < lines.size(); i++) {
                     final String line = lines.get(i);
                     if (line.startsWith("§§#§§")) continue;
 
                     List<String> list = List.of(line
-                            .replace(keyword.text, "\n§§#§§".concat(keyword.text).concat("\n"))
+                            .replace(keyword, "\n§§#§§".concat(keyword).concat("\n"))
                             .split("\n"));
                     if (list.size() > 1) {
                         lines.remove(i);
@@ -62,6 +58,8 @@ public abstract class LookupViewExt extends LookupView<Object> {
             labeled.setText(text);
             labeled.setGraphic(textFlow);
             labeled.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+            //
+            textFlow.getChildren().forEach(t -> ((Text) t).setText(DisplayHelper.displayText(((Text) t).getText())));
         } else {
             labeled.setText(text);
             labeled.setContentDisplay(ContentDisplay.TEXT_ONLY);
@@ -79,35 +77,22 @@ public abstract class LookupViewExt extends LookupView<Object> {
         // 如果此时的输入并无必要进行搜索，允许子类实现中返回null以中断并保持现状
         if (lookupText == null) return null;
 
-        lookupRequest = LookupRequest.of(lookupText, resultLimit);
-        List<LookupResultItem> result = lookupByKeywords(lookupRequest);
+        List<LookupResultItem> lookupResult = new ArrayList<>(resultLimit);
+
+        lookupByKeywords(lookupText, resultLimit, lookupResult, usedKeywords = new LinkedHashSet<>());
         if (!lookupText.isEmpty()) {
             // 默认时无输入，不需对结果进行排序
-            result.sort(Comparator.<LookupResultItem>comparingDouble(v -> v.score).reversed());
-            if (result.size() > resultLimit + 1)
-                result = result.subList(0, resultLimit + 1);
+            lookupResult.sort(Comparator.comparingDouble(LookupResultItem::score).reversed());
+            if (lookupResult.size() > resultLimit + 1)
+                lookupResult = lookupResult.subList(0, resultLimit + 1);
         }
-        return result.stream().map(v -> v.data).toList();
+        return lookupResult.stream().map(LookupResultItem::data).toList();
     }
 
-    protected abstract List<LookupResultItem> lookupByKeywords(LookupRequest lookupRequest);
+    protected abstract void lookupByKeywords(String lookupText, int resultLimit,
+                                             List<LookupResultItem> result,
+                                             Set<String> usedKeywords);
 
     public record LookupResultItem(Object data, double score) {
-    }
-
-    public record LookupKeyword(String text, boolean isFullAscii) {
-    }
-
-    public record LookupRequest(List<LookupKeyword> keywords, String text, int resultLimit) {
-        public static LookupRequest of(String lookupText, int resultLimit) {
-            return new LookupRequest(
-                    Stream.of(StringHelper.split(lookupText, " ", "[()（）“”\"]"))
-                            .map(str -> str.replaceAll("[()（）“”\"]", "")
-                                    .replaceAll("\s+", " ").toLowerCase().strip())
-                            .filter(str -> !str.isEmpty())
-                            .map(str -> new LookupKeyword(str, str.matches("[a-zA-Z0-9\s]+")))
-                            .toList(),
-                    lookupText, resultLimit);
-        }
     }
 }

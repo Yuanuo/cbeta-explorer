@@ -17,7 +17,6 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import javafx.stage.Screen;
 import netscape.javascript.JSObject;
 import org.apache.commons.io.FilenameUtils;
 import org.appxi.cbeta.explorer.AppContext;
@@ -31,6 +30,7 @@ import org.appxi.cbeta.explorer.event.BookEvent;
 import org.appxi.cbeta.explorer.event.BookdataEvent;
 import org.appxi.cbeta.explorer.event.GenericEvent;
 import org.appxi.cbeta.explorer.event.SearcherEvent;
+import org.appxi.util.ext.LookupExpression;
 import org.appxi.cbeta.explorer.search.LookupViewExt;
 import org.appxi.hanlp.convert.ChineseConvertors;
 import org.appxi.holder.IntHolder;
@@ -193,24 +193,6 @@ public class BookXmlViewer extends WorkbenchMainViewController {
             private final Object AK_INDEX = new Object();
 
             @Override
-            protected int getPrefWidth() {
-                double screenWidth = Screen.getPrimary().getBounds().getWidth();
-                if (screenWidth >= 1920)
-                    return 1080;
-                return 960;
-            }
-
-            @Override
-            protected int getPrefHeight() {
-                double screenHeight = Screen.getPrimary().getBounds().getHeight();
-                if (screenHeight >= 1080)
-                    return 800;
-                if (screenHeight >= 900)
-                    return 720;
-                return 640;
-            }
-
-            @Override
             protected String getHeaderText() {
                 return "快捷跳转本书目录";
             }
@@ -218,8 +200,9 @@ public class BookXmlViewer extends WorkbenchMainViewController {
             @Override
             protected String getUsagesText() {
                 return """
-                        >> 不分简繁任意汉字匹配（以感叹号起始则强制区分）；逗号分隔任意字/词/短语匹配；卷编号/卷名/章节名匹配；
-                        >> 斜杠'/'匹配经卷目录；#号起始开启本书卷/行定位；
+                        >> 支持简繁任意汉字匹配（以感叹号起始则强制区分）；支持按拼音（全拼）匹配，使用双引号包含则实行精确匹配；
+                        >> 支持复杂条件(+/AND,默认为OR)：例1：1juan +"bu kong" AND 仪轨；例2：1juan +("bu kong" 仪轨 OR "yi gui")
+                        >> 逗号分隔任意字/词/短语匹配；卷编号/卷名/章节名匹配；斜杠'/'匹配经卷目录；#号起始开启本书卷/行定位；
                         >> 快捷键：Ctrl+T 在阅读视图中开启；ESC 或 点击透明区 退出此界面；上下方向键选择列表项；回车键打开；
                         """;
             }
@@ -232,44 +215,55 @@ public class BookXmlViewer extends WorkbenchMainViewController {
                     labeled.setText(item.hasAttr(AK_INDEX)
                             ? StringHelper.concat(item.attrStr(AK_INDEX), " / ", DisplayHelper.displayText(item.title))
                             : DisplayHelper.displayText(item.title));
+
+                    super.updateItemLabel(labeled, data);
                 } else super.updateItemLabel(labeled, data);
             }
 
-            private void predicateByAsciiAndString(LookupRequest lookupRequest,
-                                                   String data, Chapter dataObject, List<LookupResultItem> result) {
-                lookupRequest.keywords().stream()
-                        .takeWhile(keyword -> {
-                            if (keyword.isFullAscii()) {
-                                String dataInAscii = DisplayHelper.prepareAscii(data);
-                                if (dataInAscii.contains(keyword.text())) return true;
-                            }
-                            return data.contains(keyword.text());
-                        })
-                        .findFirst()
-                        .ifPresent(s -> result.add(new LookupResultItem(dataObject, .5)));
-            }
-
             @Override
-            protected List<LookupResultItem> lookupByKeywords(LookupRequest lookupRequest) {
-                final boolean isInputEmpty = lookupRequest.keywords().isEmpty();
-                final List<LookupResultItem> result = new ArrayList<>();
+            protected void lookupByKeywords(String lookupText, int resultLimit,
+                                            List<LookupResultItem> result, Set<String> usedKeywords) {
+                final boolean isInputEmpty = lookupText.isBlank();
+                Optional<LookupExpression> optional = isInputEmpty ? Optional.empty() : LookupExpression.of(lookupText,
+                        (parent, text) -> new LookupExpression.Keyword(parent, text) {
+                            @Override
+                            public double score(Object data) {
+                                final String text = null == data ? "" : data.toString();
+                                if (this.isAsciiKeyword()) {
+                                    String dataInAscii = DisplayHelper.prepareAscii(text);
+                                    if (dataInAscii.contains(this.keyword())) return 1;
+                                }
+                                return super.score(data);
+                            }
+                        });
+                if (!isInputEmpty && optional.isEmpty()) {
+                    // not a valid expression
+                    return;
+                }
+                final LookupExpression lookupExpression = optional.orElse(null);
                 TreeHelper.filterLeafs(bookBasic.tocsTree.getRoot(), (treeItem, itemValue) -> {
-                    predicateByAsciiAndString(lookupRequest, itemValue.title, itemValue, result);
-                    return isInputEmpty && result.size() > lookupRequest.resultLimit();
+                    if (null == itemValue || null == itemValue.title) return false;
+                    double score = isInputEmpty ? 1 : lookupExpression.score(itemValue.title);
+                    if (score > 0) result.add(new LookupResultItem(itemValue, score));
+                    return isInputEmpty && result.size() > resultLimit;
                 });
 
                 final IntHolder index = new IntHolder(0);
                 TreeHelper.filterLeafs(bookBasic.volsTree.getRoot(), (treeItem, itemValue) -> {
+                    if (null == itemValue || null == itemValue.title) return false;
                     index.value++;
 
                     String indexStr = StringHelper.padLeft(index.value, 3, '0');
                     itemValue.attr(AK_INDEX, indexStr);
 
-                    String data = StringHelper.concat(indexStr, " / ", itemValue.title);
-                    predicateByAsciiAndString(lookupRequest, data, itemValue, result);
-                    return isInputEmpty && result.size() > lookupRequest.resultLimit();
+                    String text = StringHelper.concat(indexStr, " / ", itemValue.title);
+                    double score = isInputEmpty ? 1 : lookupExpression.score(text);
+                    if (score > 0) result.add(new LookupResultItem(itemValue, score));
+                    return isInputEmpty && result.size() > resultLimit;
                 });
-                return result;
+                //
+                if (null != lookupExpression)
+                    lookupExpression.keywords().forEach(k -> usedKeywords.add(k.keyword()));
             }
 
             @Override
