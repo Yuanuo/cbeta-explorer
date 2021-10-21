@@ -62,6 +62,7 @@ public class AppPreloader extends Preloader {
                 .ifPresent(v -> primaryStage.getIcons().setAll(new Image(v)));
         primaryStage.centerOnScreen();
         primaryStage.show();
+        new javax.swing.JTextField("");
     }
 
     @Override

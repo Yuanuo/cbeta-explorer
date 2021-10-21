@@ -6,6 +6,7 @@ module appxi.cbetaExplorer {
     requires javafx.fxml;
     requires javafx.web;
     requires jdk.jsobject;
+    requires transitive javafx.swing;
 
     requires appxi.shared;
     requires appxi.cbeta;
