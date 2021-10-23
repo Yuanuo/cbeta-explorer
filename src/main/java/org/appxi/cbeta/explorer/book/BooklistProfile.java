@@ -16,6 +16,7 @@ import org.appxi.cbeta.explorer.DisplayHelper;
 import org.appxi.cbeta.explorer.event.GenericEvent;
 import org.appxi.javafx.control.CardChooser;
 import org.appxi.javafx.control.TreeViewExt;
+import org.appxi.javafx.helper.FxHelper;
 import org.appxi.javafx.helper.TreeHelper;
 import org.appxi.javafx.iconfont.MaterialIcon;
 import org.appxi.prefs.Preferences;
@@ -120,7 +121,6 @@ public class BooklistProfile {
                 return;
             //
             final Optional<CardChooser.Card> optional = CardChooser.of("选择书单")
-                    .cancelable()
                     .owner(AppContext.app().getPrimaryStage())
                     .cards(Stream.of(Profile.values())
                             .map(p -> CardChooser.ofCard(p.toString())
@@ -142,7 +142,6 @@ public class BooklistProfile {
 
     void manageProfiles() {
         CardChooser.of("管理我的书单")
-                .cancelable()
                 .owner(AppContext.app().getPrimaryStage())
                 .cards(Stream.of(Profile.values()).filter(Profile::isManaged)
                         .map(p -> CardChooser.ofCard(p.toString())
@@ -229,12 +228,8 @@ public class BooklistProfile {
             super();
             this.profile = profile;
 
-            this.setPrefWidth(640);
-
             this.form = new VBox(10);
             this.form.getStyleClass().add("form");
-            HBox.setHgrow(this.form, Priority.ALWAYS);
-            VBox.setVgrow(this.form, Priority.ALWAYS);
             //
             this.edit_title();
             this.edit_description();
@@ -277,7 +272,6 @@ public class BooklistProfile {
             this.template = this.profile.template();
             Button selTemplate = new Button("从模板创建");
             selTemplate.setOnAction(event -> CardChooser.of("选择模板")
-                    .cancelable()
                     .cards(Stream.of(Profile.bulei,
                                     Profile.simple,
                                     Profile.advance)
@@ -311,13 +305,13 @@ public class BooklistProfile {
 
             treeView = new TreeViewExt<>();
             treeView.setCellFactory(CheckBoxTreeCell.forTreeView());
-            VBox.setVgrow(treeView, Priority.ALWAYS);
             //
             VBox vBox = new VBox(10, toolbar, treeView);
             HBox.setHgrow(vBox, Priority.ALWAYS);
-            VBox.setVgrow(vBox, Priority.ALWAYS);
             //
-            this.form.getChildren().addAll(new HBox(label, vBox));
+            HBox hBox = new HBox(label, vBox);
+            VBox.setVgrow(hBox, Priority.ALWAYS);
+            this.form.getChildren().addAll(hBox);
         }
 
         private void edit_rules() {
@@ -354,7 +348,7 @@ public class BooklistProfile {
         public Optional<ButtonType> showAndWait() {
             final Dialog<ButtonType> dialog = new Dialog<>();
             dialog.setTitle("编辑我的书单: ".concat(profile.toString()));
-            dialog.setResizable(false);
+            this.setPrefSize(540, 720);
             dialog.setDialogPane(this);
             //
             final Path profilePath = profileDir.resolve(profile.filename());
@@ -373,7 +367,7 @@ public class BooklistProfile {
                 this.getScene().getRoot().setStyle(owner.getScene().getRoot().getStyle());
             }
             dialog.initOwner(owner);
-            final Optional<ButtonType> optional = dialog.showAndWait();
+            final Optional<ButtonType> optional = FxHelper.withTheme(AppContext.app(), dialog).showAndWait();
             if (optional.isEmpty() || optional.get() == ButtonType.CANCEL) return optional;
             //
             //
@@ -443,10 +437,7 @@ public class BooklistProfile {
             profileMgr.setProperty(profile.name().concat(".mod"), FileHelper.fileTime(profilePath));
             profileMgr.save();
 
-            // delete indexed data
-//            IndexHelper.repository().deleteAllByProject("cbeta");
             if (!Objects.equals(oldMd5Ver, newMd5Ver)) {
-//                IndexHelper.repository().deleteAllByProject(profile.project);
                 if (profile == AppContext.booklistProfile.profile) {
                     AppContext.booklistProfile.loadProfile();
                 }

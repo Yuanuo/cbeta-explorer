@@ -107,7 +107,6 @@ public class AppPreloader extends Preloader {
             // 3，提示并让用户选择数据源
             final Optional<CardChooser.Card> optional = CardChooser.of("选择CBETA Bookcase数据源")
                     .header("选择使用Bookcase Zip数据包 或者 数据目录？", null)
-                    .cancelable()
                     .owner(primaryStage)
                     .cards(CardChooser.ofCard("Bookcase数据包")
                                     .description("CBETA官方发布的Bookcase Zip数据包。文件名类似于“bookcase_v061_20210710.zip。")

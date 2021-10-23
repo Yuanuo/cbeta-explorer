@@ -1,9 +1,7 @@
 package org.appxi.cbeta.explorer.home;
 
 import javafx.geometry.Pos;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextArea;
+import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -16,6 +14,8 @@ import org.appxi.javafx.iconfont.MaterialIcon;
 import org.appxi.javafx.workbench.WorkbenchApplication;
 import org.appxi.javafx.workbench.views.WorkbenchSideToolController;
 import org.appxi.prefs.UserPrefs;
+
+import java.util.Optional;
 
 public class AboutController extends WorkbenchSideToolController {
     public AboutController(WorkbenchApplication application) {
@@ -30,19 +30,19 @@ public class AboutController extends WorkbenchSideToolController {
 
     @Override
     public void onViewportShowing(boolean firstTime) {
-        final Alert alert = new Alert(Alert.AlertType.NONE);
-        alert.setTitle(viewTitle.get());
-
-        final ImageView graphic = new ImageView(
-                getClass().getResource("/appxi/cbetaExplorer/icons/icon-256.png").toExternalForm());
-        graphic.setFitWidth(48);
-        graphic.setFitHeight(48);
-        graphic.setSmooth(true);
-        final Label head = new Label(AppInfo.NAME, graphic);
+        final Label head = new Label(AppInfo.NAME);
         head.setStyle("-fx-font-size: 2em; -fx-padding: .5em 0;");
         head.setMaxWidth(Double.MAX_VALUE);
         head.setAlignment(Pos.CENTER);
-        head.setGraphicTextGap(20);
+        Optional.ofNullable(getClass().getResource("/appxi/cbetaExplorer/icons/icon-256.png"))
+                .ifPresent(url -> {
+                    final ImageView graphic = new ImageView(url.toExternalForm());
+                    graphic.setFitWidth(48);
+                    graphic.setFitHeight(48);
+                    head.setGraphic(graphic);
+                    head.setGraphicTextGap(20);
+                });
+
         final HBox headBox = new HBox(head);
         HBox.setHgrow(head, Priority.ALWAYS);
 
@@ -57,6 +57,7 @@ public class AboutController extends WorkbenchSideToolController {
         VBox.setVgrow(info, Priority.ALWAYS);
         info.setWrapText(true);
         info.setEditable(false);
+        info.setPrefRowCount(15);
 
         final StringBuilder buf = new StringBuilder();
         buf.append("Product Version").append("\n");
@@ -81,10 +82,13 @@ public class AboutController extends WorkbenchSideToolController {
 
         info.setText(buf.toString());
 
-        final DialogPaneEx pane = new DialogPaneEx();
-        pane.setContent(new VBox(headBox, descBox, info));
-        alert.setDialogPane(pane);
-
-        FxHelper.withTheme(getApplication(), alert).show();
+        //
+        final DialogPaneEx dialogPane = new DialogPaneEx();
+        dialogPane.setContent(new VBox(headBox, descBox, info));
+        //
+        final Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle(viewTitle.get());
+        dialog.setDialogPane(dialogPane);
+        FxHelper.withTheme(getApplication(), dialog).show();
     }
 }
