@@ -69,6 +69,13 @@ record IndexingTask(DesktopApplication application) implements Runnable {
                     if (null == book || null == book.path) return;
                     advanceBookPaths.put(book.id, "nav/advance/".concat(TreeHelper.path(treeItem)));
                 });
+                // 根据当前书单处理，如果是默认书单（非自定义）则不需要做过滤处理
+                final HashSet<String> managedBooks = new HashSet<>(512);
+                final boolean profileManaged = profile.isManaged();
+                if (profileManaged) {
+                    Booklist<TreeItem<Book>> booklist = new BooklistProfile.BooklistFilteredTree(bookMap, profile);
+                    TreeHelper.walkLeafs(booklist.tree(), (treeItem, book) -> managedBooks.add(book.id));
+                }
 
                 Preferences cacheProfiles = new PreferencesInProperties(UserPrefs.confDir().resolve(".profiles"), false);
                 String cacheProfilesStr = StringHelper.join(",",
@@ -92,7 +99,9 @@ record IndexingTask(DesktopApplication application) implements Runnable {
                         category.put("profile/bulei", "");
                         category.put("profile/simple", "");
                         category.put("profile/advance", "");
-                        category.put("profile/".concat(profile.name()), "");
+                        // 未在当前书单中，不能关联
+                        if (profileManaged && managedBooks.contains(book.id))
+                            category.put("profile/".concat(profile.name()), "");
                         //
                         BookHelper.prepareBook(book);
                         List<Piece> pieces = IndexingHelper.buildBookToPieces(book);

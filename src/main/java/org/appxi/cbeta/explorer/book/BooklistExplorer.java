@@ -203,7 +203,7 @@ public class BooklistExplorer extends WorkbenchSideViewController {
     }
 
     private void handleEventToOpenBook(Event event, Book book, Chapter chapter) {
-        if (book.id == null || book.path == null) return;
+        if (null == book || book.id == null || book.path == null) return;
         event.consume();
         final BookXmlViewer viewController = (BookXmlViewer) getPrimaryViewport().findMainViewController(book.id);
         if (null != viewController) {
