@@ -1,9 +1,7 @@
 package org.appxi.cbeta.explorer;
 
-import javafx.application.Platform;
-import javafx.scene.web.WebView;
 import org.appxi.cbeta.explorer.dao.DaoHelper;
-import org.appxi.javafx.desktop.ApplicationEvent;
+import org.appxi.javafx.control.WebViewer;
 import org.appxi.javafx.workbench.WorkbenchApplication;
 import org.appxi.javafx.workbench.WorkbenchPrimaryController;
 import org.appxi.prefs.UserPrefs;
@@ -26,7 +24,7 @@ public class AppWorkbench extends WorkbenchApplication {
         // 在此设置数据库基本环境，以供后续的功能正常使用
         DaoHelper.setupDatabaseService(UserPrefs.dataDir().resolve(".db"));
         initThemes();
-        eventBus.addEventHandler(ApplicationEvent.STARTED, event -> Platform.runLater(WebView::new));
+        new Thread(WebViewer::preloadLibrary).start();
     }
 
     @Override

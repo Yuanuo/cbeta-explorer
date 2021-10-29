@@ -41,6 +41,7 @@ public abstract class AppContext {
             AppContext.booksMap().data();
             DaoService.setupInitialize();
             ChineseConvertors.hans2HantTW("测试");
+            DisplayHelper.prepareAscii("init");
 //            beans();
         }).start();
     }
