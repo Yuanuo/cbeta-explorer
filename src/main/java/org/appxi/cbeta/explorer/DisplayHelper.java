@@ -1,10 +1,13 @@
 package org.appxi.cbeta.explorer;
 
 import org.appxi.hanlp.convert.ChineseConvertors;
+import org.appxi.hanlp.pinyin.Pinyin;
 import org.appxi.hanlp.pinyin.PinyinConvertors;
 import org.appxi.prefs.UserPrefs;
 import org.appxi.timeago.TimeAgo;
 import org.appxi.util.ext.HanLang;
+
+import java.util.List;
 
 public abstract class DisplayHelper {
     private DisplayHelper() {
@@ -46,8 +49,16 @@ public abstract class DisplayHelper {
     }
 
     public static String prepareAscii(String text) {
+        List<Pinyin> pinyinList = PinyinConvertors.convert(text);
+        StringBuilder result = new StringBuilder(pinyinList.size() * (6));
+
+        for (int i = 0; i < text.length(); ++i) {
+            Pinyin pinyin = pinyinList.get(i);
+            if (pinyin == Pinyin.none5) result.append(text.charAt(i));
+            else result.append(" ").append(pinyin.getPinyinWithoutTone()).append(" ");
+        }
+
         // 原始数据中的空格有多有少，此处需要保证仅有1个空格，以方便匹配用户输入的数据
-        return PinyinConvertors.convert(text, " ", false)
-                .replaceAll("\s+", " ").strip();
+        return result.toString().replaceAll("\s+", " ").strip();
     }
 }
