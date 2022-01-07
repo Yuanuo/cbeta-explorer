@@ -3,10 +3,14 @@ package org.appxi.cbeta.explorer.search;
 import appxi.cbeta.Book;
 import appxi.cbeta.BookHelper;
 import org.appxi.cbeta.explorer.AppContext;
-import org.appxi.cbeta.explorer.DisplayHelper;
+import org.appxi.javafx.helper.FxHelper;
 import org.appxi.util.StringHelper;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.IntStream;
 
 class LookupDatabase {
@@ -17,10 +21,7 @@ class LookupDatabase {
         long st = System.currentTimeMillis();
         new Thread(() -> {
             cachedDatabase.clear();
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException ignored) {
-            }
+            FxHelper.sleepSilently(500);
             final Collection<Book> books = new ArrayList<>(AppContext.booklistProfile.getManagedBooks());
             books.parallelStream().forEachOrdered(book -> {
                 cachedDatabase.add(new LookupData(
@@ -31,9 +32,9 @@ class LookupDatabase {
                 if (null != book.id)
                     cachedAsciiMap.put(book.id, book.id.toLowerCase());
                 if (null != book.title)
-                    cachedAsciiMap.computeIfAbsent(book.title, DisplayHelper::prepareAscii);
+                    cachedAsciiMap.computeIfAbsent(book.title, AppContext::ascii);
                 if (null != book.authorInfo)
-                    cachedAsciiMap.computeIfAbsent(book.authorInfo, DisplayHelper::prepareAscii);
+                    cachedAsciiMap.computeIfAbsent(book.authorInfo, AppContext::ascii);
             });
             books.parallelStream().forEachOrdered(book -> {
                 final Collection<LookupData> items = new ArrayList<>();
@@ -43,7 +44,7 @@ class LookupDatabase {
                             stdBook, book.id, book.volumes.size(), book.title,
                             href, text, null, null));
                     if (null != text)
-                        cachedAsciiMap.computeIfAbsent(text, DisplayHelper::prepareAscii);
+                        cachedAsciiMap.computeIfAbsent(text, AppContext::ascii);
                 });
                 cachedDatabase.addAll(items);
                 items.clear();

@@ -12,7 +12,7 @@ class LookupByPredicate {
     }
 
     public static void lookup(String lookupText, int resultLimit,
-                              List<LookupViewExt.LookupResultItem> result,
+                              List<LookupLayerEx.LookupResultItem> result,
                               Set<String> lookupKeywords) {
         final List<LookupKeyword> keywords =
                 Stream.of(StringHelper.split(lookupText, " ", "[()（）“”\"]"))
@@ -57,7 +57,7 @@ class LookupByPredicate {
                 }
             }
             if (score > 0) {
-                result.add(new LookupViewExt.LookupResultItem(data, score));
+                result.add(new LookupLayerEx.LookupResultItem(data, score));
                 if (isInputEmpty && result.size() > resultLimit) break;
             }
         }

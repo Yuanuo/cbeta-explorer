@@ -4,38 +4,47 @@ import appxi.cbeta.Book;
 import appxi.cbeta.Chapter;
 import javafx.geometry.Pos;
 import javafx.scene.control.Labeled;
-import javafx.scene.input.*;
+import javafx.scene.input.InputEvent;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
+import javafx.scene.input.KeyEvent;
+import org.appxi.cbeta.explorer.App;
 import org.appxi.cbeta.explorer.AppContext;
 import org.appxi.cbeta.explorer.event.BookEvent;
 import org.appxi.cbeta.explorer.event.GenericEvent;
 import org.appxi.cbeta.explorer.event.SearcherEvent;
-import org.appxi.javafx.control.LookupView;
-import org.appxi.javafx.iconfont.MaterialIcon;
-import org.appxi.javafx.workbench.WorkbenchApplication;
+import org.appxi.javafx.control.LookupLayer;
+import org.appxi.javafx.visual.MaterialIcon;
+import org.appxi.javafx.workbench.WorkbenchPane;
 import org.appxi.javafx.workbench.views.WorkbenchSideToolController;
 import org.appxi.util.StringHelper;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class LookupController extends WorkbenchSideToolController {
     private LookupDatabase lookupDatabase;
 
-    public LookupController(WorkbenchApplication application) {
-        super("LOOKUP", application);
+    public LookupController(WorkbenchPane workbench) {
+        super("LOOKUP", workbench);
         this.setTitles("检索", "快捷检索 (Ctrl+G)");
         this.attr(Pos.class, Pos.CENTER_LEFT);
-        this.viewIcon.set(MaterialIcon.NEAR_ME.iconView());
+        this.viewGraphic.set(MaterialIcon.NEAR_ME.graphic());
     }
 
     private long lastShiftKeyPressedTime;
 
     @Override
-    public void setupInitialize() {
-        getPrimaryScene().getAccelerators().put(new KeyCodeCombination(KeyCode.G, KeyCombination.SHORTCUT_DOWN),
+    public void initialize() {
+        app.getPrimaryScene().getAccelerators().put(new KeyCodeCombination(KeyCode.G, KeyCombination.SHORTCUT_DOWN),
                 () -> this.onViewportShowing(false));
-        getPrimaryScene().addEventHandler(KeyEvent.KEY_PRESSED, evt -> {
+        app.getPrimaryScene().addEventHandler(KeyEvent.KEY_PRESSED, evt -> {
             if (evt.getCode() == KeyCode.SHIFT) {
                 final long currShiftKeyPressedTime = System.currentTimeMillis();
                 if (currShiftKeyPressedTime - lastShiftKeyPressedTime <= 400) {
@@ -43,16 +52,16 @@ public class LookupController extends WorkbenchSideToolController {
                 } else lastShiftKeyPressedTime = currShiftKeyPressedTime;
             }
         });
-        getEventBus().addEventHandler(SearcherEvent.LOOKUP,
+        app.eventBus.addEventHandler(SearcherEvent.LOOKUP,
                 event -> this.onViewportShowing(null != event.text ? event.text.strip() : null));
         this.lookupDatabase = new LookupDatabase();
-        getEventBus().addEventHandler(GenericEvent.PROFILE_READY, event -> {
-            if (null != lookupView) lookupView.reset();
+        app.eventBus.addEventHandler(GenericEvent.PROFILE_READY, event -> {
+            if (null != lookupLayer) lookupLayer.reset();
             lookupDatabase.reload();
         });
         // 当显示汉字类型改变时需要同步更新lookupView
-        getEventBus().addEventHandler(GenericEvent.DISPLAY_HAN_CHANGED,
-                event -> Optional.ofNullable(this.lookupView).ifPresent(LookupView::refresh));
+        app.eventBus.addEventHandler(GenericEvent.DISPLAY_HAN_CHANGED,
+                event -> Optional.ofNullable(this.lookupLayer).ifPresent(LookupLayer::refresh));
     }
 
     @Override
@@ -60,12 +69,12 @@ public class LookupController extends WorkbenchSideToolController {
         onViewportShowing(null);
     }
 
-    private LookupViewExt lookupView;
+    private LookupLayerEx lookupLayer;
+    private String lookupText;
 
     private void onViewportShowing(String text) {
-        if (null == lookupView) {
-            lookupView = new LookupViewExt(application.getPrimaryViewport()) {
-
+        if (null == lookupLayer) {
+            lookupLayer = new LookupLayerEx(app.getPrimaryGlass()) {
                 @Override
                 protected int getPaddingSizeOfParent() {
                     return 200;
@@ -103,6 +112,7 @@ public class LookupController extends WorkbenchSideToolController {
                 @Override
                 protected void lookupByKeywords(String lookupText, int resultLimit,
                                                 List<LookupResultItem> result, Set<String> usedKeywords) {
+                    LookupController.this.lookupText = lookupText;
 //                    LookupByPredicate.lookup(lookupText, resultLimit, result, usedKeywords);
                     LookupByExpression.lookup(lookupText, resultLimit, result, usedKeywords);
                 }
@@ -186,10 +196,12 @@ public class LookupController extends WorkbenchSideToolController {
                         }
                     }
                     hide();
-                    AppContext.app().eventBus.fireEvent(new BookEvent(BookEvent.OPEN, book, chapter));
+                    App.app().eventBus.fireEvent(new BookEvent(BookEvent.OPEN, book, chapter));
                 }
             };
+
+            app.eventBus.addEventHandler(BookEvent.VIEW, event -> lookupLayer.refresh());
         }
-        lookupView.show(text);
+        lookupLayer.show(text != null ? text : lookupText);
     }
 }

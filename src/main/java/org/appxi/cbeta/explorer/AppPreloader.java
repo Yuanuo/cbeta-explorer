@@ -4,85 +4,52 @@ import appxi.cbeta.BookcaseInDir;
 import appxi.cbeta.BookcaseInZip;
 import javafx.application.Preloader;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.ProgressBar;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.BorderPane;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import org.appxi.javafx.control.CardChooser;
-import org.appxi.javafx.iconfont.MaterialIcon;
+import org.appxi.javafx.visual.MaterialIcon;
+import org.appxi.javafx.visual.Swatch;
+import org.appxi.javafx.visual.Theme;
+import org.appxi.javafx.visual.Visual;
 import org.appxi.prefs.UserPrefs;
 
 import java.io.File;
 import java.util.Optional;
 
 public class AppPreloader extends Preloader {
-    static Stage primaryStage;
-    private ProgressBar progressBar;
-    private Button hacker;
+    private static Stage primaryStage;
 
     @Override
     public void start(Stage primaryStage) throws Exception {
         AppPreloader.primaryStage = primaryStage;
-        primaryStage.setTitle(AppInfo.NAME);
+        primaryStage.setTitle(App.NAME);
 
         final ImageView imageView = new ImageView();
-        Optional.ofNullable(getClass().getResourceAsStream("/appxi/cbetaExplorer/images/splash.jpg"))
+        Optional.ofNullable(AppPreloader.class.getResourceAsStream("splash.jpg"))
                 .ifPresent(v -> imageView.setImage(new Image(v)));
-        progressBar = new ProgressBar(0);
-        progressBar.setPrefWidth(799);
-
-        //
-        hacker = new Button();
-        hacker.setMaxSize(.1, .1);
-        hacker.setMinSize(.1, .1);
-        hacker.setPrefSize(.1, .1);
-        hacker.setVisible(false);
-        hacker.setOnAction(event -> setupBookcase(primaryStage));
-        //
-        HBox.setHgrow(progressBar, Priority.ALWAYS);
-        final HBox bottomBar = new HBox(hacker, progressBar);
-        bottomBar.getStyleClass().add("black-bg");
-        VBox rootPane = new VBox(imageView, bottomBar);
 
         primaryStage.initStyle(StageStyle.TRANSPARENT);
-        primaryStage.setScene(new Scene(rootPane));
-        Optional.ofNullable(getClass().getResource("/appxi/cbetaExplorer/themes/preloader.css"))
-                .ifPresent(v -> primaryStage.getScene().getStylesheets().add(v.toExternalForm()));
-        Optional.ofNullable(getClass().getResource("/appxi/cbetaExplorer/themes/theme-app.css"))
-                .ifPresent(v -> primaryStage.getScene().getStylesheets().add(v.toExternalForm()));
+        primaryStage.setScene(new Scene(new BorderPane(imageView), 800, 450));
 
-        Optional.ofNullable(getClass().getResourceAsStream("/appxi/cbetaExplorer/icons/icon-32.png"))
+        Optional.ofNullable(getClass().getResourceAsStream("icon-32.png"))
                 .ifPresent(v -> primaryStage.getIcons().setAll(new Image(v)));
         primaryStage.centerOnScreen();
         primaryStage.show();
+        setupBookcase(primaryStage);
+        new javafx.scene.control.TextField("");
         new javax.swing.JTextField("");
     }
 
-    @Override
-    public void handleProgressNotification(ProgressNotification info) {
-        double percent = info.getProgress();
-        percent = percent > 1 ? 1 : percent;
-        progressBar.setProgress(percent);
-        if (percent == 0.111) {
-            hacker.fire();
-        }
+    public static void hide() {
+        if (null != primaryStage) primaryStage.close();
     }
 
-    @Override
-    public void handleApplicationNotification(PreloaderNotification noteInfo) {
-        if (noteInfo instanceof ProgressNotification info) {
-            handleProgressNotification(info);
-        } else if (noteInfo instanceof StateChangeNotification) {
-            primaryStage.close(); // seem it be always BEFORE_START
-        }
-    }
+    private static boolean themed = false;
 
     static void setupBookcase(Stage primaryStage) {
         final String key = "bookcase";
@@ -104,23 +71,30 @@ public class AppPreloader extends Preloader {
                     }
                 }
             }
+            if (!themed) {
+                primaryStage.getScene().getRoot().setStyle("-fx-font-size: 16px;");
+                Theme.getDefault().assignTo(primaryStage.getScene());
+                Swatch.getDefault().assignTo(primaryStage.getScene());
+                Visual.getDefault().assignTo(primaryStage.getScene());
+                themed = true;
+            }
             // 3，提示并让用户选择数据源
             final Optional<CardChooser.Card> optional = CardChooser.of("选择CBETA Bookcase数据源")
                     .header("选择使用Bookcase Zip数据包 或者 数据目录？", null)
                     .owner(primaryStage)
                     .cards(CardChooser.ofCard("Bookcase数据包")
                                     .description("CBETA官方发布的Bookcase Zip数据包。文件名类似于“bookcase_v061_20210710.zip。")
-                                    .graphic(MaterialIcon.ARCHIVE.iconView())
+                                    .graphic(MaterialIcon.ARCHIVE.graphic())
                                     .userData(true)
                                     .get(),
                             CardChooser.ofCard("Bookcase数据目录")
                                     .description("CBETA官方阅读器CBReader自带的Bookcase数据目录。")
-                                    .graphic(MaterialIcon.FOLDER.iconView())
+                                    .graphic(MaterialIcon.FOLDER.graphic())
                                     .userData(false)
                                     .get(),
                             CardChooser.ofCard("退出")
                                     .description("请退出")
-                                    .graphic(MaterialIcon.EXIT_TO_APP.iconView())
+                                    .graphic(MaterialIcon.EXIT_TO_APP.graphic())
                                     .get()
                     ).showAndWait();
             if (optional.isEmpty() || optional.get().userData() == null) {

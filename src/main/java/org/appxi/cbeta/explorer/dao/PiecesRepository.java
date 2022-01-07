@@ -6,7 +6,13 @@ import org.appxi.search.solr.PieceRepository;
 import org.appxi.util.StringHelper;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.solr.core.SolrTemplate;
-import org.springframework.data.solr.core.query.*;
+import org.springframework.data.solr.core.query.Criteria;
+import org.springframework.data.solr.core.query.FacetOptions;
+import org.springframework.data.solr.core.query.HighlightOptions;
+import org.springframework.data.solr.core.query.Query;
+import org.springframework.data.solr.core.query.SimpleFacetAndHighlightQuery;
+import org.springframework.data.solr.core.query.SimpleFilterQuery;
+import org.springframework.data.solr.core.query.SimpleStringCriteria;
 import org.springframework.data.solr.core.query.result.FacetAndHighlightPage;
 import org.springframework.stereotype.Repository;
 
@@ -54,8 +60,8 @@ public interface PiecesRepository extends PieceRepository {
 
         if (null != categories && !categories.isEmpty()) {
             query.addFilterQuery(new SimpleFilterQuery(new SimpleStringCriteria("category_ss:(" +
-                    categories.stream().map(PieceRepository::wrapWhitespace).collect(Collectors.joining(" OR "))
-                    + ")")));
+                                                                                categories.stream().map(PieceRepository::wrapWhitespace).collect(Collectors.joining(" OR "))
+                                                                                + ")")));
         }
 
         if (facet) {

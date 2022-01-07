@@ -365,3 +365,11 @@ function getFavoriteAnchorInfo() {
     return JSON.stringify(map);
 }
 
+function getHeadings() {
+    let result = [];
+    $("h1, h2, h3, h4, h5, h6").each(function() {
+        const text = $(this).text();
+        if (text && text.length > 0) result.push($(this).attr('id') + "#" + text);
+    });
+    return result.join('\n');
+}

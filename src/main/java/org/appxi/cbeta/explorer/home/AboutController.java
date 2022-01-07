@@ -1,40 +1,43 @@
 package org.appxi.cbeta.explorer.home;
 
 import javafx.geometry.Pos;
-import javafx.scene.control.*;
+import javafx.scene.Node;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.DialogPane;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextArea;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.web.WebView;
-import org.appxi.cbeta.explorer.AppInfo;
-import org.appxi.javafx.control.DialogPaneEx;
-import org.appxi.javafx.helper.FxHelper;
-import org.appxi.javafx.iconfont.MaterialIcon;
-import org.appxi.javafx.workbench.WorkbenchApplication;
+import org.appxi.cbeta.explorer.App;
+import org.appxi.javafx.visual.MaterialIcon;
+import org.appxi.javafx.workbench.WorkbenchPane;
 import org.appxi.javafx.workbench.views.WorkbenchSideToolController;
 import org.appxi.prefs.UserPrefs;
 
 import java.util.Optional;
 
 public class AboutController extends WorkbenchSideToolController {
-    public AboutController(WorkbenchApplication application) {
-        super("ABOUT", application);
+    public AboutController(WorkbenchPane workbench) {
+        super("ABOUT", workbench);
         this.setTitles("关于");
-        this.viewIcon.set(MaterialIcon.INFO_OUTLINE.iconView());
+        this.viewGraphic.set(MaterialIcon.INFO_OUTLINE.graphic());
     }
 
     @Override
-    public void setupInitialize() {
+    public void initialize() {
     }
 
     @Override
     public void onViewportShowing(boolean firstTime) {
-        final Label head = new Label(AppInfo.NAME);
+        final Label head = new Label(App.NAME);
         head.setStyle("-fx-font-size: 2em; -fx-padding: .5em 0;");
         head.setMaxWidth(Double.MAX_VALUE);
         head.setAlignment(Pos.CENTER);
-        Optional.ofNullable(getClass().getResource("/appxi/cbetaExplorer/icons/icon-256.png"))
+        Optional.ofNullable(App.class.getResource("icon-256.png"))
                 .ifPresent(url -> {
                     final ImageView graphic = new ImageView(url.toExternalForm());
                     graphic.setFitWidth(48);
@@ -61,7 +64,7 @@ public class AboutController extends WorkbenchSideToolController {
 
         final StringBuilder buf = new StringBuilder();
         buf.append("Product Version").append("\n");
-        buf.append(AppInfo.NAME).append(" ").append(AppInfo.VERSION).append("\n\n");
+        buf.append(App.NAME).append(" ").append(App.VERSION).append("\n\n");
 
         buf.append("Java Version").append("\n");
         buf.append(System.getProperty("java.runtime.version")).append("\n\n");
@@ -83,12 +86,19 @@ public class AboutController extends WorkbenchSideToolController {
         info.setText(buf.toString());
 
         //
-        final DialogPaneEx dialogPane = new DialogPaneEx();
+        final DialogPane dialogPane = new DialogPane() {
+            @Override
+            protected Node createButtonBar() {
+                return null;
+            }
+        };
         dialogPane.setContent(new VBox(headBox, descBox, info));
+        dialogPane.getButtonTypes().add(ButtonType.OK);
         //
-        final Dialog<ButtonType> dialog = new Dialog<>();
+        final Dialog<?> dialog = new Dialog<>();
         dialog.setTitle(viewTitle.get());
         dialog.setDialogPane(dialogPane);
-        FxHelper.withTheme(getApplication(), dialog).show();
+        dialog.initOwner(app.getPrimaryStage());
+        dialog.show();
     }
 }

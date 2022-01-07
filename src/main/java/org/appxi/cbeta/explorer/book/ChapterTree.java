@@ -5,7 +5,7 @@ import appxi.cbeta.Chapter;
 import appxi.cbeta.ChapterTreeParser;
 import javafx.scene.control.TreeItem;
 import org.appxi.cbeta.explorer.AppContext;
-import org.appxi.javafx.control.TreeViewExt;
+import org.appxi.javafx.control.TreeViewEx;
 import org.appxi.javafx.helper.TreeHelper;
 import org.appxi.util.ext.Node;
 
@@ -33,7 +33,7 @@ public class ChapterTree extends ChapterTreeParser<TreeItem<Chapter>> {
         tree.getChildren().sort(Comparator.comparing(item -> item.getValue().path));
     }
 
-    public static void parseBookChaptersToTree(Book book, TreeViewExt<Chapter> tocTree, TreeViewExt<Chapter> volTree) {
+    public static void parseBookChaptersToTree(Book book, TreeViewEx<Chapter> tocTree, TreeViewEx<Chapter> volTree) {
         final ChapterTree chapterTree = new ChapterTree(book);
         tocTree.setRoot(chapterTree.getTocChapters());
         volTree.setRoot(chapterTree.getVolChapters());
@@ -46,13 +46,13 @@ public class ChapterTree extends ChapterTreeParser<TreeItem<Chapter>> {
     }
 
 
-    public static void buildBookChaptersToTree(Book book, TreeViewExt<Chapter> tocTree, TreeViewExt<Chapter> volTree) {
+    public static void buildBookChaptersToTree(Book book, TreeViewEx<Chapter> tocTree, TreeViewEx<Chapter> volTree) {
         final appxi.cbeta.ChapterTree chapterTree = appxi.cbeta.ChapterTree.getOrInitBookChapters(AppContext.bookcase(), book);
         buildBookChaptersToTree(chapterTree.getTocChapters(), tocTree);
         buildBookChaptersToTree(chapterTree.getVolChapters(), volTree);
     }
 
-    public static void buildBookChaptersToTree(Node<Chapter> chapters, TreeViewExt<Chapter> tree) {
+    public static void buildBookChaptersToTree(Node<Chapter> chapters, TreeViewEx<Chapter> tree) {
         chapters.relinkChildren();
         TreeItem<Chapter> treeRoot = new TreeItem<>(chapters.value);
         walkAndBuildChapterTree(treeRoot, chapters);

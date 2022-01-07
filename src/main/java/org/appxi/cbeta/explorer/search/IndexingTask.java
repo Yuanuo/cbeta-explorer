@@ -1,18 +1,23 @@
 package org.appxi.cbeta.explorer.search;
 
-import appxi.cbeta.*;
-import javafx.application.Platform;
+import appxi.cbeta.Book;
+import appxi.cbeta.BookHelper;
+import appxi.cbeta.BookMap;
+import appxi.cbeta.Booklist;
+import appxi.cbeta.Tripitaka;
+import appxi.cbeta.TripitakaMap;
 import javafx.event.EventHandler;
 import javafx.scene.control.TreeItem;
+import org.appxi.cbeta.explorer.App;
 import org.appxi.cbeta.explorer.AppContext;
 import org.appxi.cbeta.explorer.book.BooklistProfile;
 import org.appxi.cbeta.explorer.dao.PiecesRepository;
 import org.appxi.cbeta.explorer.event.ProgressEvent;
 import org.appxi.holder.BoolHolder;
 import org.appxi.holder.IntHolder;
-import org.appxi.javafx.desktop.ApplicationEvent;
-import org.appxi.javafx.desktop.DesktopApplication;
-import org.appxi.javafx.helper.FxHelper;
+import org.appxi.javafx.app.AppEvent;
+import org.appxi.javafx.app.BaseApp;
+import org.appxi.javafx.app.DesktopApp;
 import org.appxi.javafx.helper.TreeHelper;
 import org.appxi.prefs.Preferences;
 import org.appxi.prefs.PreferencesInProperties;
@@ -21,24 +26,32 @@ import org.appxi.search.solr.Piece;
 import org.appxi.util.StringHelper;
 import org.springframework.data.solr.core.SolrTemplate;
 
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
-record IndexingTask(DesktopApplication application) implements Runnable {
+record IndexingTask(BaseApp app) implements Runnable {
     @Override
     public void run() {
         final PiecesRepository repository = AppContext.getBean(PiecesRepository.class);
         if (null == repository) return;
 
         final BoolHolder breaking = new BoolHolder(false);
-        final EventHandler<ApplicationEvent> handleEventToBreaking = event -> breaking.value = true;
-        application.eventBus.addEventHandler(ApplicationEvent.STOPPING, handleEventToBreaking);
-        AppContext.app().eventBus.fireEvent(new ProgressEvent(ProgressEvent.INDEXING, -1, 1, ""));
+        final EventHandler<AppEvent> handleEventToBreaking = event -> breaking.value = true;
+        app.eventBus.addEventHandler(AppEvent.STOPPING, handleEventToBreaking);
+        App.app().eventBus.fireEvent(new ProgressEvent(ProgressEvent.INDEXING, -1, 1, ""));
         try {
             running(repository, breaking);
         } finally {
             // unbind
-            application.eventBus.removeEventHandler(ApplicationEvent.STOPPING, handleEventToBreaking);
-            AppContext.app().eventBus.fireEvent(new ProgressEvent(ProgressEvent.INDEXING, 1, 1, ""));
+            app.eventBus.removeEventHandler(AppEvent.STOPPING, handleEventToBreaking);
+            App.app().eventBus.fireEvent(new ProgressEvent(ProgressEvent.INDEXING, 1, 1, ""));
         }
     }
 
@@ -111,10 +124,10 @@ record IndexingTask(DesktopApplication application) implements Runnable {
                         }
                     } catch (Throwable e) {
                         // 忽略过程中的任何错误，因为出错原因可能是程序逻辑或数据异常，除了升级或修复外此过程会一直出现错误，在此中断亦无意义
-                        if (!FxHelper.productionMode)
+                        if (!DesktopApp.productionMode)
                             e.printStackTrace();
                     }
-                    AppContext.app().eventBus.fireEvent(new ProgressEvent(ProgressEvent.INDEXING, step.value, steps.value, book.title));
+                    App.app().eventBus.fireEvent(new ProgressEvent(ProgressEvent.INDEXING, step.value, steps.value, book.title));
                 });
                 cacheProfiles.save();
                 updated = true;
@@ -125,7 +138,7 @@ record IndexingTask(DesktopApplication application) implements Runnable {
         } else if (IndexedManager.isBooklistIndexable()) {
             SolrTemplate solrTemplate = AppContext.getBean(SolrTemplate.class);
             if (null == solrTemplate) return;
-            AppContext.app().eventBus.fireEvent(new ProgressEvent(ProgressEvent.INDEXING, -1, 1, "正在更新。。。"));
+            App.app().eventBus.fireEvent(new ProgressEvent(ProgressEvent.INDEXING, -1, 1, "正在更新。。。"));
 
             final BooklistProfile.BooklistFilteredTree booklist;
             booklist = new BooklistProfile.BooklistFilteredTree(bookMap, AppContext.profile());
@@ -162,7 +175,7 @@ record IndexingTask(DesktopApplication application) implements Runnable {
         }
         if (updated) {
             IndexedManager.saveIndexedVersions();
-            Platform.runLater(() -> AppContext.toast("全文索引已更新！").showInformation());
+            AppContext.toast("全文索引已更新！");
         }
     }
 }

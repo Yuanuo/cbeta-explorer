@@ -4,23 +4,34 @@ import appxi.cbeta.Book;
 import appxi.cbeta.BookDocument;
 import appxi.cbeta.BookDocumentEx;
 import appxi.cbeta.Chapter;
-import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
-import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.geometry.Orientation;
-import javafx.scene.Node;
-import javafx.scene.control.*;
-import javafx.scene.input.*;
-import javafx.scene.layout.BorderPane;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.DialogPane;
+import javafx.scene.control.Labeled;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.Separator;
+import javafx.scene.control.SeparatorMenuItem;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.ToggleButton;
+import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.Tooltip;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.DataFormat;
+import javafx.scene.input.InputEvent;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
 import netscape.javascript.JSObject;
 import org.apache.commons.io.FilenameUtils;
 import org.appxi.cbeta.explorer.AppContext;
-import org.appxi.cbeta.explorer.DisplayHelper;
 import org.appxi.cbeta.explorer.bookdata.BookdataController;
 import org.appxi.cbeta.explorer.bookdata.BookmarksController;
 import org.appxi.cbeta.explorer.bookdata.FavoritesController;
@@ -30,66 +41,52 @@ import org.appxi.cbeta.explorer.event.BookEvent;
 import org.appxi.cbeta.explorer.event.BookdataEvent;
 import org.appxi.cbeta.explorer.event.GenericEvent;
 import org.appxi.cbeta.explorer.event.SearcherEvent;
-import org.appxi.util.ext.LookupExpression;
-import org.appxi.cbeta.explorer.search.LookupViewExt;
-import org.appxi.hanlp.convert.ChineseConvertors;
+import org.appxi.cbeta.explorer.search.LookupLayerEx;
 import org.appxi.holder.IntHolder;
-import org.appxi.javafx.control.*;
-import org.appxi.javafx.desktop.ApplicationEvent;
-import org.appxi.javafx.helper.FxHelper;
+import org.appxi.javafx.control.TabPaneEx;
 import org.appxi.javafx.helper.TreeHelper;
-import org.appxi.javafx.iconfont.FontIconView;
-import org.appxi.javafx.iconfont.MaterialIcon;
-import org.appxi.javafx.theme.Theme;
-import org.appxi.javafx.theme.ThemeEvent;
-import org.appxi.javafx.theme.ThemeSet;
-import org.appxi.javafx.workbench.WorkbenchApplication;
-import org.appxi.javafx.workbench.views.WorkbenchMainViewController;
+import org.appxi.javafx.visual.MaterialIcon;
+import org.appxi.javafx.workbench.WorkbenchPane;
 import org.appxi.prefs.UserPrefs;
+import org.appxi.smartcn.convert.ChineseConvertors;
 import org.appxi.util.NumberHelper;
 import org.appxi.util.StringHelper;
+import org.appxi.util.ext.Attributes;
 import org.appxi.util.ext.HanLang;
+import org.appxi.util.ext.LookupExpression;
 import org.json.JSONObject;
 
-import java.io.BufferedInputStream;
-import java.net.URL;
-import java.net.URLConnection;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
-public class BookXmlViewer extends WorkbenchMainViewController {
-    private final EventHandler<ThemeEvent> handleThemeChanged = this::handleThemeChanged;
-    private final EventHandler<ApplicationEvent> handleApplicationEventStopping = this::handleApplicationEventStopping;
-    private final EventHandler<GenericEvent> handleDisplayHanChanged = this::handleDisplayHanChanged;
-    private final EventHandler<GenericEvent> handleDisplayZoomChanged = this::handleDisplayZoomChanged;
-    private final InvalidationListener handleWebViewBodyResize = this::handleWebViewBodyResize;
+public class BookXmlViewer extends HtmlViewer<Chapter> {
+    private final EventHandler<GenericEvent> onDisplayHanChanged = this::onDisplayHanChanged;
     private final BookDocument bookDocument;
     public final Book book;
 
     TabPane sideViews;
-
     BookBasicController bookBasic;
     BookmarksController bookmarks;
     FavoritesController favorites;
 
-    WebViewer webViewer;
-    ToolBarEx toolbar;
-    WebViewFinder webViewFinder;
-
-    private final BlockingView blockingView = new BlockingView();
-
-    public BookXmlViewer(Book book, WorkbenchApplication application) {
-        super(book.id, application);
+    public BookXmlViewer(Book book, WorkbenchPane workbench) {
+        super(book.id, workbench);
         this.book = book;
         this.bookDocument = new BookDocumentEx(AppContext.bookcase(), book);
         this.setTitles();
     }
 
     private void setTitles() {
-        String viewTitle = DisplayHelper.displayText(book.title);
+        String viewTitle = AppContext.displayText(book.title);
         String viewTooltip = viewTitle;
         String mainTitle = viewTitle;
 
@@ -99,7 +96,7 @@ public class BookXmlViewer extends WorkbenchMainViewController {
         }
 
         if (StringHelper.isNotBlank(book.authorInfo)) {
-            String authorInfo = DisplayHelper.displayText(book.authorInfo);
+            String authorInfo = AppContext.displayText(book.authorInfo);
             viewTooltip = viewTooltip.concat("\n").concat(authorInfo);
             mainTitle = mainTitle.concat(" by ").concat(authorInfo);
         }
@@ -110,28 +107,23 @@ public class BookXmlViewer extends WorkbenchMainViewController {
     }
 
     @Override
+    public void initialize() {
+        super.initialize();
+        app.eventBus.addEventHandler(GenericEvent.DISPLAY_HAN_CHANGED, onDisplayHanChanged);
+    }
+
+    @Override
     protected void onViewportInitOnce(StackPane viewport) {
-        viewport.getStyleClass().add("book-viewer");
-
-        final BorderPane borderPane = new BorderPane();
-        viewport.getChildren().add(borderPane);
+        super.onViewportInitOnce(viewport);
+        this.addTools();
         //
-        this.webViewer = new WebViewer();
-        this.webViewer.addEventHandler(KeyEvent.KEY_PRESSED, this::handleWebViewShortcuts);
-        borderPane.setCenter(this.webViewer);
-
-        this.toolbar = new ToolBarEx();
-        this.toolbar.getStyleClass().add("flat-tool-bar");
-        this.initToolbar(viewport);
-        borderPane.setTop(this.toolbar);
-        //
-        this.sideViews = new TabPaneExt();
+        this.sideViews = new TabPaneEx();
         this.sideViews.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
         VBox.setVgrow(this.sideViews, Priority.ALWAYS);
         //
-        this.bookBasic = new BookBasicController(getApplication(), this);
-        this.bookmarks = new BookmarksController(getApplication(), this.book);
-        this.favorites = new FavoritesController(getApplication(), this.book);
+        this.bookBasic = new BookBasicController(workbench, this);
+        this.bookmarks = new BookmarksController(workbench, this.book);
+        this.favorites = new FavoritesController(workbench, this.book);
         //
         final Tab tab1 = new Tab("基本", this.bookBasic.getViewport());
         final Tab tab2 = new Tab("书签", this.bookmarks.getViewport());
@@ -140,211 +132,206 @@ public class BookXmlViewer extends WorkbenchMainViewController {
         this.sideViews.getTabs().setAll(tab1, tab2, tab3);
     }
 
-    protected void initToolbar(StackPane viewport) {
+    protected void addTools() {
         addTool_SideControl();
-        this.toolbar.addLeft(new Separator(Orientation.VERTICAL));
-        addTool_Goto_PrevNext(viewport);
+        webPane.toolbar.addLeft(new Separator(Orientation.VERTICAL));
+        addTool_Goto();
         addTool_Bookmark();
         addTool_Favorite();
-//        this.toolbar.addRight(new Separator(Orientation.VERTICAL));
-//        addTool_Themes();
-        this.toolbar.addRight(new Separator(Orientation.VERTICAL));
+        webPane.toolbar.addRight(new Separator(Orientation.VERTICAL));
         addTool_WrapLines();
         addTool_WrapPages();
         addTool_FirstLetterIndent();
-        this.toolbar.addRight(new Separator(Orientation.VERTICAL));
-        addTool_EditorMark();
+        webPane.toolbar.addRight(new Separator(Orientation.VERTICAL));
+        addTool_EditingMarks();
         //
-        this.toolbar.addRight(new Separator(Orientation.VERTICAL));
-        addTool_SearchInPage();
+        webPane.toolbar.addRight(new Separator(Orientation.VERTICAL));
+        addTool_FindInPage();
     }
 
     private void addTool_SideControl() {
-        final Button button = new Button();
-        button.setGraphic(MaterialIcon.IMPORT_CONTACTS.iconView());
-        button.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+        final Button button = MaterialIcon.IMPORT_CONTACTS.flatButton();
         button.setTooltip(new Tooltip("显示本书相关数据（目录、书签等）"));
-        button.setOnAction(event -> this.getPrimaryViewport().selectSideTool(BookDataPlaceController.getInstance().viewId.get()));
-        this.toolbar.addLeft(button);
+        button.setOnAction(event -> workbench.selectSideTool(BookDataPlaceController.getInstance().viewId.get()));
+        webPane.toolbar.addLeft(button);
     }
 
     private Button gotoPrev, gotoNext, gotoMenu;
+    private LookupLayerEx gotoMenuLayer;
 
-    private void addTool_Goto_PrevNext(StackPane viewport) {
-        gotoPrev = new Button();
-        gotoPrev.getStyleClass().add("goto-prev");
-        gotoPrev.setGraphic(MaterialIcon.ARROW_BACK.iconView());
+    protected void addTool_Goto() {
+        gotoPrev = MaterialIcon.ARROW_BACK.flatButton();
         gotoPrev.setTooltip(new Tooltip("上一卷 (Ctrl+左方向键)"));
         gotoPrev.setDisable(true);
-        gotoPrev.setOnAction(event -> openChapter((Chapter) gotoPrev.getUserData()));
+        gotoPrev.setOnAction(event -> navigate((Chapter) gotoPrev.getUserData()));
 
-        gotoNext = new Button();
-        gotoNext.getStyleClass().add("goto-next");
-        gotoNext.setGraphic(MaterialIcon.ARROW_FORWARD.iconView());
+        gotoNext = MaterialIcon.ARROW_FORWARD.flatButton();
         gotoNext.setTooltip(new Tooltip("下一卷 (Ctrl+右方向键)"));
         gotoNext.setDisable(true);
-        gotoNext.setOnAction(event -> openChapter((Chapter) gotoNext.getUserData()));
+        gotoNext.setOnAction(event -> navigate((Chapter) gotoNext.getUserData()));
 
-        gotoMenu = new Button();
-        gotoMenu.getStyleClass().add("goto-menu");
-        gotoMenu.setGraphic(MaterialIcon.NEAR_ME.iconView());
+        gotoMenu = MaterialIcon.NEAR_ME.flatButton();
         gotoMenu.setTooltip(new Tooltip("转到 (Ctrl+T)"));
-        final LookupViewExt lookupView = new LookupViewExt(viewport) {
-            private final Object AK_INDEX = new Object();
+        gotoMenu.setOnAction(event -> {
+            if (null == gotoMenuLayer) {
+                gotoMenuLayer = new LookupLayerEx(getViewport()) {
+                    private final Object AK_INDEX = new Object();
 
-            @Override
-            protected String getHeaderText() {
-                return "快捷跳转本书目录";
-            }
-
-            @Override
-            protected String getUsagesText() {
-                return """
-                        >> 支持简繁任意汉字匹配（以感叹号起始则强制区分）；支持按拼音（全拼）匹配，使用双引号包含则实行精确匹配；
-                        >> 支持复杂条件(+/AND,默认为OR)：例1：1juan +"bu kong" AND 仪轨；例2：1juan +("bu kong" 仪轨 OR "yi gui")
-                        >> 逗号分隔任意字/词/短语匹配；卷编号/卷名/章节名匹配；斜杠'/'匹配经卷目录；#号起始开启本书卷/行定位；
-                        >> 快捷键：Ctrl+T 在阅读视图中开启；ESC 或 点击透明区 退出此界面；上下方向键选择列表项；回车键打开；
-                        """;
-            }
-
-            @Override
-            protected void updateItemLabel(Labeled labeled, Object data) {
-                if (data instanceof String str) {
-                    labeled.setText(str.split("#", 2)[1]);
-                } else if (data instanceof Chapter item) {
-                    labeled.setText(item.hasAttr(AK_INDEX)
-                            ? StringHelper.concat(item.attrStr(AK_INDEX), " / ", DisplayHelper.displayText(item.title))
-                            : DisplayHelper.displayText(item.title));
-
-                    super.updateItemLabel(labeled, data);
-                } else super.updateItemLabel(labeled, data);
-            }
-
-            @Override
-            protected void lookupByKeywords(String lookupText, int resultLimit,
-                                            List<LookupResultItem> result, Set<String> usedKeywords) {
-                final boolean isInputEmpty = lookupText.isBlank();
-                Optional<LookupExpression> optional = isInputEmpty ? Optional.empty() : LookupExpression.of(lookupText,
-                        (parent, text) -> new LookupExpression.Keyword(parent, text) {
-                            @Override
-                            public double score(Object data) {
-                                final String text = null == data ? "" : data.toString();
-                                if (this.isAsciiKeyword()) {
-                                    String dataInAscii = DisplayHelper.prepareAscii(text);
-                                    if (dataInAscii.contains(this.keyword())) return 1;
-                                }
-                                return super.score(data);
-                            }
-                        });
-                if (!isInputEmpty && optional.isEmpty()) {
-                    // not a valid expression
-                    return;
-                }
-                final LookupExpression lookupExpression = optional.orElse(null);
-                TreeHelper.filterLeafs(bookBasic.tocsTree.getRoot(), (treeItem, itemValue) -> {
-                    if (null == itemValue || null == itemValue.title) return false;
-                    double score = isInputEmpty ? 1 : lookupExpression.score(itemValue.title);
-                    if (score > 0) result.add(new LookupResultItem(itemValue, score));
-                    return isInputEmpty && result.size() > resultLimit;
-                });
-
-                final IntHolder index = new IntHolder(0);
-                TreeHelper.filterLeafs(bookBasic.volsTree.getRoot(), (treeItem, itemValue) -> {
-                    if (null == itemValue || null == itemValue.title) return false;
-                    index.value++;
-
-                    String indexStr = StringHelper.padLeft(index.value, 3, '0');
-                    itemValue.attr(AK_INDEX, indexStr);
-
-                    String text = StringHelper.concat(indexStr, " / ", itemValue.title);
-                    double score = isInputEmpty ? 1 : lookupExpression.score(text);
-                    if (score > 0) result.add(new LookupResultItem(itemValue, score));
-                    return isInputEmpty && result.size() > resultLimit;
-                });
-                //
-                if (null != lookupExpression)
-                    lookupExpression.keywords().forEach(k -> usedKeywords.add(k.keyword()));
-            }
-
-            @Override
-            protected void lookupByCommands(String searchTerm, Collection<Object> result) {
-                String chapter = null;
-                boolean lineOrVolume = true;
-                Matcher matcher;
-                if (searchTerm.isBlank()) {
-                    if (!result.isEmpty())
-                        return;
-                } else if ((matcher = Pattern.compile("p(.*)").matcher(searchTerm)).matches()) {
-                    chapter = "p".concat(matcher.group(1));
-                } else if ((matcher = Pattern.compile("p\\. (.*)").matcher(searchTerm)).matches()) {
-                    String str = matcher.group(1);
-                    if (str.matches(".*[a-z]\\d$"))
-                        str = str.substring(0, str.length() - 1).concat("0").concat(str.substring(str.length() - 1));
-                    str = StringHelper.padLeft(str, 7, '0');
-                    chapter = "p".concat(str);
-                } else if ((matcher = Pattern.compile("(\\d+)").matcher(searchTerm)).matches()) {
-                    chapter = matcher.group(1);
-                    lineOrVolume = false;
-                } else {
-                    chapter = "p".concat(searchTerm);
-                }
-                if (null != chapter) {
-                    String title = "《".concat(book.title).concat("》");
-                    if (!lineOrVolume) {
-                        chapter = chapter.length() >= 3 ? chapter.substring(0, 3) : StringHelper.padLeft(chapter, 3, '0');
+                    @Override
+                    protected String getHeaderText() {
+                        return "快捷跳转本书目录";
                     }
-                    title = StringHelper.concat("转到 >>> 本经：", book.id, " ", title,
-                            (lineOrVolume ? "，行号：" : "，卷号：").concat(chapter));
-                    result.add(chapter.concat("#").concat(DisplayHelper.displayText(title)));
-                } else {
-                    result.add("#??? 使用说明：请使用以下几种格式");
-                    result.add("#格式1：#p0001a01  表示：转到本经行号p0001a01处");
-                    result.add("#格式2：#p. 1a1  表示：转到本经行号p0001a01处");
-                    result.add("#格式3：#1  表示：转到本经第001卷");
-                    result.add("#格式4：#001  表示：转到本经第001卷");
-                    result.add("#格式5：#0001a01  表示：转到本经行号p0001a01处");
-                }
-            }
 
-            @Override
-            protected void handleEnterOrDoubleClickActionOnSearchResultList(InputEvent event, Object data) {
-                Chapter chapter = null;
-                if (data instanceof String str) {
-                    String[] arr = str.split("#", 2);
-                    if (arr[0].isEmpty()) return;
-                    chapter = new Chapter();
-                    chapter.id = "#";
-                    chapter.path = arr[0];
-                } else if (data instanceof Chapter item) {
-                    if (null == item.id) return;
-                    chapter = item;
-                }
-                if (null != chapter) {
-                    hide();
-                    openChapter(chapter);
-                }
-            }
+                    @Override
+                    protected String getUsagesText() {
+                        return """
+                                >> 支持简繁任意汉字匹配（以感叹号起始则强制区分）；支持按拼音（全拼）匹配，使用双引号包含则实行精确匹配；
+                                >> 支持复杂条件(+/AND,默认为OR)：例1：1juan +"bu kong" AND 仪轨；例2：1juan +("bu kong" 仪轨 OR "yi gui")
+                                >> 逗号分隔任意字/词/短语匹配；卷编号/卷名/章节名匹配；斜杠'/'匹配经卷目录；#号起始开启本书卷/行定位；
+                                >> 快捷键：Ctrl+T 在阅读视图中开启；ESC 或 点击透明区 退出此界面；上下方向键选择列表项；回车键打开；
+                                """;
+                    }
 
-            @Override
-            public void hide() {
-                super.hide();
-                webViewer.getViewer().requestFocus();
+                    @Override
+                    protected void updateItemLabel(Labeled labeled, Object data) {
+                        if (data instanceof String str) {
+                            labeled.setText(str.split("#", 2)[1]);
+                        } else if (data instanceof Chapter item) {
+                            labeled.setText(item.hasAttr(AK_INDEX)
+                                    ? StringHelper.concat(item.attrStr(AK_INDEX), " / ", AppContext.displayText(item.title))
+                                    : AppContext.displayText(item.title));
+
+                            super.updateItemLabel(labeled, data);
+                        } else super.updateItemLabel(labeled, data);
+                    }
+
+                    @Override
+                    protected void lookupByKeywords(String lookupText, int resultLimit,
+                                                    List<LookupResultItem> result, Set<String> usedKeywords) {
+                        final boolean isInputEmpty = lookupText.isBlank();
+                        Optional<LookupExpression> optional = isInputEmpty ? Optional.empty() : LookupExpression.of(lookupText,
+                                (parent, text) -> new LookupExpression.Keyword(parent, text) {
+                                    @Override
+                                    public double score(Object data) {
+                                        final String text = null == data ? "" : data.toString();
+                                        if (this.isAsciiKeyword()) {
+                                            String dataInAscii = AppContext.ascii(text);
+                                            if (dataInAscii.contains(this.keyword())) return 1;
+                                        }
+                                        return super.score(data);
+                                    }
+                                });
+                        if (!isInputEmpty && optional.isEmpty()) {
+                            // not a valid expression
+                            return;
+                        }
+                        final LookupExpression lookupExpression = optional.orElse(null);
+                        TreeHelper.filterLeafs(bookBasic.tocsTree.getRoot(), (treeItem, itemValue) -> {
+                            if (null == itemValue || null == itemValue.title) return false;
+                            double score = isInputEmpty ? 1 : lookupExpression.score(itemValue.title);
+                            if (score > 0) result.add(new LookupResultItem(itemValue, score));
+                            return isInputEmpty && result.size() > resultLimit;
+                        });
+
+                        final IntHolder index = new IntHolder(0);
+                        TreeHelper.filterLeafs(bookBasic.volsTree.getRoot(), (treeItem, itemValue) -> {
+                            if (null == itemValue || null == itemValue.title) return false;
+                            index.value++;
+
+                            String indexStr = StringHelper.padLeft(index.value, 3, '0');
+                            itemValue.attr(AK_INDEX, indexStr);
+
+                            String text = StringHelper.concat(indexStr, " / ", itemValue.title);
+                            double score = isInputEmpty ? 1 : lookupExpression.score(text);
+                            if (score > 0) result.add(new LookupResultItem(itemValue, score));
+                            return isInputEmpty && result.size() > resultLimit;
+                        });
+                        //
+                        if (null != lookupExpression)
+                            lookupExpression.keywords().forEach(k -> usedKeywords.add(k.keyword()));
+                    }
+
+                    @Override
+                    protected void lookupByCommands(String searchTerm, Collection<Object> result) {
+                        String chapter = null;
+                        boolean lineOrVolume = true;
+                        Matcher matcher;
+                        if (searchTerm.isBlank()) {
+                            if (!result.isEmpty())
+                                return;
+                        } else if ((matcher = Pattern.compile("p(.*)").matcher(searchTerm)).matches()) {
+                            chapter = "p".concat(matcher.group(1));
+                        } else if ((matcher = Pattern.compile("p\\. (.*)").matcher(searchTerm)).matches()) {
+                            String str = matcher.group(1);
+                            if (str.matches(".*[a-z]\\d$"))
+                                str = str.substring(0, str.length() - 1).concat("0").concat(str.substring(str.length() - 1));
+                            str = StringHelper.padLeft(str, 7, '0');
+                            chapter = "p".concat(str);
+                        } else if ((matcher = Pattern.compile("(\\d+)").matcher(searchTerm)).matches()) {
+                            chapter = matcher.group(1);
+                            lineOrVolume = false;
+                        } else {
+                            chapter = "p".concat(searchTerm);
+                        }
+                        if (null != chapter) {
+                            String title = "《".concat(book.title).concat("》");
+                            if (!lineOrVolume) {
+                                chapter = chapter.length() >= 3 ? chapter.substring(0, 3) : StringHelper.padLeft(chapter, 3, '0');
+                            }
+                            title = StringHelper.concat("转到 >>> 本经：", book.id, " ", title,
+                                    (lineOrVolume ? "，行号：" : "，卷号：").concat(chapter));
+                            result.add(chapter.concat("#").concat(AppContext.displayText(title)));
+                        } else {
+                            result.add("#??? 使用说明：请使用以下几种格式");
+                            result.add("#格式1：#p0001a01  表示：转到本经行号p0001a01处");
+                            result.add("#格式2：#p. 1a1  表示：转到本经行号p0001a01处");
+                            result.add("#格式3：#1  表示：转到本经第001卷");
+                            result.add("#格式4：#001  表示：转到本经第001卷");
+                            result.add("#格式5：#0001a01  表示：转到本经行号p0001a01处");
+                        }
+                    }
+
+                    @Override
+                    protected void handleEnterOrDoubleClickActionOnSearchResultList(InputEvent event, Object data) {
+                        Chapter chapter = null;
+                        if (data instanceof String str) {
+                            String[] arr = str.split("#", 2);
+                            if (arr[0].isEmpty()) return;
+                            chapter = new Chapter();
+                            chapter.id = "#";
+                            chapter.path = arr[0];
+                        } else if (data instanceof Chapter item) {
+                            if (null == item.id) return;
+                            chapter = item;
+                        }
+                        if (null != chapter) {
+                            hide();
+                            navigate(chapter);
+                        }
+                    }
+
+                    @Override
+                    public void hide() {
+                        super.hide();
+                        webPane.webView().requestFocus();
+                    }
+                };
             }
-        };
-        gotoMenu.setOnAction(event -> lookupView.show(null));
+            gotoMenuLayer.show(null);
+        });
 
         //
-        this.toolbar.addLeft(gotoPrev, gotoNext, gotoMenu);
+        webPane.toolbar.addLeft(gotoPrev, gotoNext, gotoMenu);
     }
 
-    private void update_Goto_PrevNext() {
+    private void updateTool_Goto() {
         final List<Chapter> list = new ArrayList<>();
         TreeHelper.walkLeafs(bookBasic.volsTree.getRoot(), (treeItem, itemValue) -> list.add(itemValue));
         Chapter prev = null, next = null;
         for (int i = 0; i < list.size(); i++) {
             Chapter item = list.get(i);
             if (null == item) continue;
-            if (Objects.equals(item.path, openedChapter.path)) {
+            if (Objects.equals(item.path, openedItem.path)) {
                 prev = i - 1 < 0 ? null : list.get(i - 1);
                 next = i + 1 >= list.size() ? null : list.get(i + 1);
                 break;
@@ -357,407 +344,233 @@ public class BookXmlViewer extends WorkbenchMainViewController {
         gotoNext.setDisable(null == next);
     }
 
-    private void addTool_Themes() {
-        final Node themeMarker = MaterialIcon.PALETTE.iconView();
-        themeMarker.setId("web-theme-marker");
-        themeMarker.getStyleClass().add("label");
-        this.toolbar.addRight(themeMarker);
-    }
-
     private void addTool_WrapLines() {
-        final ToggleButton button = new ToggleButton();
-        button.setGraphic(MaterialIcon.WRAP_TEXT.iconView());
-        button.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+        final ToggleButton button = MaterialIcon.WRAP_TEXT.flatToggle();
         button.setTooltip(new Tooltip("折行显示"));
-        button.setOnAction(event -> webViewer.executeScript("handleOnWrapLines()"));
-        this.toolbar.addRight(button);
+        button.setOnAction(event -> webPane.executeScript("handleOnWrapLines()"));
+        webPane.toolbar.addRight(button);
     }
 
     private void addTool_WrapPages() {
-        final ToggleButton button = new ToggleButton();
-        button.setGraphic(MaterialIcon.VIEW_DAY.iconView());
-        button.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+        final ToggleButton button = MaterialIcon.VIEW_DAY.flatToggle();
         button.setTooltip(new Tooltip("折页显示"));
-        button.setOnAction(event -> webViewer.executeScript("handleOnWrapPages()"));
-        this.toolbar.addRight(button);
+        button.setOnAction(event -> webPane.executeScript("handleOnWrapPages()"));
+        webPane.toolbar.addRight(button);
     }
 
     private void addTool_FirstLetterIndent() {
-        final ToggleButton button = new ToggleButton();
-        button.setGraphic(MaterialIcon.FORMAT_INDENT_INCREASE.iconView());
-        button.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+        final ToggleButton button = MaterialIcon.FORMAT_INDENT_INCREASE.flatToggle();
         button.setTooltip(new Tooltip("首行标点对齐"));
         button.setSelected(true);
-        button.setOnAction(event -> webViewer.executeScript("handleOnPrettyIndent()"));
-        this.toolbar.addRight(button);
+        button.setOnAction(event -> webPane.executeScript("handleOnPrettyIndent()"));
+        webPane.toolbar.addRight(button);
     }
 
-    private void addTool_EditorMark() {
+    private void addTool_EditingMarks() {
         final ToggleGroup marksGroup = new ToggleGroup();
 
         final ToggleButton markOrigInline = new ToggleButton("原编注");
+        markOrigInline.getStyleClass().add("flat");
         markOrigInline.setTooltip(new Tooltip("在编注点直接嵌入原编注内容"));
         markOrigInline.setUserData(0);
 
         final ToggleButton markModSharp = new ToggleButton("标记");
+        markModSharp.getStyleClass().add("flat");
         markModSharp.setTooltip(new Tooltip("在编注点插入#号并划动鼠标查看CBETA编注内容"));
         markModSharp.setUserData(1);
 
         final ToggleButton markModColor = new ToggleButton("着色");
+        markModColor.getStyleClass().add("flat");
         markModColor.setTooltip(new Tooltip("在编注点着色被改变的文字并划动鼠标查看CBETA编注内容"));
         markModColor.setUserData(2);
 
         final ToggleButton markModPopover = new ToggleButton("着色+原编注");
+        markModPopover.getStyleClass().add("flat");
         markModPopover.setTooltip(new Tooltip("在编注点着色被改变的文字并划动鼠标查看原编注+CBETA编注内容"));
         markModPopover.setUserData(3);
 
         final ToggleButton markModInline = new ToggleButton("CB编注");
+        markModInline.getStyleClass().add("flat");
         markModInline.setTooltip(new Tooltip("在编注点直接嵌入CBETA编注内容"));
         markModInline.setUserData(4);
 
         marksGroup.getToggles().setAll(markOrigInline, markModInline, markModSharp, markModColor, markModPopover);
         marksGroup.selectedToggleProperty().addListener((o, ov, nv) ->
-                webViewer.executeScript("handleOnEditMark(" + (null == nv ? -1 : nv.getUserData()) + ")"));
+                webPane.executeScript("handleOnEditMark(" + (null == nv ? -1 : nv.getUserData()) + ")"));
 
-        this.toolbar.addRight(markOrigInline, markModInline, markModSharp, markModColor, markModPopover);
+        webPane.toolbar.addRight(markOrigInline, markModInline, markModSharp, markModColor, markModPopover);
     }
 
-
     private void addTool_Bookmark() {
-        final Button button = new Button();
-        button.setGraphic(MaterialIcon.BOOKMARK_OUTLINE.iconView());
-        button.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+        final Button button = MaterialIcon.BOOKMARK_OUTLINE.flatButton();
         button.setTooltip(new Tooltip("添加书签"));
         button.setOnAction(event -> this.handleEventToCreateBookdata(BookdataType.bookmark));
-        this.toolbar.addRight(button);
+        webPane.toolbar.addRight(button);
     }
 
     private void addTool_Favorite() {
-        final Button button = new Button();
-        button.setGraphic(MaterialIcon.STAR_BORDER.iconView());
-        button.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+        final Button button = MaterialIcon.STAR_BORDER.flatButton();
         button.setTooltip(new Tooltip("添加收藏"));
         button.setOnAction(event -> this.handleEventToCreateBookdata(BookdataType.favorite));
-        this.toolbar.addRight(button);
+        webPane.toolbar.addRight(button);
     }
 
-    private void addTool_SearchInPage() {
-        webViewFinder = new WebViewFinder(this.webViewer, inputText -> {
+    protected void addTool_FindInPage() {
+        super.addTool_FindInPage();
+        webFinder.setInputConvertor(inputText -> {
             // 允许输入简繁体汉字
             if (!inputText.isEmpty() && (inputText.charAt(0) == '!' || inputText.charAt(0) == '！')) {
                 // 为避免自动转换失误导致检索失败，此处特殊处理，允许以感叹号开始的字符串不自动转换简繁体
                 inputText = inputText.substring(1).strip();
             } else {
                 // 页内查找以显示文字为准，此处转换以匹配目标文字
-                inputText = ChineseConvertors.convert(inputText.strip(), null, DisplayHelper.getDisplayHan());
+                inputText = ChineseConvertors.convert(inputText.strip(), null, AppContext.getDisplayHan());
             }
             return inputText;
         });
-
-        webViewFinder.prev.setGraphic(MaterialIcon.ARROW_UPWARD.iconView());
-        webViewFinder.prev.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
-
-        webViewFinder.next.setGraphic(MaterialIcon.ARROW_DOWNWARD.iconView());
-        webViewFinder.next.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
-
-        this.toolbar.addRight(webViewFinder);
     }
-
 
     /* //////////////////////////////////////////////////////////////////// */
-    private void applyWebTheme(Theme webTheme) {
-        if (null == this.webViewer)
-            return;
 
-        byte[] allBytes = (":root {--zoom: " + DisplayHelper.getDisplayZoom() + " !important;}").getBytes();
-        if (null != webTheme && !webTheme.stylesheets.isEmpty()) {
-            for (String webStyle : webTheme.stylesheets) {
-                try {
-                    URLConnection conn = new URL(webStyle).openConnection();
-                    conn.connect();
-
-                    BufferedInputStream in = new BufferedInputStream(conn.getInputStream());
-                    int pos = allBytes.length;
-                    byte[] tmpBytes = new byte[pos + in.available()];
-                    System.arraycopy(allBytes, 0, tmpBytes, 0, pos);
-                    allBytes = tmpBytes;
-                    in.read(allBytes, pos, in.available());
-                } catch (Exception ignore) {
-                    ignore.printStackTrace();
-                }
-            }
-        }
-        String cssData = "data:text/css;charset=utf-8;base64," + Base64.getMimeEncoder().encodeToString(allBytes);
-        this.webViewer.getEngine().setUserStyleSheetLocation(cssData);
-    }
-
-    private void handleThemeChanged(ThemeEvent event) {
-        if (null == this.webViewer)
-            return;
-        final Theme theme = null != event ? event.newTheme : this.getThemeProvider().getTheme();
-        final ThemeSet themeSet = (ThemeSet) theme;
-
-        if (null == themeSet)
-            return;
-
-        final Node themeMarker = this.toolbar.lookup("#web-theme-marker");
-        if (null == themeMarker) {
-            applyWebTheme(themeSet.themes.isEmpty() ? null : themeSet.themes.iterator().next());
-            return;
-        }
-        ObservableList<Node> toolbarItems = this.toolbar.getAlignedItems();
-        int themeToolsIdx = toolbarItems.indexOf(themeMarker) + 1;
-
-        // clean old
-        for (int i = themeToolsIdx; i < toolbarItems.size(); i++) {
-            if (toolbarItems.get(i).getProperties().containsKey(themeMarker))
-                toolbarItems.remove(i--);
-        }
-        themeMarker.setUserData(null);
-        //
-        final ToggleGroup themeToolsGroup = new ToggleGroup();
-        themeToolsGroup.selectedToggleProperty().addListener((o, ov, nv) -> {
-            if (null == nv) return;
-            final Theme webTheme = (Theme) nv.getUserData();
-            if (Objects.equals(webTheme, themeMarker.getUserData()))
-                return;
-            themeMarker.setUserData(webTheme);
-            this.applyWebTheme(webTheme);
-        });
-        final List<RadioButton> themeToolsList = themeSet.themes.stream().map(v -> {
-            final RadioButton themeTool = new RadioButton();
-            themeTool.setToggleGroup(themeToolsGroup);
-            themeTool.setUserData(v);
-            themeTool.setTooltip(new Tooltip(v.title));
-            themeTool.getProperties().put(themeMarker, true);
-
-            final FontIconView icon = MaterialIcon.LENS.iconView();
-            icon.setFill(Color.valueOf(v.accentColor));
-            themeTool.setGraphic(icon);
-
-            return themeTool;
-        }).collect(Collectors.toList());
-        toolbarItems.addAll(themeToolsIdx, themeToolsList);
-
-        if (!themeToolsList.isEmpty())
-            themeToolsList.get(0).fire();
-    }
-
-    @Override
-    public void setupInitialize() {
-        getEventBus().addEventHandler(ThemeEvent.CHANGED, handleThemeChanged);
-        getEventBus().addEventHandler(GenericEvent.DISPLAY_HAN_CHANGED, handleDisplayHanChanged);
-        getEventBus().addEventHandler(GenericEvent.DISPLAY_ZOOM_CHANGED, handleDisplayZoomChanged);
-    }
-
-    @Override
-    public void onViewportShowing(boolean firstTime) {
-        if (firstTime) {
-            // 此处逻辑没问题，但首次加载时会卡，暂时没有有效的办法
-            getViewport().getChildren().add(blockingView);
-            getEventBus().addEventHandler(ApplicationEvent.STOPPING, handleApplicationEventStopping);
-            // 在线程中执行，使不造成一个空白的阻塞
-            new Thread(() -> FxHelper.runLater(() -> {
-                this.webViewer.getEngine().setUserDataDirectory(UserPrefs.cacheDir().toFile());
-                // apply theme
-                this.handleThemeChanged(null);
-                this.webViewer.setContextMenuBuilder(this::handleWebViewContextMenu);
-                // init tree
-                this.bookBasic.onViewportShowing(true);
-                openChapter(null);
-
-                this.bookmarks.onViewportShowing(true);
-                this.favorites.onViewportShowing(true);
-            })).start();
-        } else {
-            getEventBus().fireEvent(new BookEvent(BookEvent.VIEW, book, openedChapter));
-        }
+    private void onDisplayHanChanged(GenericEvent event) {
+        if (null == this.webPane) return;
+        saveUserExperienceData();
+        this.openedItem = null;
+        navigate(null);
     }
 
     @Override
     public void onViewportHiding() {
-        saveUserExperienceData();
-        getEventBus().fireEvent(new BookEvent(BookEvent.HIDE, this.book, openedChapter));
+        super.onViewportHiding();
+        app.eventBus.fireEvent(new BookEvent(BookEvent.HIDE, this.book, openedItem));
     }
 
     @Override
     public void onViewportClosing(boolean selected) {
-        saveUserExperienceData();
-        getEventBus().removeEventHandler(ThemeEvent.CHANGED, handleThemeChanged);
-        getEventBus().removeEventHandler(ApplicationEvent.STOPPING, handleApplicationEventStopping);
-        getEventBus().removeEventHandler(GenericEvent.DISPLAY_HAN_CHANGED, handleDisplayHanChanged);
-        getEventBus().removeEventHandler(GenericEvent.DISPLAY_ZOOM_CHANGED, handleDisplayZoomChanged);
-        getEventBus().fireEvent(new BookEvent(BookEvent.CLOSE, this.book, openedChapter));
+        super.onViewportClosing(selected);
+        app.eventBus.removeEventHandler(GenericEvent.DISPLAY_HAN_CHANGED, onDisplayHanChanged);
+        app.eventBus.fireEvent(new BookEvent(BookEvent.CLOSE, this.book, openedItem));
     }
 
-    private void handleDisplayHanChanged(GenericEvent event) {
-        setTitles();
-        if (null == this.webViewer)
-            return;
-        saveUserExperienceData();
-        this.openedChapter = null;
-        openChapter(null);
+    @Override
+    protected String selectorKey() {
+        return book.id;
     }
 
-    private void handleDisplayZoomChanged(GenericEvent event) {
-        if (null == this.webViewer)
-            return;
-        saveUserExperienceData();
-        this.handleThemeChanged(null);
-        openChapter(null);
+    @Override
+    public void onViewportShowing(boolean firstTime) {
+        if (!firstTime) app.eventBus.fireEvent(new BookEvent(BookEvent.VIEW, book, openedItem));
+        else super.onViewportShowing(true);
     }
 
-    private Chapter openedChapter;
+    @Override
+    protected void onWebEngineLoading() {
+        // init tree
+        this.bookBasic.onViewportShowing(true);
+        navigate(null);
 
-    void openChapter(Chapter chapter) {
-        final Chapter posChapter = null != chapter ? chapter : removeAttr(Chapter.class);
-        if (null == chapter) {
-            chapter = bookBasic.selectChapter(this.book, posChapter);
-        } else {
-            chapter = bookBasic.selectChapter(this.book, chapter);
-        }
-        if (null == chapter) return;
+        this.bookmarks.onViewportShowing(true);
+        this.favorites.onViewportShowing(true);
+    }
 
-        if (null != openedChapter && Objects.equals(chapter.path, openedChapter.path)) {
-            openedChapter = chapter;
-            gotoChapter(posChapter);
+    public void navigate(Chapter item) {
+        final Chapter pos = null != item ? item : removeAttr(Chapter.class);
+        if (null == item) item = bookBasic.selectChapter(this.book, pos);
+        else item = bookBasic.selectChapter(this.book, item);
+        if (null == item) return;
+
+        if (null != openedItem && Objects.equals(item.path, openedItem.path)) {
+            openedItem = item;
+            navigatePos = pos;
+            position(pos);
             return;
         }
+        navigatePos = pos;
+        //
+        super.navigate(item);
+        UserPrefs.recents.setProperty(book.id + ".chapter", openedItem.id);
+    }
 
-        if (!getViewport().getChildren().contains(blockingView))
-            getViewport().getChildren().add(blockingView);
-        openedChapter = chapter;
-        final long st = System.currentTimeMillis();
-        final String htmlDoc = bookDocument.getVolumeHtmlDocument(openedChapter.path, DisplayHelper.getDisplayHan(),
-                body -> DisplayHelper.displayText(StringHelper.concat("<body><article>", body.html(), "</article></body>")),
+    @Override
+    protected Path createViewableHtmlFile() {
+        final String htmlFile = bookDocument.getVolumeHtmlDocument(openedItem.path, AppContext.getDisplayHan(),
+                body -> AppContext.displayText(StringHelper.concat("<body><article>", body.html(), "</article></body>")),
                 WebIncl.getIncludePaths()
         );
-        webViewer.setOnLoadSucceedAction(we -> {
-            // set an interface object named 'dataApi' in the web engine's page
-            final JSObject window = webViewer.executeScript("window");
-            window.setMember("dataApi", dataApi);
-            //
-            gotoChapter(posChapter);
-            //
-            webViewer.widthProperty().removeListener(handleWebViewBodyResize);
-            webViewer.widthProperty().addListener(handleWebViewBodyResize);
-            System.out.println("load htmlDocFile used time: " + (System.currentTimeMillis() - st) + ", " + htmlDoc);
-            getViewport().getChildren().remove(blockingView);
-            getEventBus().fireEvent(new BookEvent(BookEvent.VIEW, book));
-        });
-
-        webViewer.getEngine().load(Path.of(htmlDoc).toUri().toString());
-        UserPrefs.recents.setProperty(book.id + ".chapter", openedChapter.id);
+        return Path.of(htmlFile);
     }
 
-    private void gotoChapter(Chapter posChapter) {
-        update_Goto_PrevNext();
+    @Override
+    protected void onWebEngineLoadSucceeded() {
+        // set an interface object named 'dataApi' in the web engine's page
+        final JSObject window = webPane.executeScript("window");
+        window.setMember("dataApi", dataApi);
 
-        try {
-            if (null != posChapter && posChapter.hasAttr("position.term")) {
-                String posTerm = posChapter.removeAttr("position.term");
-                String posText = posChapter.removeAttr("position.text");
-
-                List<String> posParts = new ArrayList<>(List.of(posText.split("。")));
-                posParts.sort(Comparator.comparingInt(String::length));
-                String longText = posParts.get(posParts.size() - 1);
-                if (!webViewer.findInPage(longText, true)) {
-                    webViewFinder.search(posTerm);
-                }
-            } else if (null != posChapter && posChapter.hasAttr("position.selector")) {
-                webViewer.executeScript(StringHelper.concat("setScrollTop1BySelectors(\"", posChapter.removeAttr("position.selector"), "\")"));
-            } else if (null != posChapter && null != posChapter.anchor) {
-                webViewer.executeScript("setScrollTop1BySelectors(\"".concat(posChapter.anchor).concat("\")"));
-            } else {
-                final String selector = UserPrefs.recents.getString(book.id + ".selector", null);
-                final double percent = UserPrefs.recents.getDouble(book.id + ".percent", 0);
-                if (null != selector) {
-                    webViewer.executeScript(StringHelper.concat("setScrollTop1BySelectors(\"", selector, "\")"));
-                } else if (null != openedChapter.anchor) {
-                    webViewer.executeScript("setScrollTop1BySelectors(\"".concat(openedChapter.anchor).concat("\")"));
-                }
-            }
-        } catch (Throwable ignored) {
-            ignored.printStackTrace();
-        }
-        // 避免在阅读视图时焦点仍然在TAB上（此时快捷键等不起作用）
-        webViewer.getViewer().requestFocus();
+        super.onWebEngineLoadSucceeded();
+        //
+        app.eventBus.fireEvent(new BookEvent(BookEvent.VIEW, book));
     }
 
-    private void handleWebViewShortcuts(KeyEvent event) {
-        if (event.isShortcutDown()) {
-            // Ctrl + F
-            if (event.getCode() == KeyCode.F) {
-                // 如果有选中文字，则按查找选中文字处理
-                String selText = webViewer.executeScript("getValidSelectionText()");
-                selText = null == selText ? null : selText.strip().replace('\n', ' ');
-                webViewFinder.search(StringHelper.isBlank(selText) ? null : selText);
-                event.consume();
-            }
-            // Ctrl + G, Ctrl + H
-            else if (event.getCode() == KeyCode.G || event.getCode() == KeyCode.H) {
-                // 如果有选中文字，则按查找选中文字处理
-                final String selText = webViewer.executeScript("getValidSelectionText()");
-                final String textToSearch = null == selText ? null :
-                        DisplayHelper.getDisplayHan() != HanLang.hantTW ? selText : "!".concat(selText);
-                getEventBus().fireEvent(event.getCode() == KeyCode.G
-                        ? SearcherEvent.ofLookup(textToSearch) // LOOKUP
-                        : SearcherEvent.ofSearch(textToSearch) // SEARCH
-                );
-                event.consume();
-            }
+    @Override
+    protected void position(Attributes pos) {
+        updateTool_Goto();
+
+        super.position(pos);
+    }
+
+    @Override
+    protected void handleWebViewShortcuts(KeyEvent event) {
+        if (!event.isConsumed() && event.isShortcutDown()) {
+//            // Ctrl + G, Ctrl + H
+//            if (event.getCode() == KeyCode.G || event.getCode() == KeyCode.H) {
+//                // 如果有选中文字，则按查找选中文字处理
+//                final String selText = webPane.executeScript("getValidSelectionText()");
+//                final String textToSearch = null == selText ? null :
+//                        AppContext.getDisplayHan() != HanLang.hantTW ? selText : "!".concat(selText);
+//                app.eventBus.fireEvent(event.getCode() == KeyCode.G
+//                        ? SearcherEvent.ofLookup(textToSearch) // LOOKUP
+//                        : SearcherEvent.ofSearch(textToSearch) // SEARCH
+//                );
+//                event.consume();
+//            }
             // Ctrl + LEFT
-            else if (event.getCode() == KeyCode.LEFT) {
+            if (event.getCode() == KeyCode.LEFT) {
                 gotoPrev.fire();
                 event.consume();
+                return;
             }
             // Ctrl + RIGHT
-            else if (event.getCode() == KeyCode.RIGHT) {
+            if (event.getCode() == KeyCode.RIGHT) {
                 System.out.println("Ctrl + RIGHT");
                 gotoNext.fire();
                 event.consume();
+                return;
             }
             // Ctrl + T
-            else if (event.getCode() == KeyCode.T) {
+            if (event.getCode() == KeyCode.T) {
                 gotoMenu.fire();
                 event.consume();
+                return;
             }
         }
+        super.handleWebViewShortcuts(event);
     }
 
-    private void handleWebViewBodyResize(Observable o) {
-        webViewer.executeScript("beforeOnResizeBody()");
-    }
-
-    private void handleApplicationEventStopping(ApplicationEvent event) {
-        saveUserExperienceData();
-    }
-
-    public void saveUserExperienceData() {
-        try {
-            final double scrollTopPercentage = webViewer.getScrollTopPercentage();
-            UserPrefs.recents.setProperty(book.id + ".percent", scrollTopPercentage);
-
-            final String selector = webViewer.executeScript("getScrollTop1Selector()");
-            UserPrefs.recents.setProperty(book.id + ".selector", selector);
-        } catch (Exception ignore) {
-        }
-    }
-
-    private ContextMenu handleWebViewContextMenu() {
-        String selText = webViewer.executeScript("getValidSelectionText()");
-        selText = null == selText ? null : selText.strip().replace('\n', ' ');
-        final String validText = StringHelper.isBlank(selText) ? null : selText;
+    @Override
+    protected ContextMenu handleWebViewContextMenu() {
+        String origText = webPane.executeScript("getValidSelectionText()");
+        String trimText = null == origText ? null : origText.strip().replace('\n', ' ');
+        final String availText = StringHelper.isBlank(trimText) ? null : trimText;
         //
         MenuItem copy = new MenuItem("复制文字");
-        copy.setDisable(null == validText);
-        copy.setOnAction(event -> Clipboard.getSystemClipboard().setContent(Map.of(DataFormat.PLAIN_TEXT, validText)));
+        copy.setDisable(null == availText);
+        copy.setOnAction(event -> Clipboard.getSystemClipboard().setContent(Map.of(DataFormat.PLAIN_TEXT, origText)));
         //
         MenuItem copyRef = new MenuItem("复制为引用");
-        copyRef.setDisable(null == validText || !book.path.startsWith("toc/"));
+        copyRef.setDisable(null == availText || !book.path.startsWith("toc/"));
         copyRef.setOnAction(event -> {
             try {
-                String refInfoStr = webViewer.executeScript("getValidSelectionReferenceInfo2()");
+                String refInfoStr = webPane.executeScript("getValidSelectionReferenceInfo2()");
                 String[] refInfo = refInfoStr.split("\\|", 3);
                 if (refInfo.length < 2) return;
                 if (refInfo[0].isBlank()) return;
@@ -767,8 +580,8 @@ public class BookXmlViewer extends WorkbenchMainViewController {
                 final StringBuilder buff = new StringBuilder();
                 buff.append("《").append(this.book.title).append("》卷");
                 String serial = "00";
-                if (this.openedChapter.path.matches(".*_\\d+\\.xml")) {
-                    String str = FilenameUtils.getBaseName(this.openedChapter.path);
+                if (this.openedItem.path.matches(".*_\\d+\\.xml")) {
+                    String str = FilenameUtils.getBaseName(this.openedItem.path);
                     str = str.substring(str.lastIndexOf('_') + 1);
                     int vol = NumberHelper.toInt(str, 0);
                     buff.append(vol);
@@ -784,7 +597,7 @@ public class BookXmlViewer extends WorkbenchMainViewController {
                 }
 
                 buff.append("：「");
-                buff.append(null == validText ? "" : validText);
+                buff.append(null == availText ? "" : availText);
                 buff.append("」(CBETA ").append(AppContext.bookcase().getQuarterlyVersion()).append(", ");
                 buff.append(book.tripitakaId).append(serial);
                 buff.append(", no. ").append(book.number.replaceAll("^0+", "")).append(", p. ");
@@ -806,30 +619,30 @@ public class BookXmlViewer extends WorkbenchMainViewController {
                 //
                 buff.append(")");
                 Clipboard.getSystemClipboard().setContent(Map.of(DataFormat.PLAIN_TEXT, buff.toString()));
-                AppContext.toast("已复制到剪贴板").showInformation();
+                AppContext.toast("已复制到剪贴板");
             } catch (Throwable t) {
                 t.printStackTrace(); // for debug
             }
         });
         //
-        String textTip = null == validText ? "" : "：".concat(StringHelper.trimChars(validText, 8));
-        String textForSearch = null == validText ? null : DisplayHelper.getDisplayHan() != HanLang.hantTW ? validText : "!".concat(validText);
+        String textTip = null == availText ? "" : "：".concat(StringHelper.trimChars(availText, 8));
+        String textForSearch = null == availText ? null : AppContext.getDisplayHan() != HanLang.hantTW ? availText : "!".concat(availText);
 
         MenuItem search = new MenuItem("全文检索".concat(textTip));
-        search.setOnAction(event -> getEventBus().fireEvent(SearcherEvent.ofSearch(textForSearch)));
+        search.setOnAction(event -> app.eventBus.fireEvent(SearcherEvent.ofSearch(textForSearch)));
 
         MenuItem searchInAbs = new MenuItem("全文检索（精确检索）".concat(textTip));
-        searchInAbs.setOnAction(event -> getEventBus().fireEvent(
+        searchInAbs.setOnAction(event -> app.eventBus.fireEvent(
                 SearcherEvent.ofSearch(null == textForSearch ? "" : "\"".concat(textForSearch).concat("\""))));
 
         MenuItem searchInBook = new MenuItem("全文检索（检索本书）".concat(textTip));
-        searchInBook.setOnAction(event -> getEventBus().fireEvent(SearcherEvent.ofSearch(textForSearch, book)));
+        searchInBook.setOnAction(event -> app.eventBus.fireEvent(SearcherEvent.ofSearch(textForSearch, book)));
 
         MenuItem lookup = new MenuItem("快捷检索（经名、作译者等）".concat(textTip));
-        lookup.setOnAction(event -> getEventBus().fireEvent(SearcherEvent.ofLookup(textForSearch)));
+        lookup.setOnAction(event -> app.eventBus.fireEvent(SearcherEvent.ofLookup(textForSearch)));
 
         MenuItem finder = new MenuItem("页内查找".concat(textTip));
-        finder.setOnAction(event -> webViewFinder.search(validText));
+        finder.setOnAction(event -> webFinder.find(availText));
         //
         MenuItem dictionary = new MenuItem("查词典");
         dictionary.setDisable(true);
@@ -839,7 +652,6 @@ public class BookXmlViewer extends WorkbenchMainViewController {
 
         MenuItem favorite = new MenuItem("添加收藏");
         favorite.setOnAction(event -> this.handleEventToCreateBookdata(BookdataType.favorite));
-
 
         //
         return new ContextMenu(copy, copyRef,
@@ -854,7 +666,7 @@ public class BookXmlViewer extends WorkbenchMainViewController {
 
     private void handleEventToCreateBookdata(BookdataType dataType) {
         try {
-            final String anchorInfo = webViewer.executeScript("getFavoriteAnchorInfo()");
+            final String anchorInfo = webPane.executeScript("getFavoriteAnchorInfo()");
             BookdataController dataHandle = null;
             if (dataType == BookdataType.bookmark) {
                 dataHandle = this.bookmarks;
@@ -877,10 +689,11 @@ public class BookXmlViewer extends WorkbenchMainViewController {
                 alert.setTitle("重复");
                 alert.setContentText("此处已存在".concat(dataType.title).concat("记录，是否删除已有").concat(dataType.title).concat("？"));
                 alert.getButtonTypes().addAll(ButtonType.YES, ButtonType.NO);
-                if (ButtonType.YES == FxHelper.withTheme(getApplication(), alert).showAndWait().orElse(null)) {
+                alert.initOwner(app.getPrimaryStage());
+                if (ButtonType.YES == alert.showAndWait().orElse(null)) {
                     dataHandle.removeData(data);
-                    getEventBus().fireEvent(new BookdataEvent(BookdataEvent.REMOVED, data));
-                    FxHelper.runLater(() -> AppContext.toast("已删除".concat(dataType.title).concat("！")).showInformation());
+                    app.eventBus.fireEvent(new BookdataEvent(BookdataEvent.REMOVED, data));
+                    AppContext.toast("已删除".concat(dataType.title).concat("！"));
                     // TODO update html?
                 }
                 return;
@@ -897,7 +710,8 @@ public class BookXmlViewer extends WorkbenchMainViewController {
             pane.setContent(content);
             alert.setDialogPane(pane);
             alert.getButtonTypes().addAll(ButtonType.YES, ButtonType.NO);
-            if (ButtonType.YES == FxHelper.withTheme(getApplication(), alert).showAndWait().orElse(null)) {
+            alert.initOwner(app.getPrimaryStage());
+            if (ButtonType.YES == alert.showAndWait().orElse(null)) {
                 String editData = content.getText().strip();
                 if (editData.isBlank())
                     editData = origData;
@@ -905,18 +719,18 @@ public class BookXmlViewer extends WorkbenchMainViewController {
                 data.createAt = data.updateAt = new Date();
                 data.type = dataType;
                 data.book = book.id;
-                data.volume = openedChapter.path;
+                data.volume = openedItem.path;
                 data.location = book.title;// .concat("/").concat(currentChapter.title);
                 data.anchor = anchor;
                 data.data = editData.length() > 300 ? editData.substring(0, 300) : editData;
                 data.extra = json.toString();
                 //
                 dataHandle.createData(data);
-                getEventBus().fireEvent(new BookdataEvent(BookdataEvent.CREATED, data));
-                FxHelper.runLater(() -> AppContext.toast("已添加".concat(dataType.title).concat("！")).showInformation());
+                app.eventBus.fireEvent(new BookdataEvent(BookdataEvent.CREATED, data));
+                AppContext.toast("已添加".concat(dataType.title).concat("！"));
             }
         } catch (Exception e) {
-            FxHelper.alertError(getApplication(), e);
+            AppContext.toastError(e.getMessage());
         }
     }
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -931,43 +745,7 @@ public class BookXmlViewer extends WorkbenchMainViewController {
          * 用于将输入文字转换成与实际显示的相同，以方便页内查找
          */
         public String convertToDisplayHan(String input) {
-            return ChineseConvertors.convert(input, null, DisplayHelper.getDisplayHan());
-        }
-    }
-
-    private static class WebIncl {
-        private static final String[] includeNames = {
-                "jquery.min.js",
-                "jquery.ext.js",
-                "jquery.isinviewport.js",
-                "jquery.scrollto.js",
-                "popper.min.js",
-                "tippy-bundle.umd.min.js",
-                "rangy-core.js",
-                "rangy-serializer.js",
-//                "rangy-classapplier.js",
-//                "rangy-textrange.js",
-//                "rangy-highlighter.js",
-//                "rangy-selectionsaverestore.js",
-                "app.css",
-                "app.js"
-        };
-        private static final String[] includePaths = new String[includeNames.length];
-
-        private static String[] getIncludePaths() {
-            if (null != includePaths[0])
-                return includePaths;
-
-            synchronized (includePaths) {
-                if (null != includePaths[0])
-                    return includePaths;
-
-                final Path dir = FxHelper.appDir().resolve("template/web-incl");
-                for (int i = 0; i < includeNames.length; i++) {
-                    includePaths[i] = dir.resolve(includeNames[i]).toUri().toString();
-                }
-            }
-            return includePaths;
+            return ChineseConvertors.convert(input, null, AppContext.getDisplayHan());
         }
     }
 }

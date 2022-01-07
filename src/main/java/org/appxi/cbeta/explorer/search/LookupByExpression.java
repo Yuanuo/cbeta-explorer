@@ -8,7 +8,7 @@ import java.util.Set;
 
 class LookupByExpression {
     public static void lookup(String lookupText, int resultLimit,
-                              List<LookupViewExt.LookupResultItem> result,
+                              List<LookupLayerEx.LookupResultItem> result,
                               Set<String> usedKeywords) {
         final boolean isInputEmpty = lookupText.isBlank();
 //        final boolean isInputFullAscii = !isInputEmpty && lookupText.matches("[a-zA-Z0-9\"\s()]+");
@@ -31,7 +31,7 @@ class LookupByExpression {
             if (isInputEmpty) score += 1;
             else score = lookupExpression.score(data);
             if (score > 0) {
-                result.add(new LookupViewExt.LookupResultItem(data, score));
+                result.add(new LookupLayerEx.LookupResultItem(data, score));
                 if (isInputEmpty && result.size() > resultLimit) break;
             }
         }

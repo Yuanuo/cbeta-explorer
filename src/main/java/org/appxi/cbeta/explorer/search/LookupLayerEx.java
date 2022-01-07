@@ -6,16 +6,21 @@ import javafx.scene.control.Labeled;
 import javafx.scene.layout.StackPane;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
-import org.appxi.cbeta.explorer.DisplayHelper;
-import org.appxi.hanlp.convert.ChineseConvertors;
-import org.appxi.javafx.control.LookupView;
+import org.appxi.cbeta.explorer.AppContext;
+import org.appxi.javafx.control.LookupLayer;
+import org.appxi.smartcn.convert.ChineseConvertors;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
-public abstract class LookupViewExt extends LookupView<Object> {
+public abstract class LookupLayerEx extends LookupLayer<Object> {
     private Set<String> usedKeywords;
 
-    public LookupViewExt(StackPane owner) {
+    public LookupLayerEx(StackPane owner) {
         super(owner);
     }
 
@@ -59,7 +64,7 @@ public abstract class LookupViewExt extends LookupView<Object> {
             labeled.setGraphic(textFlow);
             labeled.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
             //
-            textFlow.getChildren().forEach(t -> ((Text) t).setText(DisplayHelper.displayText(((Text) t).getText())));
+            textFlow.getChildren().forEach(t -> ((Text) t).setText(AppContext.displayText(((Text) t).getText())));
         } else {
             labeled.setText(text);
             labeled.setContentDisplay(ContentDisplay.TEXT_ONLY);

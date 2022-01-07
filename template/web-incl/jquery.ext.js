@@ -49,3 +49,37 @@ jQuery.fn.traverse = function (predicate) {
     }
     return false;
 };
+
+jQuery.fn.centerText = function(len = 15) {
+    return this.prevText(len) + this.text() + this.nextText(len);
+};
+jQuery.fn.prevText = function(len = 15) {
+	let result = '';
+	let $node = this;
+	do {
+		let $prev = $node.prev();
+		if ($prev.length > 0) {
+			result = $prev.text() + result;
+			if (result.length >= len) return result.substr(result.length - len);
+			$node = $prev;
+		} else $node = $node.parent();
+		if ($node.is('body')) break;
+	}
+	while($node.length > 0);
+	return result;
+};
+jQuery.fn.nextText = function(len = 15) {
+	let result = '';
+	let $node = this;
+	do {
+		let $next = $node.next();
+		if ($next.length > 0) {
+			result = result + $next.text();
+			if (result.length >= len) return result.substr(0, len);
+			$node = $next;
+		} else $node = $node.parent();
+		if ($node.is('body')) break;
+	}
+	while($node.length > 0);
+	return result;
+};

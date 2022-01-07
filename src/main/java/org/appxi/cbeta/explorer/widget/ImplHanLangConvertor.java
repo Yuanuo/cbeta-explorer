@@ -9,8 +9,8 @@ import javafx.scene.control.TextArea;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import org.appxi.hanlp.convert.ChineseConvertors;
 import org.appxi.javafx.workbench.WorkbenchViewController;
+import org.appxi.smartcn.convert.ChineseConvertors;
 import org.appxi.util.ext.HanLang;
 
 class ImplHanLangConvertor extends Widget {

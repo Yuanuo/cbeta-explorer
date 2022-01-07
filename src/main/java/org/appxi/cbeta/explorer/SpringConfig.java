@@ -4,7 +4,7 @@ import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.embedded.EmbeddedSolrServer;
 import org.apache.solr.client.solrj.request.CoreAdminRequest;
 import org.apache.solr.core.NodeConfig;
-import org.appxi.javafx.helper.FxHelper;
+import org.appxi.javafx.app.DesktopApp;
 import org.appxi.prefs.UserPrefs;
 import org.appxi.search.solr.Piece;
 import org.springframework.context.annotation.Bean;
@@ -21,7 +21,7 @@ class SpringConfig {
     @Bean
     SolrClient solrClient() throws Exception {
         final Path solrHome = UserPrefs.dataDir().resolve(".solr");
-        final Path confHome = FxHelper.appDir().resolve("template");
+        final Path confHome = DesktopApp.appDir().resolve("template");
 
         final NodeConfig config = new NodeConfig.NodeConfigBuilder(Piece.REPO, solrHome)
                 .setConfigSetBaseDirectory(confHome.toString())

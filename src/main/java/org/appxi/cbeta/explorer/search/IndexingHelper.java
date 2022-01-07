@@ -1,6 +1,11 @@
 package org.appxi.cbeta.explorer.search;
 
-import appxi.cbeta.*;
+import appxi.cbeta.Book;
+import appxi.cbeta.BookDocument;
+import appxi.cbeta.Chapter;
+import appxi.cbeta.ChapterTree;
+import appxi.cbeta.Tripitaka;
+import appxi.cbeta.VolumeDocument;
 import appxi.cbeta.xml.LinkedXmlFilter;
 import org.appxi.cbeta.explorer.AppContext;
 import org.appxi.search.solr.Piece;
@@ -10,7 +15,13 @@ import org.appxi.util.ext.Node;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Predicate;
 
 abstract class IndexingHelper {

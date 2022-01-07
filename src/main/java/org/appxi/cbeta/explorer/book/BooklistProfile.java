@@ -5,20 +5,28 @@ import appxi.cbeta.BookMap;
 import appxi.cbeta.Booklist;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.CheckBoxTreeItem;
+import javafx.scene.control.ChoiceBox;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.DialogPane;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
+import javafx.scene.control.TreeItem;
+import javafx.scene.control.TreeView;
 import javafx.scene.control.cell.CheckBoxTreeCell;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import javafx.stage.Window;
+import org.appxi.cbeta.explorer.App;
 import org.appxi.cbeta.explorer.AppContext;
-import org.appxi.cbeta.explorer.DisplayHelper;
 import org.appxi.cbeta.explorer.event.GenericEvent;
 import org.appxi.javafx.control.CardChooser;
-import org.appxi.javafx.control.TreeViewExt;
-import org.appxi.javafx.helper.FxHelper;
+import org.appxi.javafx.control.ProgressLayer;
+import org.appxi.javafx.control.TreeViewEx;
 import org.appxi.javafx.helper.TreeHelper;
-import org.appxi.javafx.iconfont.MaterialIcon;
+import org.appxi.javafx.visual.MaterialIcon;
 import org.appxi.prefs.Preferences;
 import org.appxi.prefs.PreferencesInProperties;
 import org.appxi.prefs.UserPrefs;
@@ -32,7 +40,12 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 public class BooklistProfile {
@@ -104,7 +117,10 @@ public class BooklistProfile {
             profileMgr.setProperty("profile", profile.name());
             profileMgr.save();
             //
-            AppContext.app().eventBus.fireEvent(new GenericEvent(GenericEvent.PROFILE_READY, profile));
+            ProgressLayer.showAndWait(App.app().getPrimaryGlass(), progressLayer -> {
+                this.booklist.tree();
+                App.app().eventBus.fireEvent(new GenericEvent(GenericEvent.PROFILE_READY, profile));
+            });
             return true;
         } catch (Throwable ex) {
             return false;
@@ -121,11 +137,11 @@ public class BooklistProfile {
                 return;
             //
             final Optional<CardChooser.Card> optional = CardChooser.of("选择书单")
-                    .owner(AppContext.app().getPrimaryStage())
+                    .owner(App.app().getPrimaryStage())
                     .cards(Stream.of(Profile.values())
                             .map(p -> CardChooser.ofCard(p.toString())
                                     .description(p.description())
-                                    .graphic(MaterialIcon.PLAYLIST_ADD_CHECK.iconView())
+                                    .graphic(MaterialIcon.PLAYLIST_ADD_CHECK.graphic())
                                     .focused(p == this.profile)
                                     .userData(p)
                                     .get())
@@ -136,17 +152,17 @@ public class BooklistProfile {
                     : optional.get().userData();
 
             if (profile == null)
-                AppContext.app().stop();
+                App.app().stop();
         }
     }
 
     void manageProfiles() {
         CardChooser.of("管理我的书单")
-                .owner(AppContext.app().getPrimaryStage())
+                .owner(App.app().getPrimaryStage())
                 .cards(Stream.of(Profile.values()).filter(Profile::isManaged)
                         .map(p -> CardChooser.ofCard(p.toString())
                                 .description(p.description())
-                                .graphic(MaterialIcon.EDIT_NOTE.iconView())
+                                .graphic(MaterialIcon.EDIT_NOTE.graphic())
                                 .focused(p == this.profile)
                                 .userData(p)
                                 .get())
@@ -185,7 +201,7 @@ public class BooklistProfile {
 
         @Override
         public String toString() {
-            return !this.isManaged() ? DisplayHelper.displayText(this.privateTitle)
+            return !this.isManaged() ? AppContext.displayText(this.privateTitle)
                     : profileMgr.getString(name().concat(".title"), privateTitle);
         }
 
@@ -276,7 +292,7 @@ public class BooklistProfile {
                                     Profile.simple,
                                     Profile.advance)
                             .map(p -> CardChooser.ofCard(p.toString())
-                                    .graphic(MaterialIcon.PLAYLIST_ADD.iconView())
+                                    .graphic(MaterialIcon.PLAYLIST_ADD.graphic())
                                     .userData(p).get())
                             .toList())
                     .showAndWait()
@@ -303,7 +319,7 @@ public class BooklistProfile {
 
             HBox toolbar = new HBox(10, selTemplate, selAll, selNone, selInvert);
 
-            treeView = new TreeViewExt<>();
+            treeView = new TreeViewEx<>();
             treeView.setCellFactory(CheckBoxTreeCell.forTreeView());
             //
             VBox vBox = new VBox(10, toolbar, treeView);
@@ -362,12 +378,8 @@ public class BooklistProfile {
                 }
             }
             //
-            Window owner = AppContext.app().getPrimaryStage();
-            if (null != owner && null != owner.getScene()) {
-                this.getScene().getRoot().setStyle(owner.getScene().getRoot().getStyle());
-            }
-            dialog.initOwner(owner);
-            final Optional<ButtonType> optional = FxHelper.withTheme(AppContext.app(), dialog).showAndWait();
+            dialog.initOwner(App.app().getPrimaryStage());
+            final Optional<ButtonType> optional = dialog.showAndWait();
             if (optional.isEmpty() || optional.get() == ButtonType.CANCEL) return optional;
             //
             //

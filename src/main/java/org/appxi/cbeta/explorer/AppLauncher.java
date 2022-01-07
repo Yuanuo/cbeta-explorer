@@ -1,7 +1,8 @@
 package org.appxi.cbeta.explorer;
 
 import javafx.application.Application;
-import org.appxi.javafx.helper.FxHelper;
+import org.appxi.javafx.app.DesktopApp;
+import org.appxi.prefs.PreferencesInProperties;
 import org.appxi.prefs.UserPrefs;
 import org.appxi.util.DateHelper;
 import org.appxi.util.FileHelper;
@@ -14,9 +15,9 @@ import java.util.List;
 public class AppLauncher {
     protected static void beforeLaunch(String dataDirName) {
         // 0, set data home
-        UserPrefs.localDataDirectory(null != dataDirName ? dataDirName : ".".concat(AppInfo.ID), null);
+        UserPrefs.localDataDirectory(null != dataDirName ? dataDirName : ".".concat(App.ID), null);
         // 由于在配置文件中不能使用动态变量作为路径，故在此设置日志文件路径
-        if (FxHelper.productionMode) {
+        if (DesktopApp.productionMode) {
             final Path logFile = UserPrefs.dataDir().resolve(".logs")
                     .resolve(DateHelper.format3(new Date()).concat(".log"));
             FileHelper.makeParents(logFile);
@@ -33,6 +34,7 @@ public class AppLauncher {
                 e.printStackTrace();
             }
         }
+        UserPrefs.prefs = new PreferencesInProperties(UserPrefs.confDir().resolve(".prefs"));
         //
         System.setProperty("javafx.preloader", "org.appxi.cbeta.explorer.AppPreloader");
     }
@@ -40,7 +42,7 @@ public class AppLauncher {
     public static void main(String[] args) {
         try {
             beforeLaunch(null);
-            Application.launch(AppWorkbench.class, args);
+            Application.launch(App.class, args);
         } catch (Throwable t) {
             t.printStackTrace();
         }

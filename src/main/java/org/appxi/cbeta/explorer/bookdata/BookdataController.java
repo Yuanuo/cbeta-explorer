@@ -4,21 +4,26 @@ import appxi.cbeta.Book;
 import appxi.cbeta.Chapter;
 import com.j256.ormlite.stmt.Where;
 import javafx.beans.binding.Bindings;
-import javafx.scene.control.*;
+import javafx.scene.control.ContentDisplay;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.SelectionMode;
 import javafx.scene.input.InputEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.appxi.cbeta.explorer.AppContext;
-import org.appxi.cbeta.explorer.DisplayHelper;
 import org.appxi.cbeta.explorer.dao.Bookdata;
 import org.appxi.cbeta.explorer.dao.BookdataType;
 import org.appxi.cbeta.explorer.dao.DaoService;
 import org.appxi.cbeta.explorer.event.BookEvent;
 import org.appxi.cbeta.explorer.event.BookdataEvent;
-import org.appxi.javafx.control.ListViewExt;
+import org.appxi.javafx.control.ListViewEx;
 import org.appxi.javafx.helper.FxHelper;
-import org.appxi.javafx.iconfont.MaterialIcon;
-import org.appxi.javafx.workbench.WorkbenchApplication;
+import org.appxi.javafx.visual.MaterialIcon;
+import org.appxi.javafx.workbench.WorkbenchPane;
 import org.appxi.javafx.workbench.views.WorkbenchSideViewController;
 import org.appxi.util.DateHelper;
 
@@ -35,24 +40,24 @@ public abstract class BookdataController extends WorkbenchSideViewController {
     public final Book filterByBook;
     protected ListView<Bookdata> listView;
 
-    public BookdataController(String viewId, WorkbenchApplication application,
+    public BookdataController(String viewId, WorkbenchPane workbench,
                               BookdataType dataType, Book filterByBook) {
-        super(viewId, application);
+        super(viewId, workbench);
         this.dataType = dataType;
         this.filterByBook = filterByBook;
     }
 
     @Override
-    public void setupInitialize() {
+    public void initialize() {
         // not internal
         if (null == this.filterByBook) {
-            getEventBus().addEventHandler(BookdataEvent.CREATED, event -> {
+            app.eventBus.addEventHandler(BookdataEvent.CREATED, event -> {
                 if (event.data.type == dataType && hasAttr(AK_FIRST_TIME)) {
                     FxHelper.runLater(() -> listView.getItems().add(0, event.data));
                 }
             });
 
-            getEventBus().addEventHandler(BookdataEvent.REMOVED, event -> {
+            app.eventBus.addEventHandler(BookdataEvent.REMOVED, event -> {
                 if (event.data.type == dataType) {
                     FxHelper.runLater(() -> listView.getItems().remove(event.data));
                 }
@@ -65,7 +70,7 @@ public abstract class BookdataController extends WorkbenchSideViewController {
         if (null != this.filterByBook)
             this.viewport.setTop(null);
 
-        this.listView = new ListViewExt<>(this::handleOnEnterOrDoubleClickAction);
+        this.listView = new ListViewEx<>(this::handleOnEnterOrDoubleClickAction);
         this.listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         this.viewport.setCenter(this.listView);
         //
@@ -77,12 +82,12 @@ public abstract class BookdataController extends WorkbenchSideViewController {
                 textLabel = new Label();
                 textLabel.setWrapText(true);
 
-                timeLabel = new Label(null, MaterialIcon.ACCESS_TIME.iconView());
+                timeLabel = new Label(null, MaterialIcon.ACCESS_TIME.graphic());
                 timeLabel.setStyle(timeLabel.getStyle().concat(";-fx-font-size: 80%;-fx-opacity: .65;"));
 
                 // global mode
                 if (null == filterByBook) {
-                    bookLabel = new Label(null, MaterialIcon.LOCATION_ON.iconView());
+                    bookLabel = new Label(null, MaterialIcon.LOCATION_ON.graphic());
                     bookLabel.setStyle(bookLabel.getStyle().concat("-fx-opacity:.75;"));
                     HBox hBox = new HBox(timeLabel, bookLabel);
                     hBox.setStyle(hBox.getStyle().concat("-fx-spacing:.5em;"));
@@ -119,7 +124,7 @@ public abstract class BookdataController extends WorkbenchSideViewController {
                 timeLabel.setText(DateHelper.format(item.updateAt));
                 if (null == filterByBook && null != bookLabel) {
                     Book book = AppContext.booklistProfile.getBook(item.book);
-                    bookLabel.setText(null == book ? null : DisplayHelper.displayText(book.title));
+                    bookLabel.setText(null == book ? null : AppContext.displayText(book.title));
                 }
                 setGraphic(cardBox);
             }
@@ -132,7 +137,7 @@ public abstract class BookdataController extends WorkbenchSideViewController {
                 DaoService.getBookdataDao().delete(list);
                 listView.getItems().removeAll(list);
             } catch (SQLException t) {
-                FxHelper.alertError(getApplication(), t);
+                AppContext.toastError(t.getMessage());
             }
         };
         final MenuItem removeSel = new MenuItem("删除选中");
@@ -154,7 +159,7 @@ public abstract class BookdataController extends WorkbenchSideViewController {
         chapter.anchor = item.anchor;
         if (null != item.anchor)
             chapter.attr("position.selector", item.anchor);
-        getEventBus().fireEvent(new BookEvent(BookEvent.OPEN, book, chapter));
+        app.eventBus.fireEvent(new BookEvent(BookEvent.OPEN, book, chapter));
     }
 
     @Override

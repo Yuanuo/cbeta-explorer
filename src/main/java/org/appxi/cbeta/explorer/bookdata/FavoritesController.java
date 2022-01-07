@@ -2,18 +2,18 @@ package org.appxi.cbeta.explorer.bookdata;
 
 import appxi.cbeta.Book;
 import org.appxi.cbeta.explorer.dao.BookdataType;
-import org.appxi.javafx.iconfont.MaterialIcon;
-import org.appxi.javafx.workbench.WorkbenchApplication;
+import org.appxi.javafx.visual.MaterialIcon;
+import org.appxi.javafx.workbench.WorkbenchPane;
 
 public class FavoritesController extends BookdataController {
 
-    public FavoritesController(WorkbenchApplication application) {
-        this(application, null);
+    public FavoritesController(WorkbenchPane workbench) {
+        this(workbench, null);
     }
 
-    public FavoritesController(WorkbenchApplication application, Book filterByBook) {
-        super("FAVORITES", application, BookdataType.favorite, filterByBook);
+    public FavoritesController(WorkbenchPane workbench, Book filterByBook) {
+        super("FAVORITES", workbench, BookdataType.favorite, filterByBook);
         this.setTitles("收藏");
-        this.viewIcon.set(MaterialIcon.STAR.iconView());
+        this.viewGraphic.set(MaterialIcon.STAR.graphic());
     }
 }

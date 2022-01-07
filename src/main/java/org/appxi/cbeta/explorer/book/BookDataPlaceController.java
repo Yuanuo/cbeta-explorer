@@ -1,21 +1,21 @@
 package org.appxi.cbeta.explorer.book;
 
 import javafx.event.EventHandler;
-import org.appxi.cbeta.explorer.DisplayHelper;
+import org.appxi.cbeta.explorer.AppContext;
 import org.appxi.cbeta.explorer.event.BookEvent;
-import org.appxi.javafx.iconfont.MaterialIcon;
-import org.appxi.javafx.workbench.WorkbenchApplication;
+import org.appxi.javafx.visual.MaterialIcon;
+import org.appxi.javafx.workbench.WorkbenchPane;
 import org.appxi.javafx.workbench.WorkbenchViewController;
 import org.appxi.javafx.workbench.views.WorkbenchSideViewController;
 
 public class BookDataPlaceController extends WorkbenchSideViewController {
     private static BookDataPlaceController instance;
 
-    public BookDataPlaceController(WorkbenchApplication application) {
-        super("BOOK-DATA", application);
+    public BookDataPlaceController(WorkbenchPane workbench) {
+        super("BOOK-DATA", workbench);
         instance = null == instance ? this : instance;
         this.setTitles(null);
-        this.viewIcon.set(MaterialIcon.IMPORT_CONTACTS.iconView());
+        this.viewGraphic.set(MaterialIcon.IMPORT_CONTACTS.graphic());
     }
 
     @Override
@@ -37,14 +37,14 @@ public class BookDataPlaceController extends WorkbenchSideViewController {
     private BookXmlViewer bookView;
 
     @Override
-    public void setupInitialize() {
-        getEventBus().addEventHandler(BookEvent.VIEW, event -> {
+    public void initialize() {
+        app.eventBus.addEventHandler(BookEvent.VIEW, event -> {
             bookView = null;// always reset
-            final WorkbenchViewController mainView = getPrimaryViewport().getSelectedMainViewController();
+            final WorkbenchViewController mainView = workbench.getSelectedMainViewController();
             if (mainView instanceof BookXmlViewer bookView) {
-                setTitles(DisplayHelper.displayText(bookView.book.title));
-                if (null != this.viewportVBox) {
-                    this.viewportVBox.getChildren().setAll(bookView.sideViews);
+                setTitles(AppContext.displayText(bookView.book.title));
+                if (null != this.viewport) {
+                    this.viewport.setCenter(bookView.sideViews);
                 } else this.bookView = bookView;
                 //FIXME 程序启动后的第一次在此默认显示此视图？
             } else {
@@ -54,19 +54,19 @@ public class BookDataPlaceController extends WorkbenchSideViewController {
         final EventHandler<BookEvent> handleOnBookViewHideOrClose = event -> {
             bookView = null;// always reset
             setTitles(null);
-            if (null != this.viewportVBox) {
-                this.viewportVBox.getChildren().clear();
+            if (null != this.viewport) {
+                this.viewport.setCenter(null);
             }
         };
-        getEventBus().addEventHandler(BookEvent.HIDE, handleOnBookViewHideOrClose);
-        getEventBus().addEventHandler(BookEvent.CLOSE, handleOnBookViewHideOrClose);
+        app.eventBus.addEventHandler(BookEvent.HIDE, handleOnBookViewHideOrClose);
+        app.eventBus.addEventHandler(BookEvent.CLOSE, handleOnBookViewHideOrClose);
     }
 
     @Override
     public void onViewportShowing(boolean firstTime) {
         if (null != bookView) {
-            setTitles(DisplayHelper.displayText(bookView.book.title));
-            this.viewportVBox.getChildren().setAll(bookView.sideViews);
+            setTitles(AppContext.displayText(bookView.book.title));
+            this.viewport.setCenter(bookView.sideViews);
             bookView = null;
         }
     }

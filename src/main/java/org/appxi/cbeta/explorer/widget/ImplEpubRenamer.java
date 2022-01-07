@@ -6,17 +6,22 @@ import appxi.cbeta.Booklist;
 import appxi.cbeta.TripitakaMap;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.*;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
+import javafx.scene.control.TreeItem;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
+import org.appxi.cbeta.explorer.App;
 import org.appxi.cbeta.explorer.AppContext;
 import org.appxi.cbeta.explorer.book.BooklistProfile;
 import org.appxi.holder.IntHolder;
 import org.appxi.holder.RawHolder;
-import org.appxi.javafx.helper.FxHelper;
 import org.appxi.javafx.helper.TreeHelper;
 import org.appxi.javafx.workbench.WorkbenchViewController;
 import org.appxi.util.DigestHelper;
@@ -56,7 +61,7 @@ class ImplEpubRenamer extends Widget {
         sourcePathBtn.setOnAction(evt -> {
             FileChooser fc = new FileChooser();
             fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("zip", "*.zip"));
-            sourceFileHold.value = fc.showOpenDialog(this.controller.getPrimaryStage());
+            sourceFileHold.value = fc.showOpenDialog(this.controller.app.getPrimaryStage());
             if (null != sourceFileHold.value) {
                 sourcePathField.setText(sourceFileHold.value.getAbsolutePath());
             }
@@ -84,7 +89,7 @@ class ImplEpubRenamer extends Widget {
             DirectoryChooser dc = new DirectoryChooser();
             if (null != sourceFileHold.value)
                 dc.setInitialDirectory(sourceFileHold.value.getParentFile());
-            File selDir = dc.showDialog(this.controller.getPrimaryStage());
+            File selDir = dc.showDialog(this.controller.app.getPrimaryStage());
             if (null != selDir)
                 targetPathField.setText(selDir.getAbsolutePath());
         });
@@ -97,7 +102,8 @@ class ImplEpubRenamer extends Widget {
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setHeaderText(null);
             alert.setContentText(result);
-            FxHelper.withTheme(this.controller.getApplication(), alert).show();
+            alert.initOwner(App.app().getPrimaryStage());
+            alert.show();
         });
         HBox applyBtnHBox = new HBox(applyBtn);
         applyBtnHBox.setAlignment(Pos.CENTER);

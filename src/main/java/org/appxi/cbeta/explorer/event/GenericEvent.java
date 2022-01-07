@@ -12,8 +12,6 @@ public class GenericEvent extends Event {
 
     public static final EventType<GenericEvent> DISPLAY_HAN_CHANGED = new EventType<>(Event.ANY, "DISPLAY_HAN_CHANGED");
 
-    public static final EventType<GenericEvent> DISPLAY_ZOOM_CHANGED = new EventType<>(Event.ANY, "DISPLAY_ZOOM_CHANGED");
-
     public final Object data;
 
     public GenericEvent(EventType<GenericEvent> eventType) {

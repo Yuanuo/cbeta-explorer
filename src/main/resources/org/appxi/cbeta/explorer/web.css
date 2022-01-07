@@ -185,3 +185,10 @@ article {
     font-size: 95% !important;
     max-width: 70rem !important;
 }
+
+.theme-dark .tippy-box {
+    background: #666 !important;
+}
+.theme-dark .tippy-arrow::before {
+    color: #666 !important;
+}

@@ -5,44 +5,50 @@
 
 	<groupId>org.appxi</groupId>
 	<artifactId>cbeta-explorer</artifactId>
-	<version>21.10.29</version>
+	<version>22.01.05</version>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.release>18</maven.compiler.release>
+        <javafx.version>18-ea+8</javafx.version>
 	</properties>
 
 	<dependencies>
 		<dependency>
 			<groupId>org.appxi</groupId>
-			<artifactId>appxi-shared</artifactId>
+			<artifactId>javafx</artifactId>
 			<version>[1.0.0,)</version>
 		</dependency>
 		<dependency>
 			<groupId>org.appxi</groupId>
-			<artifactId>appxi-javafx</artifactId>
+			<artifactId>cbeta</artifactId>
 			<version>[1.0.0,)</version>
 		</dependency>
 		<dependency>
 			<groupId>org.appxi</groupId>
-			<artifactId>appxi-cbeta</artifactId>
+			<artifactId>timeago</artifactId>
 			<version>[1.0.0,)</version>
 		</dependency>
 		<dependency>
 			<groupId>org.appxi</groupId>
-			<artifactId>appxi-timeago</artifactId>
+			<artifactId>smartcn-convert</artifactId>
 			<version>[1.0.0,)</version>
 		</dependency>
 		<dependency>
 			<groupId>org.appxi</groupId>
-			<artifactId>appxi-hanlp-convert</artifactId>
+			<artifactId>smartcn-pinyin</artifactId>
 			<version>[1.0.0,)</version>
 		</dependency>
-		<dependency>
-			<groupId>org.appxi</groupId>
-			<artifactId>appxi-hanlp-pinyin</artifactId>
-			<version>[1.0.0,)</version>
-		</dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-swing</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.openjfx</groupId>-->
+<!--            <artifactId>javafx-fxml</artifactId>-->
+<!--            <version>${javafx.version}</version>-->
+<!--        </dependency>-->
 
 		<dependency>
 			<groupId>org.json</groupId>
@@ -58,11 +64,11 @@
 		<dependency>
 			<groupId>com.j256.ormlite</groupId>
 			<artifactId>ormlite-jdbc</artifactId>
-			<version>5.6</version>
+			<version>6.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.appxi</groupId>
-			<artifactId>appxi-search-solr</artifactId>
+			<artifactId>search-solr</artifactId>
 			<version>[1.0.0,)</version>
 		</dependency>
 	</dependencies>

@@ -3,7 +3,6 @@ module appxi.cbetaExplorer {
     requires javafx.base;
     requires javafx.controls;
     requires javafx.graphics;
-    requires javafx.fxml;
     requires javafx.web;
     requires jdk.jsobject;
     requires transitive javafx.swing;
@@ -12,13 +11,12 @@ module appxi.cbetaExplorer {
     requires appxi.cbeta;
     requires appxi.javafx;
     requires appxi.timeago;
-    requires appxi.hanlp.convert;
-    requires appxi.hanlp.pinyin;
+    requires appxi.smartcn.convert;
+    requires appxi.smartcn.pinyin;
     requires org.jsoup;
 
     requires java.sql;
     requires static com.h2database;
-    requires static ormlite.core;
     requires static ormlite.jdbc;
     requires static org.json;
 
@@ -43,10 +41,11 @@ module appxi.cbetaExplorer {
     requires java.management;
     requires java.naming;
 
+//    requires org.scenicview.scenicview; // for debug
+
     exports org.appxi.cbeta.explorer; // for application launch
 
     opens org.appxi.cbeta.explorer;
     opens org.appxi.cbeta.explorer.book; // for javafx
     opens org.appxi.cbeta.explorer.dao; // for ormlite, spring
-    opens appxi.cbetaExplorer.themes;
 }

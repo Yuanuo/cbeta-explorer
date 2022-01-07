@@ -2,7 +2,6 @@ package org.appxi.cbeta.explorer.search;
 
 import appxi.cbeta.Book;
 import appxi.cbeta.Chapter;
-import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
@@ -10,10 +9,14 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import org.appxi.cbeta.explorer.AppContext;
-import org.appxi.cbeta.explorer.event.*;
+import org.appxi.cbeta.explorer.event.BookEvent;
+import org.appxi.cbeta.explorer.event.GenericEvent;
+import org.appxi.cbeta.explorer.event.ProgressEvent;
+import org.appxi.cbeta.explorer.event.SearchedEvent;
+import org.appxi.cbeta.explorer.event.SearcherEvent;
 import org.appxi.javafx.helper.FxHelper;
-import org.appxi.javafx.iconfont.MaterialIcon;
-import org.appxi.javafx.workbench.WorkbenchApplication;
+import org.appxi.javafx.visual.MaterialIcon;
+import org.appxi.javafx.workbench.WorkbenchPane;
 import org.appxi.javafx.workbench.views.WorkbenchSideToolController;
 import org.appxi.util.DigestHelper;
 
@@ -22,22 +25,22 @@ import java.util.Objects;
 public class SearchController extends WorkbenchSideToolController {
     private ProgressEvent indexingEvent;
 
-    public SearchController(WorkbenchApplication application) {
-        super("SEARCH", application);
+    public SearchController(WorkbenchPane workbench) {
+        super("SEARCH", workbench);
         this.setTitles("搜索", "全文检索 (Ctrl+H)");
         this.attr(Pos.class, Pos.CENTER_LEFT);
-        this.viewIcon.set(MaterialIcon.SEARCH.iconView());
+        this.viewGraphic.set(MaterialIcon.SEARCH.graphic());
     }
 
     @Override
-    public void setupInitialize() {
+    public void initialize() {
         // 响应快捷键 Ctrl+H 事件，以打开搜索视图
-        getPrimaryScene().getAccelerators().put(new KeyCodeCombination(KeyCode.H, KeyCombination.SHORTCUT_DOWN),
+        app.getPrimaryScene().getAccelerators().put(new KeyCodeCombination(KeyCode.H, KeyCombination.SHORTCUT_DOWN),
                 () -> openSearcherWithText(null, null));
         // 响应SEARCH Event事件，以打开搜索视图
-        getEventBus().addEventHandler(SearcherEvent.SEARCH, event -> openSearcherWithText(event.text, event.scope));
-        getEventBus().addEventHandler(ProgressEvent.INDEXING, event -> indexingEvent = event.isFinished() ? null : event);
-        getEventBus().addEventHandler(GenericEvent.PROFILE_READY, event -> {
+        app.eventBus.addEventHandler(SearcherEvent.SEARCH, event -> openSearcherWithText(event.text, event.scope));
+        app.eventBus.addEventHandler(ProgressEvent.INDEXING, event -> indexingEvent = event.isFinished() ? null : event);
+        app.eventBus.addEventHandler(GenericEvent.PROFILE_READY, event -> {
             this.attr(event.getEventType(), true);
 
             if (IndexedManager.isBookcaseIndexable() || IndexedManager.isBooklistIndexable()) {
@@ -48,7 +51,7 @@ public class SearchController extends WorkbenchSideToolController {
             }
         });
         // 响应搜索结果打开事件
-        getEventBus().addEventHandler(SearchedEvent.OPEN, event -> {
+        app.eventBus.addEventHandler(SearchedEvent.OPEN, event -> {
             if (null == event.piece)
                 return;
             Book book = AppContext.booklistProfile.getBook(event.piece.field("book_s"));
@@ -67,7 +70,7 @@ public class SearchController extends WorkbenchSideToolController {
                     chapter.attr("position.text", event.highlightSnippet
                             .replace("§§hl#end§§", "").replace("…", ""));
             }
-            getEventBus().fireEvent(new BookEvent(BookEvent.OPEN, book, chapter));
+            app.eventBus.fireEvent(new BookEvent(BookEvent.OPEN, book, chapter));
         });
     }
 
@@ -78,29 +81,29 @@ public class SearchController extends WorkbenchSideToolController {
 
     private void openSearcherWithText(String text, Book scope) {
         // 优先查找可用的搜索视图，以避免打开太多未使用的搜索视图
-        SearcherController searcher = getPrimaryViewport().getMainViewsTabs().stream()
+        SearcherController searcher = workbench.getMainViewsTabs().stream()
                 .map(tab -> (tab.getUserData() instanceof SearcherController view && view.isNeverSearched()) ? view : null)
                 .filter(Objects::nonNull)
                 .findFirst()
-                .orElseGet(() -> new SearcherController("SEARCHER-".concat(DigestHelper.uid()), getApplication()));
+                .orElseGet(() -> new SearcherController("SEARCHER-".concat(DigestHelper.uid()), workbench));
         FxHelper.runLater(() -> {
-            if (!getPrimaryViewport().existsMainView(searcher.viewId.get())) {
-                getPrimaryViewport().addWorkbenchViewAsMainView(searcher, false);
-                searcher.setupInitialize();
+            if (!workbench.existsMainView(searcher.viewId.get())) {
+                workbench.addWorkbenchViewAsMainView(searcher, false);
+                searcher.initialize();
             }
-            getPrimaryViewport().selectMainView(searcher.viewId.get());
+            workbench.selectMainView(searcher.viewId.get());
             searcher.setSearchScope(scope);
             if (null != indexingEvent)
                 searcher.handleEventOnIndexingToBlocking.handle(indexingEvent);
             else if (IndexedManager.isBookcaseIndexable() || IndexedManager.isBooklistIndexable())
-                Platform.runLater(() -> alertIndexable(searcher));
+                alertIndexable(searcher);
             else searcher.search(text);
         });
     }
 
     private void alertIndexable(SearcherController controller) {
         if (!this.hasAttr(GenericEvent.PROFILE_READY)) return;
-        FxHelper.runLater(() -> {
+        FxHelper.runThread(null == controller ? 5000 : 100, () -> {
             String contentText = null, headerText = null;
             if (IndexedManager.isBookcaseIndexable()) {
                 headerText = "全文检索功能需要“重建全局数据”";
@@ -129,13 +132,14 @@ public class SearchController extends WorkbenchSideToolController {
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION, contentText);
             alert.setTitle("数据更新！");
             alert.setHeaderText(headerText);
-            FxHelper.withTheme(getApplication(), alert).showAndWait().filter(v -> v == ButtonType.OK)
+            alert.initOwner(app.getPrimaryStage());
+            alert.showAndWait().filter(v -> v == ButtonType.OK)
                     .ifPresentOrElse(v -> {
                         indexingEvent = new ProgressEvent(ProgressEvent.INDEXING, -1, 1, "处理中。。。");
                         if (null != controller) controller.handleEventOnIndexingToBlocking.handle(indexingEvent);
-                        new Thread(new IndexingTask(application)).start();
+                        new Thread(new IndexingTask(app)).start();
                     }, () -> {
-                        if (null != controller) getPrimaryViewport().removeMainView(controller);
+                        if (null != controller) workbench.removeMainView(controller);
                     });
         });
     }

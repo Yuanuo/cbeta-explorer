@@ -3,8 +3,11 @@
     -fx-background-position: center;
     -fx-background-repeat: no-repeat;
 }
+.theme-dark .main-views {
+    -fx-background-image: url('app-hint-dark.png');
+}
 .side-views {
-    -fx-min-width: 10em;
+    -fx-min-width: 12.5em;
 }
 
 .font-icon.dev:hover{
@@ -12,6 +15,52 @@
 }
 .font-icon.dev:selected{
     -fx-effect: dropshadow( three-pass-box , derive(-fx-text-fill,0%) , 0.01em, 0.0 , 0, 0);
+}
+
+.tree-cell.visited:filled,
+.tree-cell.visited:filled .icon-text,
+.list-cell.visited:filled,
+.list-cell.visited:filled .primary {
+    -fx-text-fill: #20b771;
+}
+.list-cell:filled .secondary {
+    -fx-opacity: .5;
+}
+.tree-cell .plaintext,
+.list-cell .plaintext {
+	-fx-fill: ladder(-fx-base, -text-dark 49%, -text-light 50%);
+}
+.tree-cell .highlight,
+.list-cell .highlight,
+.tree-cell.visited .highlight,
+.list-cell.visited .highlight {
+    -fx-fill: derive(-fx-accent, -10%);
+    -fx-font-weight: bolder;
+}
+
+.web-finder .button.flat {
+    -fx-padding: .25em;
+}
+.web-finder .label.info {
+    -fx-text-fill: -fx-accent;
+}
+
+.form-vbox .field-name {
+    -fx-min-width: 6em;
+    -fx-alignment: center;
+}
+.form-vbox .field-info {
+    -fx-padding: 0 0 0em .5em;
+}
+.form-vbox .field-info .text {
+    -fx-fill: derive(-fx-mid-text-color, 60%);
+}
+.form-vbox .choice-box {
+    -fx-min-width: 10em;
+}
+.form-vbox .text-field,
+.form-vbox .text-area {
+    -fx-max-width: 40em;
 }
 
 .form .field-label {

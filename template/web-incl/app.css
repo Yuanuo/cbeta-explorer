@@ -1,0 +1,30 @@
+:root {
+    --font-family: tibetan, AUTO;
+}
+@font-face {
+  font-family: 'AUTO';
+  src: local('PingFang SC'),
+       local("Hiragino Sans GB"),
+       local("Heiti SC"),
+       local("Microsoft YaHei"),
+       local("WenQuanYi Micro Hei"),
+       local("STXihei"),
+       local("Arial"),
+       local("Helvetica Neue"),
+       local("Helvetica"),
+       local("sans-serif");
+}
+@font-face {
+  font-family: 'tibetan';
+  src: url('tibetan.ttf');
+  unicode-range: U+0F00-0FFF;
+}
+
+mark, .highlight {
+    background: #ff8;
+    color: black;
+}
+mark.active, .highlight.active {
+    background: #ffd71b;
+    color: black;
+}

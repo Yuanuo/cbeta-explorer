@@ -12,9 +12,8 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.appxi.holder.RawHolder;
 import org.appxi.javafx.control.TreeViewEx;
-import org.appxi.javafx.control.TreeViewExt;
 import org.appxi.javafx.helper.TreeHelper;
-import org.appxi.javafx.workbench.WorkbenchApplication;
+import org.appxi.javafx.workbench.WorkbenchPane;
 import org.appxi.javafx.workbench.views.WorkbenchSideViewController;
 import org.appxi.prefs.UserPrefs;
 import org.appxi.util.DigestHelper;
@@ -29,25 +28,25 @@ public class BookBasicController extends WorkbenchSideViewController {
 
     Accordion accordion;
     TitledPane tocsPane, volsPane, infoPane;
-    TreeViewExt<Chapter> tocsTree, volsTree;
+    TreeViewEx<Chapter> tocsTree, volsTree;
 
     TreeItem<Chapter> selectedTreeItem;
 
-    public BookBasicController(WorkbenchApplication application, BookXmlViewer bookView) {
-        super("BOOK-BASIC", application);
+    public BookBasicController(WorkbenchPane workbench, BookXmlViewer bookView) {
+        super("BOOK-BASIC", workbench);
         this.bookView = bookView;
     }
 
     @Override
-    public void setupInitialize() {
+    public void initialize() {
     }
 
     @Override
     protected void onViewportInitOnce() {
         this.viewport.setTop(null);
 
-        this.tocsPane = new TitledPane("目次", this.tocsTree = new TreeViewExt<>());
-        this.volsPane = new TitledPane("卷次", this.volsTree = new TreeViewExt<>());
+        this.tocsPane = new TitledPane("目次", this.tocsTree = new TreeViewEx<>());
+        this.volsPane = new TitledPane("卷次", this.volsTree = new TreeViewEx<>());
         this.infoPane = new TitledPane("信息", new Label("Coming soon..."));
         this.accordion = new Accordion(this.tocsPane, this.volsPane, this.infoPane);
         VBox.setVgrow(this.accordion, Priority.ALWAYS);
@@ -61,7 +60,7 @@ public class BookBasicController extends WorkbenchSideViewController {
 
     void handleChaptersTreeViewEnterOrDoubleClickAction(final InputEvent event, final TreeItem<Chapter> treeItem) {
         if (null == treeItem || null != event && !treeItem.isLeaf()) return;
-        bookView.openChapter(treeItem.getValue());
+        bookView.navigate(treeItem.getValue());
     }
 
     @Override
@@ -122,7 +121,7 @@ public class BookBasicController extends WorkbenchSideViewController {
         if (null != chapter && null != chapter.path) {
             Predicate<TreeItem<Chapter>> findByPath = itm ->
                     itm.isLeaf() && chapter.path.equals(itm.getValue().path)
-                            && (null == chapter.anchor || chapter.anchor.equals(itm.getValue().anchor));
+                    && (null == chapter.anchor || chapter.anchor.equals(itm.getValue().anchor));
             detectAvailTarget(targetPane, targetTree, targetTreeItem, findByPath);
         }
         if (null == targetTreeItem.value) {

@@ -4,8 +4,8 @@ import javafx.scene.control.Accordion;
 import javafx.scene.control.TitledPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import org.appxi.javafx.iconfont.MaterialIcon;
-import org.appxi.javafx.workbench.WorkbenchApplication;
+import org.appxi.javafx.visual.MaterialIcon;
+import org.appxi.javafx.workbench.WorkbenchPane;
 import org.appxi.javafx.workbench.views.WorkbenchSideViewController;
 import org.appxi.util.StringHelper;
 import org.appxi.util.ext.Attributes;
@@ -18,14 +18,14 @@ public class WidgetsController extends WorkbenchSideViewController {
 
     final List<Widget> widgets = new ArrayList<>();
 
-    public WidgetsController(WorkbenchApplication application) {
-        super("WIDGETS", application);
+    public WidgetsController(WorkbenchPane workbench) {
+        super("WIDGETS", workbench);
         this.setTitles("工具", "辅助工具集");
-        this.viewIcon.set(MaterialIcon.NOW_WIDGETS.iconView());
+        this.viewGraphic.set(MaterialIcon.NOW_WIDGETS.graphic());
     }
 
     @Override
-    public void setupInitialize() {
+    public void initialize() {
     }
 
     @Override
@@ -59,7 +59,7 @@ public class WidgetsController extends WorkbenchSideViewController {
             }
             widget.onViewportShowing(ensureFirstTime(widget));
         });
-        this.viewportVBox.getChildren().add(accordion);
+        this.viewport.setCenter(accordion);
     }
 
     @Override
