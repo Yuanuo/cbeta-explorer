@@ -286,7 +286,7 @@ public class SearcherController extends WorkbenchMainViewController {
             return;
         if (null != indexingProgressLayer) {
             // 正在索引时不执行搜索
-            AppContext.toast("正在准备数据，请稍后再试");
+            app.toast("正在准备数据，请稍后再试");
             return;
         }
         setTitles(inputText);

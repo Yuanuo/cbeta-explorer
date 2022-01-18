@@ -52,8 +52,8 @@ public class AppLauncherDev extends AppLauncher {
 
         @Override
         public void onViewportShowing(boolean firstTime) {
-            AppContext.toastError("disabled sceneview.jar");
-//            javafx.application.Platform.runLater(() -> org.scenicview.ScenicView.show(app.getPrimaryScene()));
+            app.toastError("disabled sceneview.jar");
+            //            javafx.application.Platform.runLater(() -> org.scenicview.ScenicView.show(app.getPrimaryScene()));
         }
     }
 

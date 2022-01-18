@@ -5,6 +5,8 @@ import appxi.cbeta.BookHelper;
 import org.appxi.cbeta.explorer.AppContext;
 import org.appxi.javafx.helper.FxHelper;
 import org.appxi.util.StringHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -14,6 +16,7 @@ import java.util.Map;
 import java.util.stream.IntStream;
 
 class LookupDatabase {
+    static final Logger logger = LoggerFactory.getLogger(LookupDatabase.class);
     static final List<LookupData> cachedDatabase = new ArrayList<>(10240);
     static final Map<String, String> cachedAsciiMap = new HashMap<>(10240);
 
@@ -52,8 +55,8 @@ class LookupDatabase {
             // 统一生成卷数的拼音（目前似乎最大为600卷，但仍生成1-999）
             IntStream.range(1, 999).mapToObj(String::valueOf)
                     .forEach(i -> cachedAsciiMap.put(i.concat("卷"), i.concat("juan")));
-            System.out.println("init lookup-in-memory items used time: " + (System.currentTimeMillis() - st));
-            System.out.println("init lookup-in-memory items size: " + cachedDatabase.size());
+            logger.warn("init lookup-in-memory items used time: " + (System.currentTimeMillis() - st));
+            logger.warn("init lookup-in-memory items size: " + cachedDatabase.size());
             System.gc();
         }).start();
     }

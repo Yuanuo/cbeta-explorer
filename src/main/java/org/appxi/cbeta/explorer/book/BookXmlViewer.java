@@ -541,7 +541,6 @@ public class BookXmlViewer extends HtmlViewer<Chapter> {
             }
             // Ctrl + RIGHT
             if (event.getCode() == KeyCode.RIGHT) {
-                System.out.println("Ctrl + RIGHT");
                 gotoNext.fire();
                 event.consume();
                 return;
@@ -619,7 +618,7 @@ public class BookXmlViewer extends HtmlViewer<Chapter> {
                 //
                 buff.append(")");
                 Clipboard.getSystemClipboard().setContent(Map.of(DataFormat.PLAIN_TEXT, buff.toString()));
-                AppContext.toast("已复制到剪贴板");
+                app.toast("已复制到剪贴板");
             } catch (Throwable t) {
                 t.printStackTrace(); // for debug
             }
@@ -693,7 +692,7 @@ public class BookXmlViewer extends HtmlViewer<Chapter> {
                 if (ButtonType.YES == alert.showAndWait().orElse(null)) {
                     dataHandle.removeData(data);
                     app.eventBus.fireEvent(new BookdataEvent(BookdataEvent.REMOVED, data));
-                    AppContext.toast("已删除".concat(dataType.title).concat("！"));
+                    app.toast("已删除".concat(dataType.title).concat("！"));
                     // TODO update html?
                 }
                 return;
@@ -727,10 +726,10 @@ public class BookXmlViewer extends HtmlViewer<Chapter> {
                 //
                 dataHandle.createData(data);
                 app.eventBus.fireEvent(new BookdataEvent(BookdataEvent.CREATED, data));
-                AppContext.toast("已添加".concat(dataType.title).concat("！"));
+                app.toast("已添加".concat(dataType.title).concat("！"));
             }
         } catch (Exception e) {
-            AppContext.toastError(e.getMessage());
+            app.toastError(e.getMessage());
         }
     }
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

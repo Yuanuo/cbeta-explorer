@@ -39,9 +39,12 @@ import org.appxi.prefs.UserPrefs;
 import org.appxi.util.StringHelper;
 import org.appxi.util.ext.Attributes;
 import org.appxi.util.ext.LookupExpression;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedInputStream;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -55,9 +58,11 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 public abstract class HtmlViewer<T extends Attributes> extends WorkbenchMainViewController {
-    private final EventHandler<VisualEvent> onThemeChanged = this::onThemeChanged;
+    protected static final Logger logger = LoggerFactory.getLogger(HtmlViewer.class);
+
+    private final EventHandler<VisualEvent> onSetAppStyle = this::onSetAppStyle;
     private final EventHandler<AppEvent> onAppEventStopping = this::onAppEventStopping;
-    private final EventHandler<VisualEvent> onWebZoomChanged = this::onWebZoomChanged;
+    private final EventHandler<VisualEvent> onSetWebFont = this::onSetWebFont;
     private final InvalidationListener onWebViewBodyResize = this::onWebViewBodyResize;
 
     protected WebPane webPane;
@@ -70,9 +75,9 @@ public abstract class HtmlViewer<T extends Attributes> extends WorkbenchMainView
 
     @Override
     public void initialize() {
-        app.eventBus.addEventHandler(VisualEvent.STYLE_CHANGED, onThemeChanged);
+        app.eventBus.addEventHandler(VisualEvent.SET_STYLE, onSetAppStyle);
         app.eventBus.addEventHandler(AppEvent.STOPPING, onAppEventStopping);
-        app.eventBus.addEventHandler(VisualEvent.WEB_ZOOM_CHANGED, onWebZoomChanged);
+        app.eventBus.addEventHandler(VisualEvent.SET_WEB_FONT, onSetWebFont);
     }
 
     @Override
@@ -89,7 +94,7 @@ public abstract class HtmlViewer<T extends Attributes> extends WorkbenchMainView
         button.setOnAction(event -> {
             Printer printer = Printer.getDefaultPrinter();
             if (null == printer) {
-                AppContext.toastError("打印机不可用");
+                app.toastError("打印机不可用");
                 return;
             }
 
@@ -99,7 +104,7 @@ public abstract class HtmlViewer<T extends Attributes> extends WorkbenchMainView
             job.getJobSettings().setPageLayout(pageLayout);
             webPane.webEngine().print(job);
             job.endJob();
-            AppContext.toast("已添加到系统打印队列，请检查打印结果！");
+            app.toast("已添加到系统打印队列，请检查打印结果！");
         });
         //
         webPane.toolbar.addLeft(button);
@@ -217,18 +222,24 @@ public abstract class HtmlViewer<T extends Attributes> extends WorkbenchMainView
         saveUserExperienceData();
     }
 
-    protected void onWebZoomChanged(VisualEvent event) {
+    protected void onSetWebFont(VisualEvent event) {
         if (null == this.webPane) return;
         saveUserExperienceData();
-        this.onThemeChanged(null);
+        this.onSetAppStyle(null);
         navigate(null);
     }
 
-    protected void onThemeChanged(VisualEvent event) {
+    protected void onSetAppStyle(VisualEvent event) {
         if (null == this.webPane) return;
 
         final RawHolder<byte[]> allBytes = new RawHolder<>();
-        allBytes.value = (":root {--zoom: " + app.visualProvider.webZoom() + " !important;}").getBytes();
+        allBytes.value = """
+                :root {
+                    --font-family: tibetan, "%s", AUTO !important;
+                    --zoom: %.2f !important;
+                }
+                """.formatted(app.visualProvider.webFontName(), app.visualProvider.webFontSize())
+                .getBytes(StandardCharsets.UTF_8);
         Consumer<InputStream> consumer = stream -> {
             try (BufferedInputStream in = new BufferedInputStream(stream)) {
                 int pos = allBytes.value.length;
@@ -258,9 +269,10 @@ public abstract class HtmlViewer<T extends Attributes> extends WorkbenchMainView
     @Override
     public void onViewportClosing(boolean selected) {
         saveUserExperienceData();
-        app.eventBus.removeEventHandler(VisualEvent.STYLE_CHANGED, onThemeChanged);
+        app.eventBus.removeEventHandler(VisualEvent.SET_STYLE, onSetAppStyle);
         app.eventBus.removeEventHandler(AppEvent.STOPPING, onAppEventStopping);
-        app.eventBus.removeEventHandler(VisualEvent.WEB_ZOOM_CHANGED, onWebZoomChanged);
+        app.eventBus.removeEventHandler(VisualEvent.SET_WEB_FONT, onSetWebFont);
+        if (null != webPane) webPane.release();
     }
 
     protected void saveUserExperienceData() {
@@ -284,7 +296,7 @@ public abstract class HtmlViewer<T extends Attributes> extends WorkbenchMainView
             loadingLayerHandler = ProgressLayer.show(getViewport(), progressLayer -> FxHelper.runLater(() -> {
                 webPane.webEngine().setUserDataDirectory(UserPrefs.cacheDir().toFile());
                 // apply theme
-                this.onThemeChanged(null);
+                this.onSetAppStyle(null);
                 //
                 webPane.webEngine().getLoadWorker().stateProperty().addListener((o, ov, state) -> {
                     if (state == Worker.State.SUCCEEDED) onWebEngineLoadSucceeded();
@@ -307,7 +319,7 @@ public abstract class HtmlViewer<T extends Attributes> extends WorkbenchMainView
         openedItem = item;
         navigatePos = null != navigatePos ? navigatePos : item;
         final Path htmlFile = createViewableHtmlFile();
-        System.out.println("LOAD htmlFile: ".concat(htmlFile.toString()));
+        logger.warn("LOAD htmlFile: ".concat(htmlFile.toString()));
         FxHelper.runLater(() -> webPane.webEngine().load(htmlFile.toUri().toString()));
     }
 

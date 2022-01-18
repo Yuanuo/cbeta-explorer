@@ -4,37 +4,28 @@ import appxi.cbeta.Book;
 import appxi.cbeta.Chapter;
 import javafx.event.Event;
 import javafx.scene.control.Button;
-import javafx.scene.control.ContextMenu;
-import javafx.scene.control.MenuItem;
 import javafx.scene.control.Tooltip;
-import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
-import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
-import javafx.scene.input.MouseButton;
 import org.appxi.cbeta.explorer.AppContext;
 import org.appxi.cbeta.explorer.event.BookEvent;
 import org.appxi.cbeta.explorer.event.GenericEvent;
 import org.appxi.cbeta.explorer.event.ProgressEvent;
 import org.appxi.cbeta.explorer.event.SearcherEvent;
 import org.appxi.javafx.app.AppEvent;
-import org.appxi.javafx.control.TreeViewEx;
 import org.appxi.javafx.helper.FxHelper;
 import org.appxi.javafx.helper.TreeHelper;
 import org.appxi.javafx.visual.MaterialIcon;
 import org.appxi.javafx.workbench.WorkbenchPane;
 import org.appxi.javafx.workbench.WorkbenchViewController;
 import org.appxi.javafx.workbench.views.WorkbenchSideViewController;
-import org.appxi.util.StringHelper;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 public class BooklistExplorer extends WorkbenchSideViewController {
-    private TreeViewEx<Book> treeView;
+    private BooklistTreeView treeView;
 
     public BooklistExplorer(WorkbenchPane workbench) {
         super("BOOKS", workbench);
@@ -85,94 +76,8 @@ public class BooklistExplorer extends WorkbenchSideViewController {
         //
         this.topBar.addRight(btnProfile, btnProfiles, btnSearch, btnLocate);
         //
-        this.treeView = new TreeViewEx<>();
-        this.treeView.setShowRoot(false);
-        this.treeView.setEnterOrDoubleClickAction((e, t) -> app.eventBus.fireEvent(new BookEvent(BookEvent.OPEN, t.getValue())));
-        this.treeView.setCellFactory(v -> new TreeCell<>() {
-            Book updatedItem;
-
-            @Override
-            protected void updateItem(Book item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty) {
-                    updatedItem = null;
-                    this.setText(null);
-                    this.setTooltip(null);
-                    this.setGraphic(null);
-                    return;
-                }
-                if (item == updatedItem)
-                    return;//
-                updatedItem = item;
-                String text = item.title;
-                if (null != item.path && item.volumes.size() > 0) {
-                    text = StringHelper.concat(text, "（", item.volumes.size(), "卷）");
-                }
-                this.setText(AppContext.displayText(text));
-                //
-                this.setTooltip(new Tooltip(this.getText().concat(StringHelper.isBlank(item.authorInfo) ? ""
-                        : "\n".concat(item.id).concat(" by ").concat(AppContext.displayText(item.authorInfo))
-                )));
-                //
-                this.setGraphic((this.getTreeItem().isLeaf() ? MaterialIcon.ARTICLE
-                        : (this.getTreeItem().isExpanded() ? MaterialIcon.FOLDER_OPEN : MaterialIcon.FOLDER)).graphic());
-                //
-                this.getStyleClass().remove("visited");
-                if (null != item.path && null != AppContext.recentBooks.getProperty(item.id)) {
-                    this.getStyleClass().add("visited");
-                }
-            }
-        });
-
-        // dynamic context-menu
-        this.treeView.setOnContextMenuRequested(this::handleEventOnContextMenuRequested);
-        // hide context-menu
-        this.treeView.setOnMousePressed(event -> {
-            if (event.getButton() != MouseButton.SECONDARY) {
-                if (null != contextMenu && contextMenu.isShowing())
-                    contextMenu.hide();
-            }
-        });
-        //
+        this.treeView = new BooklistTreeView(this);
         this.viewport.setCenter(this.treeView);
-    }
-
-    private ContextMenu contextMenu;
-
-    private void handleEventOnContextMenuRequested(ContextMenuEvent event) {
-        final TreeItem<Book> selectedItem = this.treeView.getSelectionModel().getSelectedItem();
-        final List<MenuItem> menuItems = new ArrayList<>(16);
-        //
-        if (null != selectedItem) {
-            final Book book = selectedItem.getValue();
-            MenuItem menuItem;
-            // view
-            if (book.id != null && book.path != null) {
-                menuItem = new MenuItem("查看");
-                menuItem.setGraphic(MaterialIcon.VISIBILITY.graphic());
-                menuItem.setOnAction(event1 -> app.eventBus.fireEvent(new BookEvent(BookEvent.OPEN, book)));
-                menuItems.add(menuItem);
-            }
-
-            // search in this
-            menuItem = new MenuItem("从这里搜索");
-            menuItem.setGraphic(MaterialIcon.FIND_IN_PAGE.graphic());
-            menuItem.setOnAction(event1 -> {
-                if (null == book.id) {
-                    book.attr("scope", "nav/".concat(AppContext.profile().template().name())
-                            .concat("/").concat(TreeHelper.path(selectedItem)));
-                }
-                app.eventBus.fireEvent(SearcherEvent.ofSearch(null, book));
-            });
-            menuItems.add(menuItem);
-        }
-
-        //
-        event.consume();
-        if (null != contextMenu && contextMenu.isShowing())
-            contextMenu.hide();
-        contextMenu = new ContextMenu(menuItems.toArray(new MenuItem[0]));
-        contextMenu.show(this.treeView, event.getScreenX(), event.getScreenY());
     }
 
     @Override
@@ -215,12 +120,10 @@ public class BooklistExplorer extends WorkbenchSideViewController {
     @Override
     public void onViewportShowing(boolean firstTime) {
         if (firstTime && null != treeView && null != AppContext.profile()) {
-            FxHelper.runThread(() -> {
-                final TreeItem<Book> rootItem = AppContext.booklistProfile.booklist().tree();
-                if (treeView.getRoot() == rootItem) return;
-                rootItem.setExpanded(true);
-                treeView.setRoot(rootItem);
-            });
+            final TreeItem<Book> rootItem = AppContext.booklistProfile.booklist().tree();
+            if (treeView.getRoot() == rootItem) return;
+            rootItem.setExpanded(true);
+            treeView.setRoot(rootItem);
         }
     }
 

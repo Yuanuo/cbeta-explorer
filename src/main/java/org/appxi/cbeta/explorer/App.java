@@ -33,7 +33,7 @@ import java.util.Optional;
 public class App extends WorkbenchApp {
     public static final String ID = "cbetaExplorer";
     public static final String NAME = "智悲乐藏";
-    public static final String VERSION = "22.01.05";
+    public static final String VERSION = "22.01.20";
     private static App instance;
 
     public App() {
@@ -52,6 +52,7 @@ public class App extends WorkbenchApp {
         // 在此设置数据库基本环境，以供后续的功能正常使用
         DaoHelper.setupDatabaseService(UserPrefs.dataDir().resolve(".db"));
         new Thread(WebPane::preloadLibrary).start();
+        AppContext.setupInitialize(this);
     }
 
     @Override
@@ -94,7 +95,7 @@ public class App extends WorkbenchApp {
             if (null == css) return;
             System.out.println("CSS < " + css);
             if (css.endsWith("web.css")) {
-                eventBus.fireEvent(new VisualEvent(VisualEvent.STYLE_CHANGED, null));
+                eventBus.fireEvent(new VisualEvent(VisualEvent.SET_STYLE, null));
             } else if (scene.getStylesheets().contains(css)) {
                 final int idx = scene.getStylesheets().indexOf(css);
                 String finalCss = css;

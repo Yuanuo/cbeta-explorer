@@ -137,7 +137,7 @@ public abstract class BookdataController extends WorkbenchSideViewController {
                 DaoService.getBookdataDao().delete(list);
                 listView.getItems().removeAll(list);
             } catch (SQLException t) {
-                AppContext.toastError(t.getMessage());
+                app.toastError(t.getMessage());
             }
         };
         final MenuItem removeSel = new MenuItem("删除选中");

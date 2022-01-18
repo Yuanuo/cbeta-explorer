@@ -16,9 +16,9 @@ import org.appxi.cbeta.explorer.event.ProgressEvent;
 import org.appxi.holder.BoolHolder;
 import org.appxi.holder.IntHolder;
 import org.appxi.javafx.app.AppEvent;
-import org.appxi.javafx.app.BaseApp;
 import org.appxi.javafx.app.DesktopApp;
 import org.appxi.javafx.helper.TreeHelper;
+import org.appxi.javafx.workbench.WorkbenchApp;
 import org.appxi.prefs.Preferences;
 import org.appxi.prefs.PreferencesInProperties;
 import org.appxi.prefs.UserPrefs;
@@ -36,7 +36,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-record IndexingTask(BaseApp app) implements Runnable {
+record IndexingTask(WorkbenchApp app) implements Runnable {
     @Override
     public void run() {
         final PiecesRepository repository = AppContext.getBean(PiecesRepository.class);
@@ -45,13 +45,13 @@ record IndexingTask(BaseApp app) implements Runnable {
         final BoolHolder breaking = new BoolHolder(false);
         final EventHandler<AppEvent> handleEventToBreaking = event -> breaking.value = true;
         app.eventBus.addEventHandler(AppEvent.STOPPING, handleEventToBreaking);
-        App.app().eventBus.fireEvent(new ProgressEvent(ProgressEvent.INDEXING, -1, 1, ""));
+        app.eventBus.fireEvent(new ProgressEvent(ProgressEvent.INDEXING, -1, 1, ""));
         try {
             running(repository, breaking);
         } finally {
             // unbind
             app.eventBus.removeEventHandler(AppEvent.STOPPING, handleEventToBreaking);
-            App.app().eventBus.fireEvent(new ProgressEvent(ProgressEvent.INDEXING, 1, 1, ""));
+            app.eventBus.fireEvent(new ProgressEvent(ProgressEvent.INDEXING, 1, 1, ""));
         }
     }
 
@@ -175,7 +175,7 @@ record IndexingTask(BaseApp app) implements Runnable {
         }
         if (updated) {
             IndexedManager.saveIndexedVersions();
-            AppContext.toast("全文索引已更新！");
+            app.toast("全文索引已更新！");
         }
     }
 }

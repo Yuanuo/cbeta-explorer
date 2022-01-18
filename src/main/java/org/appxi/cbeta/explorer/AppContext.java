@@ -6,8 +6,6 @@ import appxi.cbeta.TripitakaMap;
 import org.appxi.cbeta.explorer.book.BooklistProfile;
 import org.appxi.cbeta.explorer.dao.DaoService;
 import org.appxi.cbeta.explorer.event.GenericEvent;
-import org.appxi.javafx.control.Notifications;
-import org.appxi.javafx.helper.FxHelper;
 import org.appxi.prefs.Preferences;
 import org.appxi.prefs.PreferencesInMemory;
 import org.appxi.prefs.UserPrefs;
@@ -24,6 +22,7 @@ import org.springframework.core.io.UrlResource;
 
 import java.net.URL;
 import java.util.List;
+import java.util.Map;
 
 public abstract class AppContext {
     private static Bookcase bookcase;
@@ -96,25 +95,11 @@ public abstract class AppContext {
     private AppContext() {
     }
 
-    public static void toast(String msg) {
-        FxHelper.runLater(() -> Notifications.of().description(msg)
-                .owner(App.app().getPrimaryStage())
-                .showInformation()
-        );
-    }
-
-    public static void toastError(String msg) {
-        FxHelper.runLater(() -> Notifications.of().description(msg)
-                .owner(App.app().getPrimaryStage())
-                .showError()
-        );
+    static void setupInitialize(App app) {
+        app.eventBus.addEventHandler(GenericEvent.DISPLAY_HAN_CHANGED, event -> displayHan = event.data());
     }
 
     private static HanLang displayHan;
-
-    public static void setDisplayHan(HanLang displayHan) {
-        AppContext.displayHan = displayHan;
-    }
 
     public static HanLang getDisplayHan() {
         if (null == displayHan)
@@ -139,14 +124,12 @@ public abstract class AppContext {
     }
 
     public static String ascii(String text) {
-        List<Pinyin> pinyinList = PinyinConvertors.convert(text);
+        final List<Map.Entry<Character, Pinyin>> pinyinList = PinyinConvertors.convert(text);
         StringBuilder result = new StringBuilder(pinyinList.size() * (6));
-
-        for (int i = 0; i < text.length(); ++i) {
-            Pinyin pinyin = pinyinList.get(i);
-            if (pinyin == Pinyin.none5) result.append(text.charAt(i));
-            else result.append(" ").append(pinyin.getPinyinWithoutTone()).append(" ");
-        }
+        pinyinList.forEach(entry -> {
+            if (null == entry.getValue()) result.append(entry.getKey());
+            else result.append(" ").append(entry.getValue().getPinyinWithoutTone()).append(" ");
+        });
 
         // 原始数据中的空格有多有少，此处需要保证仅有1个空格，以方便匹配用户输入的数据
         return result.toString().replaceAll("\s+", " ").strip();
