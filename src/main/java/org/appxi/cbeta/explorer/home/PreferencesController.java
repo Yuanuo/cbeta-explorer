@@ -36,10 +36,12 @@ public class PreferencesController extends WorkbenchSideToolController {
     public void onViewportShowing(boolean firstTime) {
         SettingsPane settingsPane = new SettingsPane();
 
-        settingsPane.getOptions().add(app.visualProvider.settingOptionForFontSize());
-        settingsPane.getOptions().add(app.visualProvider.settingOptionForTheme());
-        settingsPane.getOptions().add(app.visualProvider.settingOptionForSwatch());
-        settingsPane.getOptions().add(app.visualProvider.settingOptionForWebZoom());
+        settingsPane.getOptions().add(app.visualProvider.optionForFontName());
+        settingsPane.getOptions().add(app.visualProvider.optionForFontSize());
+        settingsPane.getOptions().add(app.visualProvider.optionForTheme());
+        settingsPane.getOptions().add(app.visualProvider.optionForSwatch());
+        settingsPane.getOptions().add(app.visualProvider.optionForWebFontName());
+        settingsPane.getOptions().add(app.visualProvider.optionForWebFontSize());
 
         settingsPane.getOptions().add(new DefaultOption<>("简繁体",
                 "以 简体/繁体 显示经名标题、阅读视图等经藏数据", "UI",
@@ -56,7 +58,6 @@ public class PreferencesController extends WorkbenchSideToolController {
                                 if (ov == null || Objects.equals(ov, nv)) return;
                                 this.valueProperty.set(nv);
                                 //
-                                AppContext.setDisplayHan(nv);
                                 UserPrefs.prefs.setProperty("display.han", nv.lang);
                                 app.eventBus.fireEvent(new GenericEvent(GenericEvent.DISPLAY_HAN_CHANGED, nv));
                             });
