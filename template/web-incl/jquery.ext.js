@@ -57,12 +57,12 @@ jQuery.fn.prevText = function(len = 15) {
 	let result = '';
 	let $node = this;
 	do {
-		let $prev = $node.prev();
-		if ($prev.length > 0) {
-			result = $prev.text() + result;
-			if (result.length >= len) return result.substr(result.length - len);
-			$node = $prev;
-		} else $node = $node.parent();
+        let $contents = $node.parent().contents();
+        for (let i = $contents.index($node) - 1; i > -1; i--) {
+			result = $contents.eq(i).text() + result;
+			if (result.length >= len) return result.substring(result.length - len, result.length);
+        }
+		$node = $node.parent();
 		if ($node.is('body')) break;
 	}
 	while($node.length > 0);
@@ -72,12 +72,12 @@ jQuery.fn.nextText = function(len = 15) {
 	let result = '';
 	let $node = this;
 	do {
-		let $next = $node.next();
-		if ($next.length > 0) {
-			result = result + $next.text();
-			if (result.length >= len) return result.substr(0, len);
-			$node = $next;
-		} else $node = $node.parent();
+        let $contents = $node.parent().contents();
+        for (let i = $contents.index($node) + 1; i < $contents.length; i++) {
+			result = result + $contents.eq(i).text();
+			if (result.length >= len) return result.substring(0, len);
+        }
+        $node = $node.parent();
 		if ($node.is('body')) break;
 	}
 	while($node.length > 0);

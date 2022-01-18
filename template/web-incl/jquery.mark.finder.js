@@ -12,7 +12,9 @@ const markFinder = {
     find: (term, scrollToVisible = true) => {
         // highlight results
         $(document.body).unmark();
-        $(document.body).mark(term);
+        $(document.body).mark(term, {
+            acrossElements: true,
+        });
 
         // count results
         markFinder.resultsCount = $('mark').length;
@@ -59,7 +61,7 @@ const markFinder = {
     },
 
     updateState: () => {
-        if (javaApp) javaApp.updateFinderState(markFinder.currentResult, markFinder.resultsCount);
+        if (window.javaApp) javaApp.updateFinderState(markFinder.currentResult, markFinder.resultsCount);
     },
 
     scrollToCurrent: () => {
@@ -88,7 +90,7 @@ const markFinder = {
     getHighlights: (textCutLen = 21) => {
         const result = [];
         $("body > article mark").each(function(i) {
-            result.push((i+1) + "#" + $(this).centerText(textCutLen));
+            result.push((i+1) + "#" + $(this).centerText(textCutLen).replaceAll(/\n\s+/g, ' '));
         });
         return result.join("\n");
     },
