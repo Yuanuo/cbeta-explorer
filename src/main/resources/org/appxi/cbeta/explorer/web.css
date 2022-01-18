@@ -61,6 +61,7 @@
 .place-inline {
     font-size: 85%;
     font-weight: normal;
+    opacity: .8;
 }
 .place-inline::before {
     content: '（';
@@ -162,7 +163,7 @@ article {
 }
 
 .edit-mod-sharp-on span.note.mod:before {
-    content: "[#]";
+    content: "✱";
     font-size: 85%;
     font-weight: 600;
     color: #20b771;
