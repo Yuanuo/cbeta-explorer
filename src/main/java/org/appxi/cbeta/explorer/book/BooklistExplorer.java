@@ -123,7 +123,7 @@ public class BooklistExplorer extends WorkbenchSideViewController {
             final TreeItem<Book> rootItem = AppContext.booklistProfile.booklist().tree();
             if (treeView.getRoot() == rootItem) return;
             rootItem.setExpanded(true);
-            treeView.setRoot(rootItem);
+            FxHelper.runLater(() -> treeView.setRoot(rootItem));
         }
     }
 
