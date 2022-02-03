@@ -42,6 +42,8 @@ public class PreferencesController extends WorkbenchSideToolController {
         settingsPane.getOptions().add(app.visualProvider.optionForSwatch());
         settingsPane.getOptions().add(app.visualProvider.optionForWebFontName());
         settingsPane.getOptions().add(app.visualProvider.optionForWebFontSize());
+        settingsPane.getOptions().add(app.visualProvider.optionForWebPageColor());
+        settingsPane.getOptions().add(app.visualProvider.optionForWebTextColor());
 
         settingsPane.getOptions().add(new DefaultOption<>("简繁体",
                 "以 简体/繁体 显示经名标题、阅读视图等经藏数据", "UI",

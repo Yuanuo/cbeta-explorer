@@ -63,7 +63,7 @@ public abstract class HtmlViewer<T extends Attributes> extends WorkbenchMainView
 
     private final EventHandler<VisualEvent> onSetAppStyle = this::onSetAppStyle;
     private final EventHandler<AppEvent> onAppEventStopping = this::onAppEventStopping;
-    private final EventHandler<VisualEvent> onSetWebFont = this::onSetWebFont;
+    private final EventHandler<VisualEvent> onSetWebStyle = this::onSetWebStyle;
     private final InvalidationListener onWebViewBodyResize = this::onWebViewBodyResize;
 
     protected WebPane webPane;
@@ -78,7 +78,7 @@ public abstract class HtmlViewer<T extends Attributes> extends WorkbenchMainView
     public void initialize() {
         app.eventBus.addEventHandler(VisualEvent.SET_STYLE, onSetAppStyle);
         app.eventBus.addEventHandler(AppEvent.STOPPING, onAppEventStopping);
-        app.eventBus.addEventHandler(VisualEvent.SET_WEB_FONT, onSetWebFont);
+        app.eventBus.addEventHandler(VisualEvent.SET_WEB_STYLE, onSetWebStyle);
     }
 
     @Override
@@ -223,7 +223,7 @@ public abstract class HtmlViewer<T extends Attributes> extends WorkbenchMainView
         saveUserExperienceData();
     }
 
-    protected void onSetWebFont(VisualEvent event) {
+    protected void onSetWebStyle(VisualEvent event) {
         if (null == this.webPane) return;
         saveUserExperienceData();
         this.onSetAppStyle(null);
@@ -238,9 +238,16 @@ public abstract class HtmlViewer<T extends Attributes> extends WorkbenchMainView
                 :root {
                     --font-family: tibetan, "%s", AUTO !important;
                     --zoom: %.2f !important;
+                    --text-color: %s;
                 }
-                """.formatted(app.visualProvider.webFontName(), app.visualProvider.webFontSize())
-                .getBytes(StandardCharsets.UTF_8);
+                body {
+                    background-color: %s;
+                }
+                """.formatted(app.visualProvider.webFontName(),
+                app.visualProvider.webFontSize(),
+                app.visualProvider.webTextColor(),
+                app.visualProvider.webPageColor()
+        ).getBytes(StandardCharsets.UTF_8);
         Consumer<InputStream> consumer = stream -> {
             try (BufferedInputStream in = new BufferedInputStream(stream)) {
                 int pos = allBytes.value.length;
@@ -272,7 +279,7 @@ public abstract class HtmlViewer<T extends Attributes> extends WorkbenchMainView
         saveUserExperienceData();
         app.eventBus.removeEventHandler(VisualEvent.SET_STYLE, onSetAppStyle);
         app.eventBus.removeEventHandler(AppEvent.STOPPING, onAppEventStopping);
-        app.eventBus.removeEventHandler(VisualEvent.SET_WEB_FONT, onSetWebFont);
+        app.eventBus.removeEventHandler(VisualEvent.SET_WEB_STYLE, onSetWebStyle);
         if (null != webPane) webPane.release();
     }
 
