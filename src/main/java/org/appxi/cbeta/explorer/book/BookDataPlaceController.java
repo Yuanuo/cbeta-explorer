@@ -15,7 +15,7 @@ public class BookDataPlaceController extends WorkbenchSideViewController {
         super("BOOK-DATA", workbench);
         instance = null == instance ? this : instance;
         this.setTitles(null);
-        this.viewGraphic.set(MaterialIcon.IMPORT_CONTACTS.graphic());
+        this.graphic.set(MaterialIcon.IMPORT_CONTACTS.graphic());
     }
 
     @Override

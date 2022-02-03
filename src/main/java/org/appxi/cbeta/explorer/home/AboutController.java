@@ -24,7 +24,7 @@ public class AboutController extends WorkbenchSideToolController {
     public AboutController(WorkbenchPane workbench) {
         super("ABOUT", workbench);
         this.setTitles("关于");
-        this.viewGraphic.set(MaterialIcon.INFO_OUTLINE.graphic());
+        this.graphic.set(MaterialIcon.INFO_OUTLINE.graphic());
     }
 
     @Override
@@ -96,7 +96,7 @@ public class AboutController extends WorkbenchSideToolController {
         dialogPane.getButtonTypes().add(ButtonType.OK);
         //
         final Dialog<?> dialog = new Dialog<>();
-        dialog.setTitle(viewTitle.get());
+        dialog.setTitle(title.get());
         dialog.setDialogPane(dialogPane);
         dialog.initOwner(app.getPrimaryStage());
         dialog.show();

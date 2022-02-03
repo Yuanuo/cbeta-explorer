@@ -21,7 +21,7 @@ public class WidgetsController extends WorkbenchSideViewController {
     public WidgetsController(WorkbenchPane workbench) {
         super("WIDGETS", workbench);
         this.setTitles("工具", "辅助工具集");
-        this.viewGraphic.set(MaterialIcon.NOW_WIDGETS.graphic());
+        this.graphic.set(MaterialIcon.NOW_WIDGETS.graphic());
     }
 
     @Override

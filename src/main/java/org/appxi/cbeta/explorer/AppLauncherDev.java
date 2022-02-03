@@ -42,7 +42,7 @@ public class AppLauncherDev extends AppLauncher {
         public ScenicView(WorkbenchPane workbench) {
             super("ScenicView", workbench);
             this.setTitles("ScenicView", "ScenicView");
-            this.viewGraphic.set(MaterialIcon.ACCESSIBILITY.graphic());
+            this.graphic.set(MaterialIcon.ACCESSIBILITY.graphic());
         }
 
         @Override
@@ -61,7 +61,7 @@ public class AppLauncherDev extends AppLauncher {
         public MaterialIcons(WorkbenchPane application) {
             super("MaterialIcons", application);
             this.setTitles("FontIcon 图标 MaterialIcons", "MaterialIcons");
-            this.viewGraphic.set(MaterialIcon.PHOTO_LIBRARY.graphic());
+            this.graphic.set(MaterialIcon.PHOTO_LIBRARY.graphic());
         }
 
         @Override
@@ -94,7 +94,7 @@ public class AppLauncherDev extends AppLauncher {
             dialogPane.setContent(scrollPane);
 
             final Alert alert = new Alert(Alert.AlertType.NONE);
-            alert.setTitle(viewTitle.get() + " Total " + MaterialIcon.values().length + " Icons");
+            alert.setTitle(title.get() + " Total " + MaterialIcon.values().length + " Icons");
             alert.setDialogPane(dialogPane);
             alert.initOwner(app.getPrimaryStage());
             alert.show();

@@ -3,6 +3,7 @@ package org.appxi.cbeta.explorer.book;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.concurrent.Worker;
+import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.print.PageLayout;
 import javafx.print.PageOrientation;
@@ -267,7 +268,7 @@ public abstract class HtmlViewer<T extends Attributes> extends WorkbenchMainView
     }
 
     @Override
-    public void onViewportClosing(boolean selected) {
+    public void onViewportClosing(Event event, boolean selected) {
         saveUserExperienceData();
         app.eventBus.removeEventHandler(VisualEvent.SET_STYLE, onSetAppStyle);
         app.eventBus.removeEventHandler(AppEvent.STOPPING, onAppEventStopping);

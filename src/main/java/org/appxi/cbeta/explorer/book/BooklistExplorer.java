@@ -30,7 +30,7 @@ public class BooklistExplorer extends WorkbenchSideViewController {
     public BooklistExplorer(WorkbenchPane workbench) {
         super("BOOKS", workbench);
         this.setTitles("典籍");
-        this.viewGraphic.set(MaterialIcon.LOCAL_LIBRARY.graphic());
+        this.graphic.set(MaterialIcon.LOCAL_LIBRARY.graphic());
     }
 
     @Override
@@ -103,7 +103,7 @@ public class BooklistExplorer extends WorkbenchSideViewController {
         event.consume();
         final BookXmlViewer viewController = (BookXmlViewer) workbench.findMainViewController(book.id);
         if (null != viewController) {
-            workbench.selectMainView(viewController.viewId.get());
+            workbench.selectMainView(viewController.id.get());
             FxHelper.runLater(() -> viewController.navigate(chapter));
             return;
         }
@@ -113,7 +113,7 @@ public class BooklistExplorer extends WorkbenchSideViewController {
             controller.attr(Chapter.class, chapter);
             workbench.addWorkbenchViewAsMainView(controller, false);
             controller.initialize();
-            workbench.selectMainView(controller.viewId.get());
+            workbench.selectMainView(controller.id.get());
         });
     }
 

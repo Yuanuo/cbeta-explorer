@@ -37,7 +37,7 @@ public class RecentViewsController extends WorkbenchNoneViewController {
                 final Book book = AppContext.booklistProfile.getBook(key);
                 // 如果此书不存在于当前书单，则需要移除（如果存在）
                 if (null == book) {
-                    Optional.ofNullable(workbench.findMainViewTab(key)).ifPresent(workbench.mainViews::closeTabs);
+                    Optional.ofNullable(workbench.findMainViewHandler(key)).ifPresent(workbench.mainViews::closeTabs);
                     continue;
                 }
                 //
@@ -59,7 +59,7 @@ public class RecentViewsController extends WorkbenchNoneViewController {
             if (!swapRecentViews.isEmpty()) {
                 swapRecentViews.forEach(WorkbenchViewController::initialize);
                 if (null != swapRecentViewSelected.value)
-                    workbench.selectMainView(swapRecentViewSelected.value.viewId.get());
+                    workbench.selectMainView(swapRecentViewSelected.value.id.get());
             }
         }));
     }

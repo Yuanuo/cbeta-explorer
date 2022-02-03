@@ -25,7 +25,7 @@ public class PreferencesController extends WorkbenchSideToolController {
     public PreferencesController(WorkbenchPane workbench) {
         super("PREFERENCES", workbench);
         this.setTitles("设置");
-        this.viewGraphic.set(MaterialIcon.TUNE.graphic());
+        this.graphic.set(MaterialIcon.TUNE.graphic());
     }
 
     @Override
@@ -84,7 +84,7 @@ public class PreferencesController extends WorkbenchSideToolController {
         dialogPane.getButtonTypes().add(ButtonType.OK);
         //
         Dialog<?> dialog = new Dialog<>();
-        dialog.setTitle(viewTitle.get());
+        dialog.setTitle(title.get());
         dialog.setDialogPane(dialogPane);
         dialog.getDialogPane().setPrefWidth(600);
         dialog.initOwner(app.getPrimaryStage());

@@ -29,7 +29,7 @@ public class SearchController extends WorkbenchSideToolController {
         super("SEARCH", workbench);
         this.setTitles("搜索", "全文检索 (Ctrl+H)");
         this.attr(Pos.class, Pos.CENTER_LEFT);
-        this.viewGraphic.set(MaterialIcon.SEARCH.graphic());
+        this.graphic.set(MaterialIcon.SEARCH.graphic());
     }
 
     @Override
@@ -87,11 +87,11 @@ public class SearchController extends WorkbenchSideToolController {
                 .findFirst()
                 .orElseGet(() -> new SearcherController("SEARCHER-".concat(DigestHelper.uid()), workbench));
         FxHelper.runLater(() -> {
-            if (!workbench.existsMainView(searcher.viewId.get())) {
+            if (!workbench.existsMainView(searcher.id.get())) {
                 workbench.addWorkbenchViewAsMainView(searcher, false);
                 searcher.initialize();
             }
-            workbench.selectMainView(searcher.viewId.get());
+            workbench.selectMainView(searcher.id.get());
             searcher.setSearchScope(scope);
             if (null != indexingEvent)
                 searcher.handleEventOnIndexingToBlocking.handle(indexingEvent);
@@ -139,7 +139,7 @@ public class SearchController extends WorkbenchSideToolController {
                         if (null != controller) controller.handleEventOnIndexingToBlocking.handle(indexingEvent);
                         new Thread(new IndexingTask(app)).start();
                     }, () -> {
-                        if (null != controller) workbench.mainViews.removeTabs(controller.tab.get());
+                        if (null != controller) workbench.mainViews.removeTabs(workbench.mainViews.findById(controller.id.get()));
                     });
         });
     }

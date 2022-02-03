@@ -6,6 +6,7 @@ import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -227,7 +228,7 @@ public class SearcherController extends WorkbenchMainViewController {
     }
 
     @Override
-    public void onViewportClosing(boolean selected) {
+    public void onViewportClosing(Event event, boolean selected) {
         app.eventBus.removeEventHandler(ProgressEvent.INDEXING, handleEventOnIndexingToBlocking);
     }
 

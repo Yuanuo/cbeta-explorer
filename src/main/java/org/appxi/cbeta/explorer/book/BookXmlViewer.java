@@ -4,6 +4,7 @@ import appxi.cbeta.Book;
 import appxi.cbeta.BookDocument;
 import appxi.cbeta.BookDocumentEx;
 import appxi.cbeta.Chapter;
+import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.geometry.Orientation;
 import javafx.scene.control.Alert;
@@ -82,6 +83,7 @@ public class BookXmlViewer extends HtmlViewer<Chapter> {
         super(book.id, workbench);
         this.book = book;
         this.bookDocument = new BookDocumentEx(AppContext.bookcase(), book);
+        this.appTitle.unbind();
         this.setTitles();
     }
 
@@ -101,8 +103,8 @@ public class BookXmlViewer extends HtmlViewer<Chapter> {
             mainTitle = mainTitle.concat(" by ").concat(authorInfo);
         }
 
-        this.viewTitle.set(viewTitle);
-        this.viewTooltip.set(viewTooltip);
+        this.title.set(viewTitle);
+        this.tooltip.set(viewTooltip);
         this.appTitle.set(mainTitle);
     }
 
@@ -152,7 +154,7 @@ public class BookXmlViewer extends HtmlViewer<Chapter> {
     private void addTool_SideControl() {
         final Button button = MaterialIcon.IMPORT_CONTACTS.flatButton();
         button.setTooltip(new Tooltip("显示本书相关数据（目录、书签等）"));
-        button.setOnAction(event -> workbench.selectSideTool(BookDataPlaceController.getInstance().viewId.get()));
+        button.setOnAction(event -> workbench.selectSideTool(BookDataPlaceController.getInstance().id.get()));
         webPane.toolbar.addLeft(button);
     }
 
@@ -446,8 +448,8 @@ public class BookXmlViewer extends HtmlViewer<Chapter> {
     }
 
     @Override
-    public void onViewportClosing(boolean selected) {
-        super.onViewportClosing(selected);
+    public void onViewportClosing(Event event, boolean selected) {
+        super.onViewportClosing(event, selected);
         app.eventBus.removeEventHandler(GenericEvent.DISPLAY_HAN_CHANGED, onDisplayHanChanged);
         app.eventBus.fireEvent(new BookEvent(BookEvent.CLOSE, this.book, openedItem));
     }

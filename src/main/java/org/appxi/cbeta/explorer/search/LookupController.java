@@ -35,7 +35,7 @@ public class LookupController extends WorkbenchSideToolController {
         super("LOOKUP", workbench);
         this.setTitles("检索", "快捷检索 (Ctrl+G)");
         this.attr(Pos.class, Pos.CENTER_LEFT);
-        this.viewGraphic.set(MaterialIcon.NEAR_ME.graphic());
+        this.graphic.set(MaterialIcon.NEAR_ME.graphic());
     }
 
     private long lastShiftKeyPressedTime;
