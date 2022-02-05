@@ -36,6 +36,7 @@ public class PreferencesController extends WorkbenchSideToolController {
     public void onViewportShowing(boolean firstTime) {
         SettingsPane settingsPane = new SettingsPane();
 
+        settingsPane.getOptions().add(app.visualProvider.optionForFontSmooth());
         settingsPane.getOptions().add(app.visualProvider.optionForFontName());
         settingsPane.getOptions().add(app.visualProvider.optionForFontSize());
         settingsPane.getOptions().add(app.visualProvider.optionForTheme());
