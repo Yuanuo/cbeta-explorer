@@ -76,6 +76,8 @@ public class AppPreloader extends Preloader {
                 Theme.getDefault().assignTo(primaryStage.getScene());
                 Swatch.getDefault().assignTo(primaryStage.getScene());
                 Visual.getDefault().assignTo(primaryStage.getScene());
+                Optional.ofNullable(AppPreloader.class.getResource("app_desktop.css"))
+                        .ifPresent(v -> primaryStage.getScene().getStylesheets().add(v.toExternalForm()));
                 themed = true;
             }
             // 3，提示并让用户选择数据源
@@ -83,12 +85,12 @@ public class AppPreloader extends Preloader {
                     .header("选择使用Bookcase Zip数据包 或者 数据目录？", null)
                     .owner(primaryStage)
                     .cards(CardChooser.ofCard("Bookcase数据包")
-                                    .description("CBETA官方发布的Bookcase Zip数据包。文件名类似于“bookcase_v061_20210710.zip。")
+                                    .description("CBETA官方发布的Bookcase Zip数据包。文件名类似于“bookcase_v061_20210710.zip”。")
                                     .graphic(MaterialIcon.ARCHIVE.graphic())
                                     .userData(true)
                                     .get(),
                             CardChooser.ofCard("Bookcase数据目录")
-                                    .description("CBETA官方阅读器CBReader自带的Bookcase数据目录。")
+                                    .description("CBETA官方阅读器CBReader自带的Bookcase数据目录。文件夹类似于“Bookcase/CBETA/”。")
                                     .graphic(MaterialIcon.FOLDER.graphic())
                                     .userData(false)
                                     .get(),
