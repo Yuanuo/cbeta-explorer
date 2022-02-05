@@ -10,10 +10,10 @@
     -fx-min-width: 12.5em;
 }
 
-.font-icon.dev:hover{
+.icon-text.dev:hover{
     -fx-effect: dropshadow( three-pass-box , derive(-fx-text-fill,0%) , 0.01em, 0.0 , 0, 0);
 }
-.font-icon.dev:selected{
+.icon-text.dev:selected{
     -fx-effect: dropshadow( three-pass-box , derive(-fx-text-fill,0%) , 0.01em, 0.0 , 0, 0);
 }
 
@@ -79,23 +79,25 @@
 .notification-popup > * {
     -fx-padding: .5em;
 }
-.notification-popup .description .font-icon {
+.notification-popup .description .icon-text {
     -fx-font-size: 3em;
-    -fx-fill: -fx-accent;
+    -fx-text-fill: -fx-accent;
 }
 
 .card-chooser .card-view.focused {
     -fx-border-color: -fx-accent;
     -fx-border-radius: 3;
 }
-.card-chooser .card-view .font-icon {
-    -fx-font-size: 3em;
-    -fx-opacity: .5;
+.card-chooser .card-view .icon-text {
+    -fx-font-size: 2.5em;
+    -fx-opacity: .85;
 }
 .card-chooser .card-view .title {
     -fx-font-weight: 700;
+    -fx-text-fill: ladder(-primary-swatch-500, -text-dark 49%, -text-light 50%);
 }
 .card-chooser .card-view .description {
     -fx-font-size: 85%;
-    -fx-opacity: .75;
+    -fx-opacity: .85;
+    -fx-text-fill: ladder(-primary-swatch-500, -text-dark 49%, -text-light 50%);
 }
