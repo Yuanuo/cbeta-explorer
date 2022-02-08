@@ -2,6 +2,15 @@
 
 这是一款基于CBETA经藏数据进行本地阅读、记录、搜索的应用程序！
 
+## 阅读
+![image](https://user-images.githubusercontent.com/10892032/152895529-09faa134-d9e5-4659-9c65-7ea12e21654f.png)
+
+## 搜索
+![image](https://user-images.githubusercontent.com/10892032/152895661-7354ff44-170c-44af-a76c-caf79253b812.png)
+
+![image](https://user-images.githubusercontent.com/10892032/152895982-05f47055-5130-4299-a3df-875e80754007.png)
+
+
 ## 重要！！
   本程序只是一个阅读程序，本身不提供CBETA经藏数据，由于其数据打包压缩仍然非常庞大！
   运行本程序需要的数据，是CBETA官方提供的阅读器（CBReader）所包含的数据。通常是存在“Bookcase\CBETA”的目录中。
@@ -65,9 +74,9 @@
 ## 多平台支持
 
 由于本程序基于Java/JavaFX/OpenJFX开发，可轻易实现跨平台，目前经过测试的三个平台
-*  Windows 10 （[提供MSI安装程序](https://github.com/Yuanuo/appxi-cbeta-explorer/releases)）
-*  Ubuntu 20.10 （[提供DEB安装程序](https://github.com/Yuanuo/appxi-cbeta-explorer/releases)）
-*  macOS Big Sur （[提供DMG安装程序](https://github.com/Yuanuo/appxi-cbeta-explorer/releases)）
+*  Windows 10 （[提供MSI安装程序](https://github.com/Yuanuo/appxi-cbeta-explorer/releases/latest)）
+*  Ubuntu 20.10 （[提供DEB安装程序](https://github.com/Yuanuo/appxi-cbeta-explorer/releases/latest)）
+*  macOS Big Sur （[提供DMG安装程序](https://github.com/Yuanuo/appxi-cbeta-explorer/releases/latest)）
 
 
 ## 如何使用（绿色版）
@@ -76,20 +85,15 @@
 
     工作在此模式时用户数据和主程序在同一目录，此时若使用“卸载”功能将删除整个目录从而导致用户数据丢失，故请勿在此模式时使用系统“卸载”功能。
 
-+ 在此提供Portable版本并带有CBETA经藏数据的压缩包云盘下载地址
-  + [云盘主目录](https://cloud.189.cn/t/nInQ7zyA7zMr#4p5z)（访问码：4p5z）
-  + 阅读器 + CBETA经藏数据 （文件：cbeta-explorer-21.02.23-data.zip）
-  + 阅读器 + CBETA经藏数据 + 全文索引数据库 （文件：cbeta-explorer-21.02.23-data&index.zip）
-
 + 在此模式下，若要更新阅读器程序版本，直接覆盖安装即可
 
 
 ## 如何使用
 
 + 1、准备程序。本程序默认提供跨三种平台的安装包
-  + Windows（[MSI安装程序](https://github.com/Yuanuo/appxi-cbeta-explorer/releases)）
-  + MacOS（[DEB安装程序](https://github.com/Yuanuo/appxi-cbeta-explorer/releases)）
-  + Ubuntu（[DMG安装程序](https://github.com/Yuanuo/appxi-cbeta-explorer/releases)）
+  + Windows（[MSI安装程序](https://github.com/Yuanuo/appxi-cbeta-explorer/releases/latest)）
+  + MacOS（[DEB安装程序](https://github.com/Yuanuo/appxi-cbeta-explorer/releases/latest)）
+  + Ubuntu（[DMG安装程序](https://github.com/Yuanuo/appxi-cbeta-explorer/releases/latest)）
   + [云盘下载地址](https://cloud.189.cn/t/nInQ7zyA7zMr#4p5z)（访问码：4p5z）
 + 2、准备数据。本程序仅使用CBETA官方的“經文資料檔”，如果本机已经有CBReader阅读器，此阅读器本身即包含了官方“經文資料檔”数据（数据通常在CBReader.exe所在目录），无需再次下载。
   + [下载地址](http://www.cbeta.org/download/cbreader.htm) ，在此页面中查找 “經文資料檔”并选择最新版本下载，下载完成后解压到本地磁盘即可
@@ -99,7 +103,3 @@
 
   小提示：首次启动（或本地经藏数据已更新）时，程序会自动建立全文索引，此时系统CPU资源使用量增大是正常现象（一般情况下20~30分钟左右即可完成，在此期间可正常使用阅读等功能，此时开启一个搜索视图可显示实时索引进度）
 
-
-## 欢迎反馈
-
-欢迎反馈任何BUG或意见。当然也可以提新需求。
