@@ -497,6 +497,7 @@ public class BookXmlViewer extends HtmlViewer<Chapter> {
         if (null != openedItem && Objects.equals(item.path, openedItem.path)) {
             openedItem = item;
             navigatePos = pos;
+            if (null != item.anchor) pos.attr("anchor", item.anchor);
             position(pos);
             return;
         }
