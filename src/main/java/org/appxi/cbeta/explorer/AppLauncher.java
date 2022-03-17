@@ -11,9 +11,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class AppLauncher {
     protected static void beforeLaunch(String dataDirName) {
+        Locale.setDefault(Locale.SIMPLIFIED_CHINESE);
         // 0, set data home
         UserPrefs.localDataDirectory(null != dataDirName ? dataDirName : ".".concat(App.ID), null);
         // 由于在配置文件中不能使用动态变量作为路径，故在此设置日志文件路径

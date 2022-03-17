@@ -48,9 +48,6 @@ public class App extends WorkbenchApp {
     public void init() throws Exception {
         super.init();
         //
-        Locale.setDefault(Locale.SIMPLIFIED_CHINESE);
-        // 在此设置数据库基本环境，以供后续的功能正常使用
-        DaoHelper.setupDatabaseService(UserPrefs.dataDir().resolve(".db"));
         new Thread(WebPane::preloadLibrary).start();
         AppContext.setupInitialize(this);
     }

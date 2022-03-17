@@ -4,6 +4,7 @@ import appxi.cbeta.BookMap;
 import appxi.cbeta.Bookcase;
 import appxi.cbeta.TripitakaMap;
 import org.appxi.cbeta.explorer.book.BooklistProfile;
+import org.appxi.cbeta.explorer.dao.DaoHelper;
 import org.appxi.cbeta.explorer.dao.DaoService;
 import org.appxi.cbeta.explorer.event.GenericEvent;
 import org.appxi.prefs.Preferences;
@@ -32,6 +33,9 @@ public abstract class AppContext {
         AppContext.bookcase = AppContext.bookcase == null ? bookcase : AppContext.bookcase;
         AppContext.bookMap = bookMap == null ? new BookMap(new TripitakaMap(AppContext.bookcase)) : bookMap;
 //        // 如果以上执行出错，程序也尚未初始化完成，只有在基础数据正常时，再加载更多数据
+
+        // 在此设置数据库基本环境，以供后续的功能正常使用
+        DaoHelper.setupDatabaseService(UserPrefs.dataDir().resolve(".db"));
         new Thread(() -> {
             AppContext.booksMap().data();
             DaoService.setupInitialize();
