@@ -28,10 +28,6 @@ module appxi.cbetaExplorer {
     requires static spring.data.commons;
     requires static spring.data.solr;
     requires static spring.tx;
-    requires static org.apache.logging.log4j.core;
-    requires static org.apache.logging.log4j.slf4j;
-    requires static org.apache.logging.log4j.web;
-    requires org.apache.logging.log4j;
     requires org.slf4j;
     requires org.slf4j.simple;
     requires org.apache.commons.logging;

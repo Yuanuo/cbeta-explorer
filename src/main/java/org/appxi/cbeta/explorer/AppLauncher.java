@@ -38,6 +38,7 @@ public class AppLauncher {
         }
         UserPrefs.prefs = new PreferencesInProperties(UserPrefs.confDir().resolve(".prefs"));
         //
+        System.setProperty("com.j256.simplelogger.backend", "SLF4J");
         System.setProperty("javafx.preloader", "org.appxi.cbeta.explorer.AppPreloader");
     }
 
