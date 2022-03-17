@@ -60,6 +60,7 @@ public class BookBasicController extends WorkbenchSideViewController {
 
     void handleChaptersTreeViewEnterOrDoubleClickAction(final InputEvent event, final TreeItem<Chapter> treeItem) {
         if (null == treeItem || null != event && !treeItem.isLeaf()) return;
+        selectedTreeItem = treeItem;
         bookView.navigate(treeItem.getValue());
     }
 
