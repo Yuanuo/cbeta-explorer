@@ -9,7 +9,7 @@ import org.appxi.util.DigestHelper;
 import java.util.Objects;
 
 public final class IndexedManager {
-    private static final String BOOKCASE_V = "21.10.16.1";
+    private static final String BOOKCASE_V = "22.03.17.1";
     private static final String BOOKLIST_V = "21.10.24.1";
     private static final Preferences config = new PreferencesInProperties(UserPrefs.confDir().resolve(".indexed"));
 
