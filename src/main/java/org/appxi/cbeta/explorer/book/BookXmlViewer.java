@@ -136,18 +136,18 @@ public class BookXmlViewer extends HtmlViewer<Chapter> {
 
     protected void addTools() {
         addTool_SideControl();
-        webPane.toolbar.addLeft(new Separator(Orientation.VERTICAL));
+        webPane.getTopAsBar().addLeft(new Separator(Orientation.VERTICAL));
         addTool_Goto();
         addTool_Bookmark();
         addTool_Favorite();
-        webPane.toolbar.addRight(new Separator(Orientation.VERTICAL));
+        webPane.getTopAsBar().addRight(new Separator(Orientation.VERTICAL));
         addTool_WrapLines();
         addTool_WrapPages();
         addTool_FirstLetterIndent();
-        webPane.toolbar.addRight(new Separator(Orientation.VERTICAL));
+        webPane.getTopAsBar().addRight(new Separator(Orientation.VERTICAL));
         addTool_EditingMarks();
         //
-        webPane.toolbar.addRight(new Separator(Orientation.VERTICAL));
+        webPane.getTopAsBar().addRight(new Separator(Orientation.VERTICAL));
         addTool_FindInPage();
     }
 
@@ -155,7 +155,7 @@ public class BookXmlViewer extends HtmlViewer<Chapter> {
         final Button button = MaterialIcon.IMPORT_CONTACTS.flatButton();
         button.setTooltip(new Tooltip("显示本书相关数据（目录、书签等）"));
         button.setOnAction(event -> workbench.selectSideTool(BookDataPlaceController.getInstance().id.get()));
-        webPane.toolbar.addLeft(button);
+        webPane.getTopAsBar().addLeft(button);
     }
 
     private Button gotoPrev, gotoNext, gotoMenu;
@@ -323,7 +323,7 @@ public class BookXmlViewer extends HtmlViewer<Chapter> {
         });
 
         //
-        webPane.toolbar.addLeft(gotoPrev, gotoNext, gotoMenu);
+        webPane.getTopAsBar().addLeft(gotoPrev, gotoNext, gotoMenu);
     }
 
     private void updateTool_Goto() {
@@ -350,14 +350,14 @@ public class BookXmlViewer extends HtmlViewer<Chapter> {
         final ToggleButton button = MaterialIcon.WRAP_TEXT.flatToggle();
         button.setTooltip(new Tooltip("折行显示"));
         button.setOnAction(event -> webPane.executeScript("handleOnWrapLines()"));
-        webPane.toolbar.addRight(button);
+        webPane.getTopAsBar().addRight(button);
     }
 
     private void addTool_WrapPages() {
         final ToggleButton button = MaterialIcon.VIEW_DAY.flatToggle();
         button.setTooltip(new Tooltip("折页显示"));
         button.setOnAction(event -> webPane.executeScript("handleOnWrapPages()"));
-        webPane.toolbar.addRight(button);
+        webPane.getTopAsBar().addRight(button);
     }
 
     private void addTool_FirstLetterIndent() {
@@ -365,7 +365,7 @@ public class BookXmlViewer extends HtmlViewer<Chapter> {
         button.setTooltip(new Tooltip("首行标点对齐"));
         button.setSelected(true);
         button.setOnAction(event -> webPane.executeScript("handleOnPrettyIndent()"));
-        webPane.toolbar.addRight(button);
+        webPane.getTopAsBar().addRight(button);
     }
 
     private void addTool_EditingMarks() {
@@ -400,21 +400,21 @@ public class BookXmlViewer extends HtmlViewer<Chapter> {
         marksGroup.selectedToggleProperty().addListener((o, ov, nv) ->
                 webPane.executeScript("handleOnEditMark(" + (null == nv ? -1 : nv.getUserData()) + ")"));
 
-        webPane.toolbar.addRight(markOrigInline, markModInline, markModSharp, markModColor, markModPopover);
+        webPane.getTopAsBar().addRight(markOrigInline, markModInline, markModSharp, markModColor, markModPopover);
     }
 
     private void addTool_Bookmark() {
         final Button button = MaterialIcon.BOOKMARK_OUTLINE.flatButton();
         button.setTooltip(new Tooltip("添加书签"));
         button.setOnAction(event -> this.handleEventToCreateBookdata(BookdataType.bookmark));
-        webPane.toolbar.addRight(button);
+        webPane.getTopAsBar().addRight(button);
     }
 
     private void addTool_Favorite() {
         final Button button = MaterialIcon.STAR_BORDER.flatButton();
         button.setTooltip(new Tooltip("添加收藏"));
         button.setOnAction(event -> this.handleEventToCreateBookdata(BookdataType.favorite));
-        webPane.toolbar.addRight(button);
+        webPane.getTopAsBar().addRight(button);
     }
 
     protected void addTool_FindInPage() {

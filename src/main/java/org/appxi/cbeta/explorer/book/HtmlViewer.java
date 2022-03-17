@@ -108,7 +108,7 @@ public abstract class HtmlViewer<T extends Attributes> extends WorkbenchMainView
             app.toast("已添加到系统打印队列，请检查打印结果！");
         });
         //
-        webPane.toolbar.addLeft(button);
+        webPane.getTopAsBar().addLeft(button);
     }
 
     private Button gotoHeadings;
@@ -209,13 +209,13 @@ public abstract class HtmlViewer<T extends Attributes> extends WorkbenchMainView
             gotoHeadingsLayer.show(null);
         });
         //
-        webPane.toolbar.addLeft(gotoHeadings);
+        webPane.getTopAsBar().addLeft(gotoHeadings);
     }
 
     protected void addTool_FindInPage() {
         webFinder = new WebPane.WebMarksFinder(this.webPane, getViewport());
         webFinder.setAsciiConvertor(AppContext::ascii);
-        webPane.toolbar.addRight(webFinder);
+        webPane.getTopAsBar().addRight(webFinder);
     }
 
     protected void onAppEventStopping(AppEvent event) {
