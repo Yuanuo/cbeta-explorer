@@ -70,6 +70,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class BookXmlViewer extends HtmlViewer<Chapter> {
+    private static final Pattern P_VOL = Pattern.compile(".*_(\\d+)\\.xml");
+
     private final EventHandler<GenericEvent> onDisplayHanChanged = this::onDisplayHanChanged;
     private final BookDocument bookDocument;
     public final Book book;
@@ -84,17 +86,26 @@ public class BookXmlViewer extends HtmlViewer<Chapter> {
         this.book = book;
         this.bookDocument = new BookDocumentEx(AppContext.bookcase(), book);
         this.appTitle.unbind();
-        this.setTitles();
+        this.setTitles((Chapter) null);
     }
 
-    private void setTitles() {
+    private void setTitles(Chapter chapter) {
         String viewTitle = AppContext.displayText(book.title);
         String viewTooltip = viewTitle;
         String mainTitle = viewTitle;
 
         if (book.volumes.size() > 0) {
-            viewTooltip = StringHelper.concat(viewTooltip, "（", book.volumes.size(), "卷）");
-            mainTitle = StringHelper.concat(mainTitle, "（", book.volumes.size(), "卷）");
+            short vol = -1;
+            if (null != chapter && null != chapter.path) {
+                Matcher matcher = P_VOL.matcher(chapter.path);
+                if (matcher.matches())
+                    vol = Short.parseShort(matcher.group(1));
+            }
+            String volInfo = vol > 0
+                    ? StringHelper.concat('（', vol, '/', book.volumes.size(), "卷）")
+                    : StringHelper.concat('（', book.volumes.size(), "卷）");
+            viewTooltip = viewTooltip.concat(volInfo);
+            mainTitle = mainTitle.concat(volInfo);
         }
 
         if (StringHelper.isNotBlank(book.authorInfo)) {
@@ -480,6 +491,8 @@ public class BookXmlViewer extends HtmlViewer<Chapter> {
         if (null == item) item = bookBasic.selectChapter(this.book, pos);
         else item = bookBasic.selectChapter(this.book, item);
         if (null == item) return;
+
+        setTitles(item);
 
         if (null != openedItem && Objects.equals(item.path, openedItem.path)) {
             openedItem = item;
