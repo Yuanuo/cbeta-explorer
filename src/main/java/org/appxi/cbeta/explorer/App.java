@@ -33,7 +33,7 @@ import java.util.Optional;
 public class App extends WorkbenchApp {
     public static final String ID = "cbetaExplorer";
     public static final String NAME = "智悲乐藏";
-    public static final String VERSION = "22.02.05";
+    public static final String VERSION = "22.03.18";
     private static App instance;
 
     public App() {
