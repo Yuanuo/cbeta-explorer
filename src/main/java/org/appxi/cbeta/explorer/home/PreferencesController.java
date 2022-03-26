@@ -8,6 +8,8 @@ import javafx.scene.control.Dialog;
 import javafx.scene.control.DialogPane;
 import org.appxi.cbeta.explorer.AppContext;
 import org.appxi.cbeta.explorer.event.GenericEvent;
+import org.appxi.cbeta.explorer.search.SearchEngineStart;
+import org.appxi.javafx.settings.DefaultOption;
 import org.appxi.javafx.settings.DefaultOptions;
 import org.appxi.javafx.settings.Option;
 import org.appxi.javafx.settings.SettingsPane;
@@ -46,6 +48,8 @@ public class PreferencesController extends WorkbenchSideToolController {
 
         settingsPane.getOptions().add(optionForDisplayHan());
 
+        settingsPane.getOptions().add(optionForSearchEngineStart());
+
         final DialogPane dialogPane = new DialogPane() {
             @Override
             protected Node createButtonBar() {
@@ -74,6 +78,16 @@ public class PreferencesController extends WorkbenchSideToolController {
         });
         return new DefaultOptions<HanLang>("简繁体", "以 简体/繁体 显示经名标题、阅读视图等经藏数据", "UI", true)
                 .setValues(HanLang.hans, HanLang.hant, HanLang.hantHK, HanLang.hantTW)
+                .setValueProperty(valueProperty);
+    }
+
+    private Option<SearchEngineStart> optionForSearchEngineStart() {
+        final ObjectProperty<SearchEngineStart> valueProperty = new SimpleObjectProperty<>(SearchEngineStart.value());
+        valueProperty.addListener((o, ov, nv) -> {
+            if (null == ov || Objects.equals(ov, nv)) return;
+            UserPrefs.prefs.setProperty("search.engine.start", nv.name());
+        });
+        return new DefaultOption<SearchEngineStart>("搜索引擎初始化时机", null, "性能", true)
                 .setValueProperty(valueProperty);
     }
 }
