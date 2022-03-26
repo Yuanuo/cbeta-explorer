@@ -108,13 +108,15 @@ public class AppPreloader extends Preloader {
                 final FileChooser chooser = new FileChooser();
                 chooser.setTitle("请选择CBETA Bookcase Zip数据包");
                 chooser.getExtensionFilters().add(
-                        new FileChooser.ExtensionFilter("Bookcase Zip File", "bookcase_*.zip"));
+                        new FileChooser.ExtensionFilter("CBETA Bookcase Zip File", "cbeta.zip", "bookcase.zip", "bookcase_*.zip")
+                );
                 final File selected = chooser.showOpenDialog(primaryStage);
                 if (null != selected) {
                     try {
                         String path = selected.getAbsolutePath();
-                        AppContext.setupInitialize(new BookcaseInZip(path));
+                        BookcaseInZip bookcase = new BookcaseInZip(path);
                         UserPrefs.prefs.setProperty(key, path);
+                        AppContext.setupInitialize(bookcase);
                         return;
                     } catch (Throwable ignore) {
                     }
@@ -128,7 +130,9 @@ public class AppPreloader extends Preloader {
                 }) {
                     if (!path.endsWith(".zip")) {
                         try {
-                            AppContext.setupInitialize(new BookcaseInDir(path));
+                            BookcaseInDir bookcase = new BookcaseInDir(path);
+                            UserPrefs.prefs.setProperty(key, path);
+                            AppContext.setupInitialize(bookcase);
                             return;
                         } catch (Throwable ignore) {
                         }
@@ -141,7 +145,9 @@ public class AppPreloader extends Preloader {
                 if (null != selected) {
                     try {
                         String path = selected.getAbsolutePath();
-                        AppContext.setupInitialize(new BookcaseInDir(path));
+                        BookcaseInDir bookcase = new BookcaseInDir(path);
+                        UserPrefs.prefs.setProperty(key, path);
+                        AppContext.setupInitialize(bookcase);
                         return;
                     } catch (Throwable ignore) {
                     }

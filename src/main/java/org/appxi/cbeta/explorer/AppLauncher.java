@@ -14,10 +14,12 @@ import java.util.List;
 import java.util.Locale;
 
 public class AppLauncher {
+    static String dataDirName;
     protected static void beforeLaunch(String dataDirName) {
         Locale.setDefault(Locale.SIMPLIFIED_CHINESE);
         // 0, set data home
-        UserPrefs.localDataDirectory(null != dataDirName ? dataDirName : ".".concat(App.ID), null);
+        AppLauncher.dataDirName = null != dataDirName ? dataDirName : ".".concat(App.ID);
+        UserPrefs.localDataDirectory(AppLauncher.dataDirName, null);
         // 由于在配置文件中不能使用动态变量作为路径，故在此设置日志文件路径
         if (DesktopApp.productionMode) {
             final Path logFile = UserPrefs.dataDir().resolve(".logs")

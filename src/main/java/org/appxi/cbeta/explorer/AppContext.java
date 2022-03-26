@@ -8,6 +8,7 @@ import org.appxi.cbeta.explorer.dao.DaoService;
 import org.appxi.cbeta.explorer.event.GenericEvent;
 import org.appxi.prefs.Preferences;
 import org.appxi.prefs.PreferencesInMemory;
+import org.appxi.prefs.PreferencesInProperties;
 import org.appxi.prefs.UserPrefs;
 import org.appxi.smartcn.convert.ChineseConvertors;
 import org.appxi.smartcn.pinyin.Pinyin;
@@ -21,6 +22,8 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
@@ -29,6 +32,19 @@ public abstract class AppContext {
     private static BookMap bookMap;
 
     static void setupInitialize(Bookcase bookcase) {
+        try {
+            // 尝试优先使用绿色版数据
+            final Path bookcaseDir = Path.of(bookcase.getPath()).resolve("../".concat(AppLauncher.dataDirName));
+            if (Files.exists(bookcaseDir) && Files.isDirectory(bookcaseDir) && Files.isWritable(bookcaseDir)) {
+                //
+                UserPrefs.prefs.save();
+                // reset
+                UserPrefs.setupDataDirectory(bookcaseDir, null);
+                UserPrefs.prefs = new PreferencesInProperties(UserPrefs.confDir().resolve(".prefs"));
+            }
+        } catch (Throwable ignore) {
+        }
+        //
         AppContext.bookcase = AppContext.bookcase == null ? bookcase : AppContext.bookcase;
         AppContext.bookMap = bookMap == null ? new BookMap(new TripitakaMap(AppContext.bookcase)) : bookMap;
 //        // 如果以上执行出错，程序也尚未初始化完成，只有在基础数据正常时，再加载更多数据
