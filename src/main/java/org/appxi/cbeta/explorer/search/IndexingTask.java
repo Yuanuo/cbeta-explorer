@@ -56,7 +56,7 @@ record IndexingTask(WorkbenchApp app) implements Runnable {
     }
 
     private void running(PiecesRepository repository, BoolHolder breaking) {
-        final BooklistProfile.Profile profile = AppContext.profile();
+        final BooklistProfile.Profile profile = BooklistProfile.ONE.profile();
         final TripitakaMap tripitakaMap = new TripitakaMap(AppContext.bookcase());
         final BookMap bookMap = new BookMap(tripitakaMap);
         boolean updated = false;
@@ -141,7 +141,7 @@ record IndexingTask(WorkbenchApp app) implements Runnable {
             App.app().eventBus.fireEvent(new ProgressEvent(ProgressEvent.INDEXING, -1, 1, "正在更新。。。"));
 
             final BooklistProfile.BooklistFilteredTree booklist;
-            booklist = new BooklistProfile.BooklistFilteredTree(bookMap, AppContext.profile());
+            booklist = new BooklistProfile.BooklistFilteredTree(bookMap, BooklistProfile.ONE.profile());
             try {
                 final HashSet<String> managedBooks = new HashSet<>(512);
                 TreeHelper.walkLeafs(booklist.tree(), (treeItem, book) -> managedBooks.add(book.id));

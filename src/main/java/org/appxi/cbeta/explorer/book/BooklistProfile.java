@@ -49,6 +49,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 public class BooklistProfile {
+    public static final BooklistProfile ONE = new BooklistProfile();
     private static final Path profileDir = UserPrefs.dataDir().resolve(".profiles");
     private static final Preferences profileMgr = new PreferencesInProperties(profileDir.resolve(".list"));
 
@@ -450,8 +451,8 @@ public class BooklistProfile {
             profileMgr.save();
 
             if (!Objects.equals(oldMd5Ver, newMd5Ver)) {
-                if (profile == AppContext.booklistProfile.profile) {
-                    AppContext.booklistProfile.loadProfile();
+                if (profile == ONE.profile) {
+                    ONE.loadProfile();
                 }
             }
             //

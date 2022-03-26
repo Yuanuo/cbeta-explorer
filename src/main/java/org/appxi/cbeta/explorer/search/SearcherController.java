@@ -37,6 +37,7 @@ import javafx.scene.text.TextAlignment;
 import javafx.scene.text.TextFlow;
 import javafx.util.Callback;
 import org.appxi.cbeta.explorer.AppContext;
+import org.appxi.cbeta.explorer.book.BooklistProfile;
 import org.appxi.cbeta.explorer.dao.PiecesRepository;
 import org.appxi.cbeta.explorer.event.GenericEvent;
 import org.appxi.cbeta.explorer.event.ProgressEvent;
@@ -312,7 +313,7 @@ public class SearcherController extends WorkbenchMainViewController {
         }
         searchedText = inputText;
         inputQuery = inputText;
-        facetAndHighlightPage = repository.search(AppContext.profile().name(),
+        facetAndHighlightPage = repository.search(BooklistProfile.ONE.profile().name(),
                 null == searchScope ? null : List.of(searchScope.id != null ? searchScope.id : searchScope.attr("scope")),
                 inputQuery, categories, facet, new SolrPageRequest(0, PAGE_SIZE));
         if (null == facetAndHighlightPage) return;
@@ -382,7 +383,7 @@ public class SearcherController extends WorkbenchMainViewController {
             highlightPage = facetAndHighlightPage;
         } else {
             // query for next page
-            highlightPage = repository.search(AppContext.profile().name(),
+            highlightPage = repository.search(BooklistProfile.ONE.profile().name(),
                     null == searchScope ? null : List.of(searchScope.id != null ? searchScope.id : searchScope.attr("scope")),
                     inputQuery, categories, false, new SolrPageRequest(pageIdx, PAGE_SIZE));
         }
@@ -438,7 +439,7 @@ public class SearcherController extends WorkbenchMainViewController {
                 nameLabel.setText(AppContext.displayText(item.title));
                 locationLabel.setText(null);
                 if (item.categories != null && !item.categories.isEmpty()) {
-                    final String navPrefix = "nav/".concat(AppContext.profile().template().name()).concat("/");
+                    final String navPrefix = "nav/".concat(BooklistProfile.ONE.profile().template().name()).concat("/");
                     item.categories.stream().filter(s -> s.startsWith(navPrefix)).findFirst()
                             .ifPresent(s -> locationLabel.setText(s.substring(navPrefix.length())));
                 }

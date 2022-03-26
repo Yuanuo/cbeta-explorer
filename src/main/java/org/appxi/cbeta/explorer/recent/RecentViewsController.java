@@ -1,8 +1,8 @@
 package org.appxi.cbeta.explorer.recent;
 
 import appxi.cbeta.Book;
-import org.appxi.cbeta.explorer.AppContext;
 import org.appxi.cbeta.explorer.book.BookXmlViewer;
+import org.appxi.cbeta.explorer.book.BooklistProfile;
 import org.appxi.cbeta.explorer.event.GenericEvent;
 import org.appxi.holder.RawHolder;
 import org.appxi.javafx.app.AppEvent;
@@ -34,7 +34,7 @@ public class RecentViewsController extends WorkbenchNoneViewController {
             final List<WorkbenchMainViewController> swapRecentViews = new ArrayList<>();
             WorkbenchMainViewController addedController = null;
             for (String key : recent.getPropertyKeys()) {
-                final Book book = AppContext.booklistProfile.getBook(key);
+                final Book book = BooklistProfile.ONE.getBook(key);
                 // 如果此书不存在于当前书单，则需要移除（如果存在）
                 if (null == book) {
                     Optional.ofNullable(workbench.findMainViewHandler(key)).ifPresent(workbench.mainViews::closeTabs);

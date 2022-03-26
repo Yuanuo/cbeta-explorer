@@ -9,6 +9,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import org.appxi.cbeta.explorer.AppContext;
+import org.appxi.cbeta.explorer.book.BooklistProfile;
 import org.appxi.cbeta.explorer.event.BookEvent;
 import org.appxi.cbeta.explorer.event.GenericEvent;
 import org.appxi.cbeta.explorer.event.ProgressEvent;
@@ -54,7 +55,7 @@ public class SearchController extends WorkbenchSideToolController {
         app.eventBus.addEventHandler(SearchedEvent.OPEN, event -> {
             if (null == event.piece)
                 return;
-            Book book = AppContext.booklistProfile.getBook(event.piece.field("book_s"));
+            Book book = BooklistProfile.ONE.getBook(event.piece.field("book_s"));
             Chapter chapter = null;
             String file = event.piece.field("file_s");
             if (null != file) {

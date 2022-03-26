@@ -9,7 +9,6 @@ import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
-import org.appxi.cbeta.explorer.AppContext;
 import org.appxi.cbeta.explorer.event.BookEvent;
 import org.appxi.cbeta.explorer.event.GenericEvent;
 import org.appxi.cbeta.explorer.event.ProgressEvent;
@@ -38,11 +37,11 @@ public class BooklistExplorer extends WorkbenchSideViewController {
         //
         final Button btnProfile = MaterialIcon.PLAYLIST_ADD_CHECK.flatButton();
         btnProfile.setTooltip(new Tooltip("选择书单"));
-        btnProfile.setOnAction(event -> AppContext.booklistProfile.selectProfile(null));
+        btnProfile.setOnAction(event -> BooklistProfile.ONE.selectProfile(null));
         //
         final Button btnProfiles = MaterialIcon.EDIT_NOTE.flatButton();
         btnProfiles.setTooltip(new Tooltip("管理我的书单"));
-        btnProfiles.setOnAction(event -> AppContext.booklistProfile.manageProfiles());
+        btnProfiles.setOnAction(event -> BooklistProfile.ONE.manageProfiles());
         //
         app.eventBus.addEventHandler(ProgressEvent.INDEXING, event -> {
             if (event.isFinished()) {
@@ -86,10 +85,10 @@ public class BooklistExplorer extends WorkbenchSideViewController {
         app.eventBus.addEventHandler(AppEvent.STARTING,
                 event -> new Thread(() -> {
                     // 在启动过程中尝试加载booklistProfile，正常情况下会成功加载（如果过早加载成功，有的监听器可能不被执行！）
-                    if (!AppContext.booklistProfile.loadProfile()) {
+                    if (!BooklistProfile.ONE.loadProfile()) {
                         FxHelper.sleepSilently(100);
                         // 如果未加载成功，此时则给予提示并让用户选择
-                        FxHelper.runLater(() -> AppContext.booklistProfile.selectProfile(AppContext.profile()));
+                        FxHelper.runLater(() -> BooklistProfile.ONE.selectProfile(BooklistProfile.ONE.profile()));
                     }
                 }).start());
         app.eventBus.addEventHandler(GenericEvent.PROFILE_READY, event -> onViewportShowing(true));
@@ -119,8 +118,8 @@ public class BooklistExplorer extends WorkbenchSideViewController {
 
     @Override
     public void onViewportShowing(boolean firstTime) {
-        if (firstTime && null != treeView && null != AppContext.profile()) {
-            final TreeItem<Book> rootItem = AppContext.booklistProfile.booklist().tree();
+        if (firstTime && null != treeView && null != BooklistProfile.ONE.profile()) {
+            final TreeItem<Book> rootItem = BooklistProfile.ONE.booklist().tree();
             if (treeView.getRoot() == rootItem) return;
             rootItem.setExpanded(true);
             FxHelper.runLater(() -> treeView.setRoot(rootItem));

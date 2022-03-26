@@ -3,7 +3,6 @@ package org.appxi.cbeta.explorer;
 import appxi.cbeta.BookMap;
 import appxi.cbeta.Bookcase;
 import appxi.cbeta.TripitakaMap;
-import org.appxi.cbeta.explorer.book.BooklistProfile;
 import org.appxi.cbeta.explorer.dao.DaoHelper;
 import org.appxi.cbeta.explorer.dao.DaoService;
 import org.appxi.cbeta.explorer.event.GenericEvent;
@@ -50,12 +49,6 @@ public abstract class AppContext {
 
     public static BookMap booksMap() {
         return bookMap;
-    }
-
-    public static final BooklistProfile booklistProfile = new BooklistProfile();
-
-    public static BooklistProfile.Profile profile() {
-        return booklistProfile.profile();
     }
 
     private static AnnotationConfigApplicationContext beans;

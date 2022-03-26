@@ -4,7 +4,6 @@ import appxi.cbeta.Book;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TreeItem;
-import org.appxi.cbeta.explorer.AppContext;
 import org.appxi.cbeta.explorer.event.BookEvent;
 import org.appxi.cbeta.explorer.event.SearcherEvent;
 import org.appxi.javafx.control.TreeViewEx;
@@ -53,7 +52,7 @@ class BooklistTreeView extends TreeViewEx<Book> {
             menuItem.setGraphic(MaterialIcon.FIND_IN_PAGE.graphic());
             menuItem.setOnAction(event1 -> {
                 if (null == book.id) {
-                    book.attr("scope", "nav/".concat(AppContext.profile().template().name())
+                    book.attr("scope", "nav/".concat(BooklistProfile.ONE.profile().template().name())
                             .concat("/").concat(TreeHelper.path(selectedItem)));
                 }
                 app.eventBus.fireEvent(SearcherEvent.ofSearch(null, book));

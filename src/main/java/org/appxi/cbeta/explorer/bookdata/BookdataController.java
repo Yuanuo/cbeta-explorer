@@ -15,6 +15,7 @@ import javafx.scene.input.InputEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.appxi.cbeta.explorer.AppContext;
+import org.appxi.cbeta.explorer.book.BooklistProfile;
 import org.appxi.cbeta.explorer.dao.Bookdata;
 import org.appxi.cbeta.explorer.dao.BookdataType;
 import org.appxi.cbeta.explorer.dao.DaoService;
@@ -123,7 +124,7 @@ public abstract class BookdataController extends WorkbenchSideViewController {
                 textLabel.setText(item.data);
                 timeLabel.setText(DateHelper.format(item.updateAt));
                 if (null == filterByBook && null != bookLabel) {
-                    Book book = AppContext.booklistProfile.getBook(item.book);
+                    Book book = BooklistProfile.ONE.getBook(item.book);
                     bookLabel.setText(null == book ? null : AppContext.displayText(book.title));
                 }
                 setGraphic(cardBox);
@@ -153,7 +154,7 @@ public abstract class BookdataController extends WorkbenchSideViewController {
     protected void handleOnEnterOrDoubleClickAction(InputEvent inputEvent, Bookdata item) {
         if (null == item)
             return;
-        final Book book = AppContext.booklistProfile.getBook(item.book);
+        final Book book = BooklistProfile.ONE.getBook(item.book);
         final Chapter chapter = new Chapter();
         chapter.path = item.volume;
         chapter.anchor = item.anchor;

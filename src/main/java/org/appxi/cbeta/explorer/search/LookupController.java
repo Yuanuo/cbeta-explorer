@@ -11,6 +11,7 @@ import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
 import org.appxi.cbeta.explorer.App;
 import org.appxi.cbeta.explorer.AppContext;
+import org.appxi.cbeta.explorer.book.BooklistProfile;
 import org.appxi.cbeta.explorer.event.BookEvent;
 import org.appxi.cbeta.explorer.event.GenericEvent;
 import org.appxi.cbeta.explorer.event.SearcherEvent;
@@ -153,7 +154,7 @@ public class LookupController extends WorkbenchSideToolController {
                         lineOrVolume = false;
                     }
                     if (null != bookId) {
-                        Book book = AppContext.booklistProfile.getBook(bookId);
+                        Book book = BooklistProfile.ONE.getBook(bookId);
                         String title = null == book ? "???" : "《".concat(book.title).concat("》");
                         if (!lineOrVolume) {
                             chapter = chapter.length() >= 3 ? chapter.substring(0, 3) : StringHelper.padLeft(chapter, 3, '0');
@@ -177,7 +178,7 @@ public class LookupController extends WorkbenchSideToolController {
                 protected void handleEnterOrDoubleClickActionOnSearchResultList(InputEvent event, Object data) {
                     if (!(data instanceof LookupDatabase.LookupData item)) return;
                     if (null == item.bookId) return;
-                    Book book = AppContext.booklistProfile.getBook(item.bookId);
+                    Book book = BooklistProfile.ONE.getBook(item.bookId);
                     if (null == book) return;
 
                     Chapter chapter = null;

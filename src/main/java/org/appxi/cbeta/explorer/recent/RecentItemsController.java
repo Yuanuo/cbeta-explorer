@@ -4,6 +4,7 @@ import appxi.cbeta.Book;
 import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import org.appxi.cbeta.explorer.AppContext;
+import org.appxi.cbeta.explorer.book.BooklistProfile;
 import org.appxi.cbeta.explorer.event.BookEvent;
 import org.appxi.cbeta.explorer.event.GenericEvent;
 import org.appxi.javafx.app.AppEvent;
@@ -101,7 +102,7 @@ public class RecentItemsController extends WorkbenchSideViewController {
             this.treeView.setEnterOrDoubleClickAction((e, treeItem) -> {
                 if (!(treeItem.getValue() instanceof RecentBook rBook))
                     return;
-                final Book book = AppContext.booklistProfile.getBook(rBook.id);
+                final Book book = BooklistProfile.ONE.getBook(rBook.id);
                 if (null != book)
                     app.eventBus.fireEvent(new BookEvent(BookEvent.OPEN, book));
             });
@@ -126,7 +127,7 @@ public class RecentItemsController extends WorkbenchSideViewController {
                         this.setGraphic(getTreeItem().isExpanded() ? MaterialIcon.FOLDER_OPEN.graphic() : MaterialIcon.FOLDER.graphic());
                     } else if (item instanceof RecentBook rBook) {
                         this.setGraphic(null);
-                        final Book book = AppContext.booklistProfile.getBook(rBook.id);
+                        final Book book = BooklistProfile.ONE.getBook(rBook.id);
                         if (null != book) {
                             text = book.title;
                             if (null != book.path && book.volumes.size() > 0) {
