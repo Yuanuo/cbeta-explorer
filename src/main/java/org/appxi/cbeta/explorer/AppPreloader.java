@@ -17,6 +17,7 @@ import org.appxi.javafx.visual.Swatch;
 import org.appxi.javafx.visual.Theme;
 import org.appxi.javafx.visual.Visual;
 import org.appxi.prefs.UserPrefs;
+import org.appxi.util.OSVersions;
 
 import java.io.File;
 import java.util.Optional;
@@ -41,8 +42,10 @@ public class AppPreloader extends Preloader {
         primaryStage.centerOnScreen();
         primaryStage.show();
         setupBookcase(primaryStage);
-        new javafx.scene.control.TextField("");
-        new javax.swing.JTextField("");
+        if (OSVersions.isLinux) {
+            new javafx.scene.control.TextField("");
+            new javax.swing.JTextField("");
+        }
     }
 
     public static void hide() {
