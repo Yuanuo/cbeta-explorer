@@ -3,9 +3,13 @@ package org.appxi.cbeta.explorer;
 import appxi.cbeta.BookMap;
 import appxi.cbeta.Bookcase;
 import appxi.cbeta.TripitakaMap;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import org.appxi.cbeta.explorer.dao.DaoHelper;
 import org.appxi.cbeta.explorer.dao.DaoService;
 import org.appxi.cbeta.explorer.event.GenericEvent;
+import org.appxi.javafx.settings.DefaultOptions;
+import org.appxi.javafx.settings.SettingsList;
 import org.appxi.prefs.Preferences;
 import org.appxi.prefs.PreferencesInMemory;
 import org.appxi.prefs.PreferencesInProperties;
@@ -26,6 +30,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public abstract class AppContext {
     private static Bookcase bookcase;
@@ -110,6 +115,19 @@ public abstract class AppContext {
 
     static void setupInitialize(App app) {
         app.eventBus.addEventHandler(GenericEvent.DISPLAY_HAN_CHANGED, event -> displayHan = event.data());
+        //
+        SettingsList.add(() -> {
+            final ObjectProperty<HanLang> valueProperty = new SimpleObjectProperty<>(AppContext.getDisplayHan());
+            valueProperty.addListener((o, ov, nv) -> {
+                if (null == ov || Objects.equals(ov, nv)) return;
+                //
+                UserPrefs.prefs.setProperty("display.han", nv.lang);
+                app.eventBus.fireEvent(new GenericEvent(GenericEvent.DISPLAY_HAN_CHANGED, nv));
+            });
+            return new DefaultOptions<HanLang>("简繁体", "以 简体/繁体 显示经名标题、阅读视图等经藏数据", "VIEWER", true)
+                    .setValues(HanLang.hans, HanLang.hant, HanLang.hantHK, HanLang.hantTW)
+                    .setValueProperty(valueProperty);
+        });
     }
 
     private static HanLang displayHan;

@@ -2,6 +2,8 @@ package org.appxi.cbeta.explorer.search;
 
 import appxi.cbeta.Book;
 import appxi.cbeta.Chapter;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Pos;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
@@ -16,9 +18,12 @@ import org.appxi.cbeta.explorer.event.ProgressEvent;
 import org.appxi.cbeta.explorer.event.SearchedEvent;
 import org.appxi.cbeta.explorer.event.SearcherEvent;
 import org.appxi.javafx.helper.FxHelper;
+import org.appxi.javafx.settings.DefaultOption;
+import org.appxi.javafx.settings.SettingsList;
 import org.appxi.javafx.visual.MaterialIcon;
 import org.appxi.javafx.workbench.WorkbenchPane;
 import org.appxi.javafx.workbench.views.WorkbenchSideToolController;
+import org.appxi.prefs.UserPrefs;
 import org.appxi.util.DigestHelper;
 
 import java.util.Objects;
@@ -43,10 +48,10 @@ public class SearchController extends WorkbenchSideToolController {
         app.eventBus.addEventHandler(ProgressEvent.INDEXING, event -> indexingEvent = event.isFinished() ? null : event);
         app.eventBus.addEventHandler(GenericEvent.PROFILE_READY, event -> {
             this.attr(event.getEventType(), true);
-
+            if (!UserPrefs.prefs.getBoolean("search.engine.start", false)) return;
             if (IndexedManager.isBookcaseIndexable() || IndexedManager.isBooklistIndexable()) {
                 alertIndexable(null);
-            } else if (SearchEngineStart.start == SearchEngineStart.value()) {
+            } else {
                 // 如果全文索引数据正常（不需重建索引），则此时尝试加载，否则仅在后续重建索引时初始化
                 new Thread(AppContext::beans).start();
             }
@@ -72,6 +77,17 @@ public class SearchController extends WorkbenchSideToolController {
                             .replace("§§hl#end§§", "").replace("…", ""));
             }
             app.eventBus.fireEvent(new BookEvent(BookEvent.OPEN, book, chapter));
+        });
+        //
+        SettingsList.add(() -> {
+            final BooleanProperty valueProperty = new SimpleBooleanProperty();
+            valueProperty.set(UserPrefs.prefs.getBoolean("search.engine.start", false));
+            valueProperty.addListener((o, ov, nv) -> {
+                if (null == ov || Objects.equals(ov, nv)) return;
+                UserPrefs.prefs.setProperty("search.engine.start", nv);
+            });
+            return new DefaultOption<Boolean>("自动初始化全文搜索引擎", "开：程序启动时；关：首次使用时", "性能", true)
+                    .setValueProperty(valueProperty);
         });
     }
 
