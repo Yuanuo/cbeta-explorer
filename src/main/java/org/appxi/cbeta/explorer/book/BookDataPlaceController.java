@@ -1,14 +1,23 @@
 package org.appxi.cbeta.explorer.book;
 
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.event.EventHandler;
 import org.appxi.cbeta.explorer.AppContext;
 import org.appxi.cbeta.explorer.event.BookEvent;
+import org.appxi.javafx.settings.DefaultOption;
+import org.appxi.javafx.settings.SettingsList;
 import org.appxi.javafx.visual.MaterialIcon;
 import org.appxi.javafx.workbench.WorkbenchPane;
 import org.appxi.javafx.workbench.WorkbenchViewController;
 import org.appxi.javafx.workbench.views.WorkbenchSideViewController;
+import org.appxi.prefs.UserPrefs;
+
+import java.util.Objects;
 
 public class BookDataPlaceController extends WorkbenchSideViewController {
+    private static final String PK_BOOK_DATA_SHOW = "book.data.show";
+
     private static BookDataPlaceController instance;
 
     public BookDataPlaceController(WorkbenchPane workbench) {
@@ -46,7 +55,10 @@ public class BookDataPlaceController extends WorkbenchSideViewController {
                 if (null != this.viewport) {
                     this.viewport.setCenter(bookView.sideViews);
                 } else this.bookView = bookView;
-                //FIXME 程序启动后的第一次在此默认显示此视图？
+
+                if (UserPrefs.prefs.getBoolean(PK_BOOK_DATA_SHOW, false)) {
+                    workbench.selectSideTool(id.get());
+                }
             } else {
                 setTitles(null);
             }
@@ -60,6 +72,17 @@ public class BookDataPlaceController extends WorkbenchSideViewController {
         };
         app.eventBus.addEventHandler(BookEvent.HIDE, handleOnBookViewHideOrClose);
         app.eventBus.addEventHandler(BookEvent.CLOSE, handleOnBookViewHideOrClose);
+        //
+        SettingsList.add(() -> {
+            final BooleanProperty valueProperty = new SimpleBooleanProperty();
+            valueProperty.set(UserPrefs.prefs.getBoolean(PK_BOOK_DATA_SHOW, false));
+            valueProperty.addListener((o, ov, nv) -> {
+                if (null == ov || Objects.equals(ov, nv)) return;
+                UserPrefs.prefs.setProperty(PK_BOOK_DATA_SHOW, nv);
+            });
+            return new DefaultOption<Boolean>("自动显示在读本书数据", "开：自动显示；关：手动切换", "VIEWER", true)
+                    .setValueProperty(valueProperty);
+        });
     }
 
     @Override
