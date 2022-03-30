@@ -29,6 +29,8 @@ import org.appxi.util.DigestHelper;
 import java.util.Objects;
 
 public class SearchController extends WorkbenchSideToolController {
+    private static final String PK_START_TYPE = "search.engine.start";
+
     private ProgressEvent indexingEvent;
 
     public SearchController(WorkbenchPane workbench) {
@@ -48,7 +50,7 @@ public class SearchController extends WorkbenchSideToolController {
         app.eventBus.addEventHandler(ProgressEvent.INDEXING, event -> indexingEvent = event.isFinished() ? null : event);
         app.eventBus.addEventHandler(GenericEvent.PROFILE_READY, event -> {
             this.attr(event.getEventType(), true);
-            if (!UserPrefs.prefs.getBoolean("search.engine.start", false)) return;
+            if (!UserPrefs.prefs.getBoolean(PK_START_TYPE, false)) return;
             if (IndexedManager.isBookcaseIndexable() || IndexedManager.isBooklistIndexable()) {
                 alertIndexable(null);
             } else {
@@ -81,10 +83,10 @@ public class SearchController extends WorkbenchSideToolController {
         //
         SettingsList.add(() -> {
             final BooleanProperty valueProperty = new SimpleBooleanProperty();
-            valueProperty.set(UserPrefs.prefs.getBoolean("search.engine.start", false));
+            valueProperty.set(UserPrefs.prefs.getBoolean(PK_START_TYPE, false));
             valueProperty.addListener((o, ov, nv) -> {
                 if (null == ov || Objects.equals(ov, nv)) return;
-                UserPrefs.prefs.setProperty("search.engine.start", nv);
+                UserPrefs.prefs.setProperty(PK_START_TYPE, nv);
             });
             return new DefaultOption<Boolean>("自动初始化全文搜索引擎", "开：程序启动时；关：首次使用时", "性能", true)
                     .setValueProperty(valueProperty);
