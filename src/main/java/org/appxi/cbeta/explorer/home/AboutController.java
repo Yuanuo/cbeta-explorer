@@ -72,7 +72,7 @@ public class AboutController extends WorkbenchSideToolController {
         buf.append("JavaFX Version").append("\n");
         buf.append(System.getProperty("javafx.runtime.version")).append("\n\n");
 
-        buf.append("OS Info").append("\n");
+        buf.append("Platform Info").append("\n");
         buf.append(System.getProperty("os.name")).append(", ");
         buf.append(System.getProperty("os.arch")).append(", ");
         buf.append(System.getProperty("os.version")).append("\n\n");
@@ -80,7 +80,7 @@ public class AboutController extends WorkbenchSideToolController {
         WebView web = new WebView();
         web.getEngine().setUserDataDirectory(UserPrefs.cacheDir().toFile());
 
-        buf.append("Embedded Webkit Info").append("\n");
+        buf.append("Webview Info").append("\n");
         buf.append(web.getEngine().getUserAgent());
 
         info.setText(buf.toString());
