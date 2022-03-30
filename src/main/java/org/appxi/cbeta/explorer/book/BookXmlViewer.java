@@ -4,6 +4,7 @@ import appxi.cbeta.Book;
 import appxi.cbeta.BookDocument;
 import appxi.cbeta.BookDocumentEx;
 import appxi.cbeta.Chapter;
+import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.geometry.Orientation;
@@ -45,6 +46,7 @@ import org.appxi.cbeta.explorer.event.SearcherEvent;
 import org.appxi.cbeta.explorer.search.LookupLayerEx;
 import org.appxi.holder.IntHolder;
 import org.appxi.javafx.control.TabPaneEx;
+import org.appxi.javafx.helper.FxHelper;
 import org.appxi.javafx.helper.TreeHelper;
 import org.appxi.javafx.visual.MaterialIcon;
 import org.appxi.javafx.workbench.WorkbenchPane;
@@ -381,35 +383,43 @@ public class BookXmlViewer extends HtmlViewer<Chapter> {
 
     private void addTool_EditingMarks() {
         final ToggleGroup marksGroup = new ToggleGroup();
+        final int usedMarks = UserPrefs.prefs.getInt("viewer.edit.marks", -1);
 
         final ToggleButton markOrigInline = new ToggleButton("原编注");
         markOrigInline.getStyleClass().add("flat");
         markOrigInline.setTooltip(new Tooltip("在编注点直接嵌入原编注内容"));
         markOrigInline.setUserData(0);
+        markOrigInline.setSelected(usedMarks == (int) markOrigInline.getUserData());
 
         final ToggleButton markModSharp = new ToggleButton("标记");
         markModSharp.getStyleClass().add("flat");
         markModSharp.setTooltip(new Tooltip("在编注点插入#号并划动鼠标查看CBETA编注内容"));
         markModSharp.setUserData(1);
+        markModSharp.setSelected(usedMarks == (int) markModSharp.getUserData());
 
         final ToggleButton markModColor = new ToggleButton("着色");
         markModColor.getStyleClass().add("flat");
         markModColor.setTooltip(new Tooltip("在编注点着色被改变的文字并划动鼠标查看CBETA编注内容"));
         markModColor.setUserData(2);
+        markModColor.setSelected(usedMarks == (int) markModColor.getUserData());
 
         final ToggleButton markModPopover = new ToggleButton("着色+原编注");
         markModPopover.getStyleClass().add("flat");
         markModPopover.setTooltip(new Tooltip("在编注点着色被改变的文字并划动鼠标查看原编注+CBETA编注内容"));
         markModPopover.setUserData(3);
+        markModPopover.setSelected(usedMarks == (int) markModPopover.getUserData());
 
         final ToggleButton markModInline = new ToggleButton("CB编注");
         markModInline.getStyleClass().add("flat");
         markModInline.setTooltip(new Tooltip("在编注点直接嵌入CBETA编注内容"));
         markModInline.setUserData(4);
+        markModInline.setSelected(usedMarks == (int) markModInline.getUserData());
 
         marksGroup.getToggles().setAll(markOrigInline, markModInline, markModSharp, markModColor, markModPopover);
-        marksGroup.selectedToggleProperty().addListener((o, ov, nv) ->
-                webPane.executeScript("handleOnEditMark(" + (null == nv ? -1 : nv.getUserData()) + ")"));
+        marksGroup.selectedToggleProperty().addListener((o, ov, nv) -> {
+            UserPrefs.prefs.setProperty("viewer.edit.marks", null == nv ? -1 : nv.getUserData());
+            webPane.executeScript("handleOnEditMark(" + (null == nv ? -1 : nv.getUserData()) + ")");
+        });
 
         webPane.getTopAsBar().addRight(markOrigInline, markModInline, markModSharp, markModColor, markModPopover);
     }
@@ -497,7 +507,7 @@ public class BookXmlViewer extends HtmlViewer<Chapter> {
         if (null != openedItem && Objects.equals(item.path, openedItem.path)) {
             openedItem = item;
             navigatePos = pos;
-            if (null != item.anchor && null !=pos) {
+            if (null != item.anchor && null != pos) {
                 pos.attr("anchor", item.anchor);
             }
             position(pos);
@@ -527,6 +537,17 @@ public class BookXmlViewer extends HtmlViewer<Chapter> {
         super.onWebEngineLoadSucceeded();
         //
         app.eventBus.fireEvent(new BookEvent(BookEvent.VIEW, book));
+        //
+        FxHelper.runThread(100, () -> webPane.getTopAsBar().lookupAll(".toggle-button").forEach(node -> {
+            if (node instanceof ToggleButton toggle && toggle.isSelected()) {
+                if (toggle.getToggleGroup() == null) {
+                    toggle.fireEvent(new ActionEvent());
+                } else {
+                    toggle.getToggleGroup().selectToggle(null);
+                    toggle.getToggleGroup().selectToggle(toggle);
+                }
+            }
+        }));
     }
 
     @Override

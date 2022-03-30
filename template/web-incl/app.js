@@ -96,7 +96,6 @@ function handleOnResizeBody() {
 $(document).ready(function () {
     documentLoaded = true;
     document.body.onresize = handleOnResizeBody;
-    handleOnPrettyIndent();
     if (rangy) rangy.init();
 });
 
