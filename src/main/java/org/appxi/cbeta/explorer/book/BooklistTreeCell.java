@@ -13,26 +13,16 @@ class BooklistTreeCell implements Callback<TreeView<Book>, TreeCell<Book>> {
     @Override
     public TreeCell<Book> call(TreeView<Book> param) {
         return new TreeCell<>() {
-            Book updatedItem;
-
             @Override
             protected void updateItem(Book item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty) {
-                    updatedItem = null;
                     this.setText(null);
                     this.setTooltip(null);
                     this.setGraphic(null);
                     return;
                 }
-                if (item == updatedItem)
-                    return;//
-                updatedItem = item;
-                String text = item.title;
-                if (null != item.path && item.volumes.size() > 0) {
-                    text = StringHelper.concat(text, "（", item.volumes.size(), "卷）");
-                }
-                this.setText(AppContext.displayText(text));
+                this.setText(AppContext.displayText(BookLabelStyle.value().format.apply(item)));
                 //
                 this.setTooltip(new Tooltip(this.getText().concat(StringHelper.isBlank(item.authorInfo) ? ""
                         : "\n".concat(item.id).concat(" by ").concat(AppContext.displayText(item.authorInfo))

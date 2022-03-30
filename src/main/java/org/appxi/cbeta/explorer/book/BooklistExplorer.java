@@ -2,6 +2,8 @@ package org.appxi.cbeta.explorer.book;
 
 import appxi.cbeta.Book;
 import appxi.cbeta.Chapter;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.event.Event;
 import javafx.scene.control.Button;
 import javafx.scene.control.Tooltip;
@@ -16,11 +18,14 @@ import org.appxi.cbeta.explorer.event.SearcherEvent;
 import org.appxi.javafx.app.AppEvent;
 import org.appxi.javafx.helper.FxHelper;
 import org.appxi.javafx.helper.TreeHelper;
+import org.appxi.javafx.settings.DefaultOption;
+import org.appxi.javafx.settings.SettingsList;
 import org.appxi.javafx.visual.MaterialIcon;
 import org.appxi.javafx.workbench.WorkbenchPane;
 import org.appxi.javafx.workbench.WorkbenchViewController;
 import org.appxi.javafx.workbench.views.WorkbenchSideViewController;
 
+import java.util.Objects;
 import java.util.Optional;
 
 public class BooklistExplorer extends WorkbenchSideViewController {
@@ -95,6 +100,17 @@ public class BooklistExplorer extends WorkbenchSideViewController {
         // 当显示汉字类型改变时需要同步更新treeView
         app.eventBus.addEventHandler(GenericEvent.DISPLAY_HAN_CHANGED,
                 event -> Optional.ofNullable(this.treeView).ifPresent(TreeView::refresh));
+        //
+        SettingsList.add(() -> {
+            final ObjectProperty<BookLabelStyle> valueProperty = new SimpleObjectProperty<>(BookLabelStyle.value());
+            valueProperty.addListener((o, ov, nv) -> {
+                if (null == ov || Objects.equals(ov, nv)) return;
+                BookLabelStyle.setValue(nv);
+                treeView.refresh();
+            });
+            return new DefaultOption<BookLabelStyle>("书名显示风格", "仅典籍树中有效", "显示", true)
+                    .setValueProperty(valueProperty);
+        });
     }
 
     private void handleEventToOpenBook(Event event, Book book, Chapter chapter) {
