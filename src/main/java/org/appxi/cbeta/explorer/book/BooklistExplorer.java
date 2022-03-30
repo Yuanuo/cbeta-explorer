@@ -106,7 +106,9 @@ public class BooklistExplorer extends WorkbenchSideViewController {
             valueProperty.addListener((o, ov, nv) -> {
                 if (null == ov || Objects.equals(ov, nv)) return;
                 BookLabelStyle.setValue(nv);
-                treeView.refresh();
+                if (null != treeView) {
+                    treeView.refresh();
+                }
             });
             return new DefaultOption<BookLabelStyle>("书名显示风格", "仅典籍树中有效", "显示", true)
                     .setValueProperty(valueProperty);
