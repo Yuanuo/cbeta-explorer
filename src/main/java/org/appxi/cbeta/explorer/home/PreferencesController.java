@@ -4,6 +4,7 @@ import javafx.scene.Node;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.DialogPane;
+import org.appxi.javafx.helper.FxHelper;
 import org.appxi.javafx.settings.SettingsList;
 import org.appxi.javafx.settings.SettingsPane;
 import org.appxi.javafx.visual.MaterialIcon;
@@ -43,6 +44,11 @@ public class PreferencesController extends WorkbenchSideToolController {
         dialog.getDialogPane().setPrefWidth(600);
         dialog.setResizable(true);
         dialog.initOwner(app.getPrimaryStage());
+        dialog.setOnShown(evt -> FxHelper.runThread(100, () -> {
+            dialog.setHeight(800);
+            if (dialog.getX() < 0) dialog.setX(0);
+            if (dialog.getY() < 0) dialog.setY(0);
+        }));
         dialog.show();
     }
 }
