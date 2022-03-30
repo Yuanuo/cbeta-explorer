@@ -6,7 +6,6 @@ import org.appxi.cbeta.explorer.book.BookDataPlaceController;
 import org.appxi.cbeta.explorer.book.BooklistExplorer;
 import org.appxi.cbeta.explorer.bookdata.BookmarksController;
 import org.appxi.cbeta.explorer.bookdata.FavoritesController;
-import org.appxi.cbeta.explorer.dao.DaoHelper;
 import org.appxi.cbeta.explorer.home.AboutController;
 import org.appxi.cbeta.explorer.home.PreferencesController;
 import org.appxi.cbeta.explorer.recent.RecentItemsController;
@@ -21,19 +20,17 @@ import org.appxi.javafx.visual.VisualEvent;
 import org.appxi.javafx.workbench.WorkbenchApp;
 import org.appxi.javafx.workbench.WorkbenchPane;
 import org.appxi.javafx.workbench.WorkbenchViewController;
-import org.appxi.prefs.UserPrefs;
 
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 
 public class App extends WorkbenchApp {
     public static final String ID = "cbetaExplorer";
     public static final String NAME = "智悲乐藏";
-    public static final String VERSION = "22.03.26";
+    public static final String VERSION = "22.03.30";
     private static App instance;
 
     public App() {
