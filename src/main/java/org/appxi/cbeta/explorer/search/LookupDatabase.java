@@ -23,10 +23,10 @@ class LookupDatabase {
 
     public void reload() {
         long st = System.currentTimeMillis();
+        AppContext.ascii("test");
         new Thread(() -> {
             cachedDatabase.clear();
             FxHelper.sleepSilently(500);
-            AppContext.ascii("test");
             final Collection<Book> books = new ArrayList<>(BooklistProfile.ONE.getManagedBooks());
             books.parallelStream().forEachOrdered(book -> {
                 cachedDatabase.add(new LookupData(
