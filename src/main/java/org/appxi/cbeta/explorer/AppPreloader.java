@@ -12,6 +12,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import org.appxi.javafx.control.CardChooser;
+import org.appxi.javafx.helper.FontFaceHelper;
 import org.appxi.javafx.visual.MaterialIcon;
 import org.appxi.javafx.visual.Swatch;
 import org.appxi.javafx.visual.Theme;
@@ -42,6 +43,9 @@ public class AppPreloader extends Preloader {
         primaryStage.centerOnScreen();
         primaryStage.show();
         setupBookcase(primaryStage);
+        //
+        FontFaceHelper.fixing();
+        //
         if (OSVersions.isLinux) {
             new javafx.scene.control.TextField("");
             new javax.swing.JTextField("");
