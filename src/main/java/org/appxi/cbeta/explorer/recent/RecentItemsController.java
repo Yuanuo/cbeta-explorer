@@ -42,6 +42,7 @@ public class RecentItemsController extends WorkbenchSideViewController {
     public void initialize() {
         app.eventBus.addEventHandler(BookEvent.OPEN, event -> handleToSaveOrUpdateRecentBook(event.book));
         app.eventBus.addEventHandler(BookEvent.CLOSE, event -> handleToSaveOrUpdateRecentBook(event.book));
+        app.eventBus.addEventHandler(BookEvent.VIEW, event -> handleToSaveOrUpdateRecentBook(event.book));
         app.eventBus.addEventHandler(AppEvent.STOPPING, event -> saveRecentBooks());
         if (!(UserPrefs.recents instanceof PreferencesInProperties))
             UserPrefs.recents = new PreferencesInProperties(UserPrefs.confDir().resolve(".recents"));
