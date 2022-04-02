@@ -95,6 +95,10 @@ public class BookXmlViewer extends HtmlViewer<Chapter> {
         String viewTitle = AppContext.displayText(book.title);
         String viewTooltip = viewTitle;
         String mainTitle = viewTitle;
+        if (StringHelper.isNotBlank(book.id)) {
+            viewTooltip = book.id.concat(" ").concat(viewTooltip);
+            mainTitle = book.id.concat(" ").concat(mainTitle);
+        }
 
         if (book.volumes.size() > 0) {
             short vol = -1;
