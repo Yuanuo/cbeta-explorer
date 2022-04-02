@@ -84,9 +84,12 @@
     -fx-text-fill: -fx-accent;
 }
 
+.card-chooser .card-view.flat {
+    -fx-border-width: 1;
+    -fx-border-color: ladder(-fx-background, -divider-dark 49%, -divider-light 50%);
+}
 .card-chooser .card-view.focused {
-    -fx-border-color: -fx-accent;
-    -fx-border-radius: 3;
+    -fx-background-color: -primary-swatch-500;
 }
 .card-chooser .card-view .icon-text {
     -fx-font-size: 2.5em;
