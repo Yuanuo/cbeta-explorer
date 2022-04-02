@@ -32,7 +32,6 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import netscape.javascript.JSObject;
-import org.apache.commons.io.FilenameUtils;
 import org.appxi.cbeta.explorer.AppContext;
 import org.appxi.cbeta.explorer.bookdata.BookdataController;
 import org.appxi.cbeta.explorer.bookdata.BookmarksController;
@@ -52,7 +51,6 @@ import org.appxi.javafx.visual.MaterialIcon;
 import org.appxi.javafx.workbench.WorkbenchPane;
 import org.appxi.prefs.UserPrefs;
 import org.appxi.smartcn.convert.ChineseConvertors;
-import org.appxi.util.NumberHelper;
 import org.appxi.util.StringHelper;
 import org.appxi.util.ext.Attributes;
 import org.appxi.util.ext.HanLang;
@@ -101,12 +99,7 @@ public class BookXmlViewer extends HtmlViewer<Chapter> {
         }
 
         if (book.volumes.size() > 0) {
-            short vol = -1;
-            if (null != chapter && null != chapter.path) {
-                Matcher matcher = P_VOL.matcher(chapter.path);
-                if (matcher.matches())
-                    vol = Short.parseShort(matcher.group(1));
-            }
+            short vol = getVolume(chapter);
             String volInfo = vol > 0
                     ? StringHelper.concat('（', vol, '/', book.volumes.size(), "卷）")
                     : StringHelper.concat('（', book.volumes.size(), "卷）");
@@ -123,6 +116,15 @@ public class BookXmlViewer extends HtmlViewer<Chapter> {
         this.title.set(viewTitle);
         this.tooltip.set(viewTooltip);
         this.appTitle.set(mainTitle);
+    }
+
+    static short getVolume(Chapter chapter) {
+        if (null != chapter && null != chapter.path) {
+            Matcher matcher = P_VOL.matcher(chapter.path);
+            if (matcher.matches())
+                return Short.parseShort(matcher.group(1));
+        }
+        return 0;
     }
 
     @Override
@@ -481,31 +483,13 @@ public class BookXmlViewer extends HtmlViewer<Chapter> {
 
     @Override
     protected String selectorKey() {
-        return null != openedItem && null != openedItem.id ? openedItem.id : book.id;
+        return book.id + "." + getVolume(openedItem);
     }
 
     @Override
     public void onViewportShowing(boolean firstTime) {
         if (!firstTime) app.eventBus.fireEvent(new BookEvent(BookEvent.VIEW, book, openedItem));
-        else {
-            // 升级旧数据，从原来以book粒度记录的进度位置升级成以chapter为粒度
-            final String lastChapterId = UserPrefs.recents.getString(book.id + ".chapter", null);
-            if (StringHelper.isNotBlank(lastChapterId)) {
-                final String selector = UserPrefs.recents.getString(book.id + ".selector", null);
-                if (null != selector) {
-                    UserPrefs.recents.removeProperty(book.id + ".selector");
-                    UserPrefs.recents.setProperty(lastChapterId + ".selector", selector);
-                }
-
-                final double percent = UserPrefs.recents.getDouble(book.id + ".percent", -1);
-                if (percent != -1) {
-                    UserPrefs.recents.removeProperty(book.id + ".percent");
-                    UserPrefs.recents.setProperty(lastChapterId + ".percent", percent);
-                }
-            }
-            //
-            super.onViewportShowing(true);
-        }
+        else super.onViewportShowing(true);
     }
 
     @Override
@@ -529,6 +513,9 @@ public class BookXmlViewer extends HtmlViewer<Chapter> {
         else item = bookBasic.selectChapter(this.book, item);
         if (null == item) return;
 
+        // 升级旧数据，从原来以book粒度记录的进度位置升级成以volume为粒度
+        upgradeOldSelectorKey(item);
+
         setTitles(item);
 
         if (null != openedItem && Objects.equals(item.path, openedItem.path)) {
@@ -544,6 +531,27 @@ public class BookXmlViewer extends HtmlViewer<Chapter> {
         //
         super.navigate(item);
         UserPrefs.recents.setProperty(book.id + ".chapter", openedItem.id);
+    }
+
+    private void upgradeOldSelectorKey(Chapter item) {
+        if (UserPrefs.recents.containsProperty(book.id + ".selector")) {
+            Chapter openedItemTmp = openedItem;
+            openedItem = item;
+            final String newSelectorKey = selectorKey();
+            openedItem = openedItemTmp;
+            //
+            final String selector = UserPrefs.recents.getString(book.id + ".selector", null);
+            if (null != selector) {
+                UserPrefs.recents.removeProperty(book.id + ".selector");
+                UserPrefs.recents.setProperty(newSelectorKey + ".selector", selector);
+            }
+
+            final double percent = UserPrefs.recents.getDouble(book.id + ".percent", -1);
+            if (percent != -1) {
+                UserPrefs.recents.removeProperty(book.id + ".percent");
+                UserPrefs.recents.setProperty(newSelectorKey + ".percent", percent);
+            }
+        }
     }
 
     @Override
@@ -645,18 +653,10 @@ public class BookXmlViewer extends HtmlViewer<Chapter> {
                 final StringBuilder buff = new StringBuilder();
                 buff.append("《").append(this.book.title).append("》卷");
                 String serial = "00";
-                if (this.openedItem.path.matches(".*_\\d+\\.xml")) {
-                    String str = FilenameUtils.getBaseName(this.openedItem.path);
-                    str = str.substring(str.lastIndexOf('_') + 1);
-                    int vol = NumberHelper.toInt(str, 0);
+                final short vol = getVolume(openedItem);
+                if (vol > 0) {
                     buff.append(vol);
                     serial = book.volumes.get(vol);
-//                    for (Book.SerialVol sv : book.vols) {
-//                        if (vol >= sv.startVol() && vol <= sv.endVol()) {
-//                            serial = sv.serial();
-//                            break;
-//                        }
-//                    }
                 } else {
                     buff.append("00");
                 }
