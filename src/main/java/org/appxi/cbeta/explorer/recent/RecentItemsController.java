@@ -3,7 +3,9 @@ package org.appxi.cbeta.explorer.recent;
 import appxi.cbeta.Book;
 import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
+import javafx.scene.control.TreeView;
 import org.appxi.cbeta.explorer.AppContext;
+import org.appxi.cbeta.explorer.book.BookLabelStyle;
 import org.appxi.cbeta.explorer.book.BooklistProfile;
 import org.appxi.cbeta.explorer.event.BookEvent;
 import org.appxi.cbeta.explorer.event.GenericEvent;
@@ -17,7 +19,6 @@ import org.appxi.prefs.PreferencesInProperties;
 import org.appxi.prefs.UserPrefs;
 import org.appxi.timeago.TimeAgo;
 import org.appxi.util.NumberHelper;
-import org.appxi.util.StringHelper;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -25,6 +26,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 public class RecentItemsController extends WorkbenchSideViewController {
     private final Map<String, RecentBook> recentBooksMap = new LinkedHashMap<>(128);
@@ -44,6 +46,9 @@ public class RecentItemsController extends WorkbenchSideViewController {
         if (!(UserPrefs.recents instanceof PreferencesInProperties))
             UserPrefs.recents = new PreferencesInProperties(UserPrefs.confDir().resolve(".recents"));
         loadRecentBooks();
+        // 当书名显示风格改变时需要同步更新treeView
+        app.eventBus.addEventHandler(GenericEvent.BOOK_LABEL_STYLED,
+                event -> Optional.ofNullable(this.treeView).ifPresent(TreeView::refresh));
     }
 
     private void handleToSaveOrUpdateRecentBook(Book book) {
@@ -107,21 +112,15 @@ public class RecentItemsController extends WorkbenchSideViewController {
                     app.eventBus.fireEvent(new BookEvent(BookEvent.OPEN, book));
             });
             this.treeView.setCellFactory(v -> new TreeCell<>() {
-                Object updatedItem;
-
                 @Override
                 protected void updateItem(Object item, boolean empty) {
                     super.updateItem(item, empty);
                     if (empty) {
-                        updatedItem = null;
                         this.setText(null);
                         this.setGraphic(null);
                         return;
                     }
-                    if (item == updatedItem)
-                        return;//
-                    updatedItem = item;
-                    String text = null;
+                    String text;
                     if (item instanceof String str) {
                         text = str;
                         this.setGraphic(getTreeItem().isExpanded() ? MaterialIcon.FOLDER_OPEN.graphic() : MaterialIcon.FOLDER.graphic());
@@ -129,11 +128,7 @@ public class RecentItemsController extends WorkbenchSideViewController {
                         this.setGraphic(null);
                         final Book book = BooklistProfile.ONE.getBook(rBook.id);
                         if (null != book) {
-                            text = book.title;
-                            if (null != book.path && book.volumes.size() > 0) {
-                                text = StringHelper.concat(text, "（", book.volumes.size(), "卷）");
-                            }
-                            text = AppContext.displayText(text);
+                            text = AppContext.displayText(BookLabelStyle.format(book));
                         } else {
                             text = rBook.id;
                         }

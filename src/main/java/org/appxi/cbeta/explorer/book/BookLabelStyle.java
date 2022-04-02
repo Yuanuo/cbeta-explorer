@@ -6,7 +6,7 @@ import org.appxi.util.StringHelper;
 
 import java.util.function.Function;
 
-enum BookLabelStyle {
+public enum BookLabelStyle {
     name("书名，例：大智度论", item -> item.title),
     name_vols("书名+卷数，例：大智度论 (100卷)", item -> {
         String text = item.title;
@@ -60,5 +60,9 @@ enum BookLabelStyle {
     static void setValue(BookLabelStyle val) {
         style = val;
         UserPrefs.prefs.setProperty("book.label.style", val.name());
+    }
+
+    public static String format(Book book) {
+        return value().format.apply(book);
     }
 }

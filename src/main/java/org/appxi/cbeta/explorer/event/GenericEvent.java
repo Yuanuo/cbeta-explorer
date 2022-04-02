@@ -12,6 +12,8 @@ public class GenericEvent extends Event {
 
     public static final EventType<GenericEvent> DISPLAY_HAN_CHANGED = new EventType<>(Event.ANY, "DISPLAY_HAN_CHANGED");
 
+    public static final EventType<GenericEvent> BOOK_LABEL_STYLED = new EventType<>(Event.ANY, "BOOK_LABEL_STYLED");
+
     private final Object data;
 
     public GenericEvent(EventType<GenericEvent> eventType) {

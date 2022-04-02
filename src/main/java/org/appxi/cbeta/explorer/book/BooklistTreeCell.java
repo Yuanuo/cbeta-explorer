@@ -22,7 +22,7 @@ class BooklistTreeCell implements Callback<TreeView<Book>, TreeCell<Book>> {
                     this.setGraphic(null);
                     return;
                 }
-                this.setText(AppContext.displayText(BookLabelStyle.value().format.apply(item)));
+                this.setText(AppContext.displayText(BookLabelStyle.format(item)));
                 //
                 this.setTooltip(new Tooltip(this.getText().concat(StringHelper.isBlank(item.authorInfo) ? ""
                         : "\n".concat(item.id).concat(" by ").concat(AppContext.displayText(item.authorInfo))
