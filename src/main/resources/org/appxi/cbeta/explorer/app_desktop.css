@@ -97,10 +97,8 @@
 }
 .card-chooser .card-view .title {
     -fx-font-weight: 700;
-    -fx-text-fill: ladder(-primary-swatch-500, -text-dark 49%, -text-light 50%);
 }
 .card-chooser .card-view .description {
     -fx-font-size: 85%;
     -fx-opacity: .85;
-    -fx-text-fill: ladder(-primary-swatch-500, -text-dark 49%, -text-light 50%);
 }
