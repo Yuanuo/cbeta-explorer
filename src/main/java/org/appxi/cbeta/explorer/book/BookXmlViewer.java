@@ -395,9 +395,9 @@ public class BookXmlViewer extends HtmlViewer<Chapter> {
         markOrigInline.setUserData(0);
         markOrigInline.setSelected(usedMarks == (int) markOrigInline.getUserData());
 
-        final ToggleButton markModSharp = new ToggleButton("标记");
+        final ToggleButton markModSharp = new ToggleButton("✱标");
         markModSharp.getStyleClass().add("flat");
-        markModSharp.setTooltip(new Tooltip("在编注点插入#号并划动鼠标查看CBETA编注内容"));
+        markModSharp.setTooltip(new Tooltip("在编注点插入✱号并划动鼠标查看CBETA编注内容"));
         markModSharp.setUserData(1);
         markModSharp.setSelected(usedMarks == (int) markModSharp.getUserData());
 
