@@ -481,13 +481,31 @@ public class BookXmlViewer extends HtmlViewer<Chapter> {
 
     @Override
     protected String selectorKey() {
-        return book.id;
+        return null != openedItem && null != openedItem.id ? openedItem.id : book.id;
     }
 
     @Override
     public void onViewportShowing(boolean firstTime) {
         if (!firstTime) app.eventBus.fireEvent(new BookEvent(BookEvent.VIEW, book, openedItem));
-        else super.onViewportShowing(true);
+        else {
+            // 升级旧数据，从原来以book粒度记录的进度位置升级成以chapter为粒度
+            final String lastChapterId = UserPrefs.recents.getString(book.id + ".chapter", null);
+            if (StringHelper.isNotBlank(lastChapterId)) {
+                final String selector = UserPrefs.recents.getString(book.id + ".selector", null);
+                if (null != selector) {
+                    UserPrefs.recents.removeProperty(book.id + ".selector");
+                    UserPrefs.recents.setProperty(lastChapterId + ".selector", selector);
+                }
+
+                final double percent = UserPrefs.recents.getDouble(book.id + ".percent", -1);
+                if (percent != -1) {
+                    UserPrefs.recents.removeProperty(book.id + ".percent");
+                    UserPrefs.recents.setProperty(lastChapterId + ".percent", percent);
+                }
+            }
+            //
+            super.onViewportShowing(true);
+        }
     }
 
     @Override
@@ -501,6 +519,11 @@ public class BookXmlViewer extends HtmlViewer<Chapter> {
     }
 
     public void navigate(Chapter item) {
+        // 在切换章节时先保存现有进度数据
+        if (null != openedItem) {
+            saveUserExperienceData();
+        }
+        //
         final Chapter pos = null != item ? item : removeAttr(Chapter.class);
         if (null == item) item = bookBasic.selectChapter(this.book, pos);
         else item = bookBasic.selectChapter(this.book, item);
