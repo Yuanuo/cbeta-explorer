@@ -13,11 +13,11 @@ module appxi.cbetaExplorer {
     requires appxi.smartcn.convert;
     requires appxi.smartcn.pinyin;
     requires org.jsoup;
+    requires org.json;
 
     requires java.sql;
     requires static com.h2database;
     requires static ormlite.jdbc;
-    requires static org.json;
 
     requires appxi.search.solr;
 
