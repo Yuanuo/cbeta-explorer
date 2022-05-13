@@ -73,7 +73,7 @@ public class SearchController extends WorkbenchSideToolController {
                 if (null != chapter.anchor)
                     chapter.attr("position.selector", chapter.anchor);
                 if (null != event.highlightTerm)
-                    chapter.attr("position.term", event.highlightTerm.replace("…", ""));
+                    chapter.attr("position.term", event.highlightTerm.replaceAll("…|^\"|\"$", ""));
                 if (null != event.highlightSnippet)
                     chapter.attr("position.text", event.highlightSnippet
                             .replace("§§hl#end§§", "").replace("…", ""));
