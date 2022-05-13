@@ -19,6 +19,7 @@ import java.util.Set;
 
 public abstract class LookupLayerEx extends LookupLayer<Object> {
     private Set<String> usedKeywords;
+    protected String inputQuery;
 
     public LookupLayerEx(StackPane owner) {
         super(owner);
@@ -74,6 +75,9 @@ public abstract class LookupLayerEx extends LookupLayer<Object> {
     @Override
     protected final Collection<Object> lookupByKeywords(String lookupText, int resultLimit) {
         if (!lookupText.isEmpty() && lookupText.matches("[(（“\"]+")) return null;
+
+        //
+        inputQuery = lookupText;
 
         if (lookupText.matches("[!！].*")) {
             lookupText = lookupText.substring(1);

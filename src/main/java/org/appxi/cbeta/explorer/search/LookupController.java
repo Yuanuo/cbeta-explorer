@@ -71,7 +71,6 @@ public class LookupController extends WorkbenchSideToolController {
     }
 
     private LookupLayerEx lookupLayer;
-    private String lookupText;
 
     private void onViewportShowing(String text) {
         if (null == lookupLayer) {
@@ -113,7 +112,6 @@ public class LookupController extends WorkbenchSideToolController {
                 @Override
                 protected void lookupByKeywords(String lookupText, int resultLimit,
                                                 List<LookupResultItem> result, Set<String> usedKeywords) {
-                    LookupController.this.lookupText = lookupText;
 //                    LookupByPredicate.lookup(lookupText, resultLimit, result, usedKeywords);
                     LookupByExpression.lookup(lookupText, resultLimit, result, usedKeywords);
                 }
@@ -203,6 +201,6 @@ public class LookupController extends WorkbenchSideToolController {
 
             app.eventBus.addEventHandler(BookEvent.VIEW, event -> lookupLayer.refresh());
         }
-        lookupLayer.show(text != null ? text : lookupText);
+        lookupLayer.show(text != null ? text : lookupLayer.inputQuery);
     }
 }
