@@ -715,6 +715,14 @@ public class BookXmlViewer extends HtmlViewer<Chapter> {
         //
         MenuItem dictionary = new MenuItem("查词典");
         dictionary.setDisable(true);
+
+        MenuItem pinyin = new MenuItem();
+        if (null != availText) {
+            pinyin.setText("查拼音：".concat(AppContext.ascii(StringHelper.trimChars(availText, 10), true)));
+        } else {
+            pinyin.setText("查拼音：<选择1~10字>");
+        }
+
         //
         MenuItem bookmark = new MenuItem("添加书签");
         bookmark.setOnAction(event -> this.handleEventToCreateBookdata(BookdataType.bookmark));
@@ -727,7 +735,7 @@ public class BookXmlViewer extends HtmlViewer<Chapter> {
                 new SeparatorMenuItem(),
                 search, searchInAbs, searchInBook, lookup, finder,
                 new SeparatorMenuItem(),
-                dictionary,
+                dictionary, pinyin,
                 new SeparatorMenuItem(),
                 bookmark, favorite
         );

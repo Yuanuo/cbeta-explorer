@@ -155,11 +155,15 @@ public abstract class AppContext {
     }
 
     public static String ascii(String text) {
+        return ascii(text, false);
+    }
+
+    public static String ascii(String text, boolean tone) {
         final List<Map.Entry<Character, Pinyin>> pinyinList = PinyinConvertors.convert(text);
         StringBuilder result = new StringBuilder(pinyinList.size() * (6));
         pinyinList.forEach(entry -> {
             if (null == entry.getValue()) result.append(entry.getKey());
-            else result.append(" ").append(entry.getValue().getPinyinWithoutTone()).append(" ");
+            else result.append(" ").append(tone ? entry.getValue().getPinyinWithToneMark() : entry.getValue().getPinyinWithoutTone()).append(" ");
         });
 
         // 原始数据中的空格有多有少，此处需要保证仅有1个空格，以方便匹配用户输入的数据
