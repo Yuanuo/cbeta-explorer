@@ -573,16 +573,20 @@ public class BookXmlViewer extends HtmlViewer<Chapter> {
         //
         app.eventBus.fireEvent(new BookEvent(BookEvent.VIEW, book));
         //
-        FxHelper.runThread(100, () -> webPane.getTopAsBar().lookupAll(".toggle-button").forEach(node -> {
-            if (node instanceof ToggleButton toggle && toggle.isSelected()) {
-                if (toggle.getToggleGroup() == null) {
-                    toggle.fireEvent(new ActionEvent());
-                } else {
-                    toggle.getToggleGroup().selectToggle(null);
-                    toggle.getToggleGroup().selectToggle(toggle);
+        FxHelper.runThread(100, () -> {
+            webFinder.clear.fire();
+            //
+            webPane.getTopAsBar().lookupAll(".toggle-button").forEach(node -> {
+                if (node instanceof ToggleButton toggle && toggle.isSelected()) {
+                    if (toggle.getToggleGroup() == null) {
+                        toggle.fireEvent(new ActionEvent());
+                    } else {
+                        toggle.getToggleGroup().selectToggle(null);
+                        toggle.getToggleGroup().selectToggle(toggle);
+                    }
                 }
-            }
-        }));
+            });
+        });
     }
 
     @Override
