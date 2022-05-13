@@ -95,8 +95,8 @@ public class SearcherController extends WorkbenchMainViewController {
     private BorderPane resultView;
     private Label resultInfo;
 
-    private String searchedText, inputQuery;
-    private final InvalidationListener facetCellStateListener = o -> handleSearching(searchedText);
+    private String inputQuery, finalQuery;
+    private final InvalidationListener facetCellStateListener = o -> handleSearching(finalQuery);
 
     @Override
     protected void onViewportInitOnce(StackPane viewport) {
@@ -261,6 +261,8 @@ public class SearcherController extends WorkbenchMainViewController {
         }
         // 允许搜索空字符串，一般情况下用户无法入手时，可通过此处默认显示的搜索结果入门
         String inputText = input.getText().strip().replace(':', ' ');
+        //
+        inputQuery = inputText;
         // 允许输入简繁体汉字
         if (!inputText.isEmpty() && (inputText.charAt(0) == '!' || inputText.charAt(0) == '！')) {
             // 为避免自动转换失误导致检索失败，此处特殊处理，允许以感叹号开始的字符串不自动转换简繁体
@@ -291,7 +293,7 @@ public class SearcherController extends WorkbenchMainViewController {
             app.toast("正在准备数据，请稍后再试");
             return;
         }
-        setTitles(inputText);
+        setTitles(inputQuery.length() > 20 ? inputQuery.substring(0, 20) : inputQuery);
         // 使用线程，避免UI阻塞假死
         ProgressLayer.showAndWait(getViewport(), progressLayer -> handleSearchingImpl(inputText));
     }
@@ -304,18 +306,17 @@ public class SearcherController extends WorkbenchMainViewController {
         boolean facet = true;
         categories = new ArrayList<>();
         // 当搜索条件（关键词）未改变时，已经搜索过一次，此时认为是在根据facet条件过滤，否则开启一个新的搜索
-        if (inputText.equals(searchedText) && null != facetAndHighlightPage && facetAndHighlightPage.getTotalElements() > 0) {
+        if (inputText.equals(finalQuery) && null != facetAndHighlightPage && facetAndHighlightPage.getTotalElements() > 0) {
             facet = false;
             categories.addAll(getSelectedFacetFilterValues(facetCatalogView));
             categories.addAll(getSelectedFacetFilterValues(facetPeriodView));
             categories.addAll(getSelectedFacetFilterValues(facetTripitakaView));
             categories.addAll(getSelectedFacetFilterValues(facetAuthorView));
         }
-        searchedText = inputText;
-        inputQuery = inputText;
+        finalQuery = inputText;
         facetAndHighlightPage = repository.search(BooklistProfile.ONE.profile().name(),
                 null == searchScope ? null : List.of(searchScope.id != null ? searchScope.id : searchScope.attr("scope")),
-                inputQuery, categories, facet, new SolrPageRequest(0, PAGE_SIZE));
+                finalQuery, categories, facet, new SolrPageRequest(0, PAGE_SIZE));
         if (null == facetAndHighlightPage) return;
 
         // update facet ui
@@ -385,7 +386,7 @@ public class SearcherController extends WorkbenchMainViewController {
             // query for next page
             highlightPage = repository.search(BooklistProfile.ONE.profile().name(),
                     null == searchScope ? null : List.of(searchScope.id != null ? searchScope.id : searchScope.attr("scope")),
-                    inputQuery, categories, false, new SolrPageRequest(pageIdx, PAGE_SIZE));
+                    finalQuery, categories, false, new SolrPageRequest(pageIdx, PAGE_SIZE));
         }
         if (null == highlightPage)
             return new Label();// avoid NPE
