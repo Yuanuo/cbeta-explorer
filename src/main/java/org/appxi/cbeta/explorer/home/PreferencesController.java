@@ -20,6 +20,7 @@ public class PreferencesController extends WorkbenchSideToolController {
 
     @Override
     public void initialize() {
+        app.visualProvider.addSettings();
     }
 
     @Override
