@@ -442,12 +442,12 @@ public class SearcherController extends WorkbenchMainViewController {
                 if (item.categories != null && !item.categories.isEmpty()) {
                     final String navPrefix = "nav/".concat(BooklistProfile.ONE.profile().template().name()).concat("/");
                     item.categories.stream().filter(s -> s.startsWith(navPrefix)).findFirst()
-                            .ifPresent(s -> locationLabel.setText(s.substring(navPrefix.length())));
+                            .ifPresent(s -> locationLabel.setText(AppContext.displayText(s.substring(navPrefix.length()))));
                 }
                 if (locationLabel.getText() == null || locationLabel.getText().isBlank())
-                    locationLabel.setText(item.field("location_s").concat("（").concat(item.field("book_s")).concat("）"));
+                    locationLabel.setText(AppContext.displayText(item.field("location_s").concat("（").concat(item.field("book_s")).concat("）")));
 
-                authorsLabel.setText(item.field("author_txt_aio"));
+                authorsLabel.setText(AppContext.displayText(item.field("author_txt_aio")));
 
                 List<HighlightEntry.Highlight> highlights = highlightPage.getHighlights(item);
                 List<Node> texts = new ArrayList<>();
@@ -482,7 +482,7 @@ public class SearcherController extends WorkbenchMainViewController {
                     });
                 } else {
                     String text = item.text("text_txt_aio_sub");
-                    final Text text1 = new Text(null == text ? "" : StringHelper.trimChars(text, 200));
+                    final Text text1 = new Text(null == text ? "" : AppContext.displayText(StringHelper.trimChars(text, 200)));
                     text1.getStyleClass().add("plaintext");
                     texts.add(text1);
                 }
