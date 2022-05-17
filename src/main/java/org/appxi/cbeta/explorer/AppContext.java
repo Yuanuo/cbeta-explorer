@@ -139,7 +139,7 @@ public abstract class AppContext {
     }
 
     public static String displayText(String text) {
-        return ChineseConvertors.convert(text, HanLang.hantTW, getDisplayHan());
+        return null == text ? "" : ChineseConvertors.convert(text, HanLang.hantTW, getDisplayHan());
     }
 
     private static TimeAgo.Messages timeAgoI18N;
@@ -159,7 +159,7 @@ public abstract class AppContext {
     }
 
     public static String ascii(String text, boolean tone) {
-        final List<Map.Entry<Character, Pinyin>> pinyinList = PinyinConvertors.convert(text);
+        final List<Map.Entry<Character, Pinyin>> pinyinList = null == text ? List.of() : PinyinConvertors.convert(text);
         StringBuilder result = new StringBuilder(pinyinList.size() * (6));
         pinyinList.forEach(entry -> {
             if (null == entry.getValue()) result.append(entry.getKey());
