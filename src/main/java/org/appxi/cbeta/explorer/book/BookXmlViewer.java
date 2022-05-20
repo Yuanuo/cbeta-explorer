@@ -718,9 +718,15 @@ public class BookXmlViewer extends HtmlViewer<Chapter> {
 
         MenuItem pinyin = new MenuItem();
         if (null != availText) {
-            pinyin.setText("查拼音：".concat(AppContext.ascii(StringHelper.trimChars(availText, 10), true)));
+            final String str = StringHelper.trimChars(availText, 10, "");
+            final String strPy = AppContext.ascii(str, true);
+            pinyin.setText("查拼音：" + strPy);
+            pinyin.setOnAction(event -> {
+                Clipboard.getSystemClipboard().setContent(Map.of(DataFormat.PLAIN_TEXT, str + "\n" + strPy));
+                app.toast("已复制拼音到剪贴板！");
+            });
         } else {
-            pinyin.setText("查拼音：<选择1~10字>");
+            pinyin.setText("查拼音：<选择1~10字>，并点击可复制");
         }
 
         //
