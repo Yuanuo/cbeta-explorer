@@ -10,13 +10,11 @@ import javafx.scene.control.Labeled;
 import javafx.scene.input.InputEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
-import org.appxi.cbeta.explorer.AppContext;
 import org.appxi.javafx.control.LookupLayer;
 import org.appxi.javafx.helper.FxHelper;
 import org.appxi.javafx.visual.MaterialIcon;
 import org.appxi.javafx.workbench.WorkbenchApp;
 import org.appxi.smartcn.convert.ChineseConvertors;
-import org.appxi.util.ext.HanLang;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -50,8 +48,8 @@ class DictionaryLookupLayer extends LookupLayer<DictEntry> {
     @Override
     protected String getUsagesText() {
         return """
-                >> 支持简繁汉字匹配（以感叹号起始则强制区分）；支持按拼音（全拼）匹配，使用双引号包含则实行精确匹配；
-                >> 支持复杂条件(+/AND,默认为OR)：例1：1juan +"bu kong" AND 仪轨；例2：1juan +("bu kong" 仪轨 OR "yi gui")
+                >> 当前支持自动简繁汉字和英文词！
+                >> 匹配规则：默认1）以词开始：输入 或 输入*；2）以词结尾：*输入；3）以词存在：*输入*；4）以双引号包含精确查词："输入"；
                 >> 快捷键：Ctrl+D 开启；ESC 或 点击透明区 退出此界面；上/下方向键选择列表项；回车键打开；
                 """;
     }
@@ -59,15 +57,37 @@ class DictionaryLookupLayer extends LookupLayer<DictEntry> {
     @Override
     protected Collection<DictEntry> lookupByKeywords(String lookupText, int resultLimit) {
         inputQuery = lookupText;
-        if (AppContext.getDisplayHan() != HanLang.hans)
-            lookupText = ChineseConvertors.toHans(lookupText);
+
+        // detect
+        SearchMode searchMode = SearchMode.TitleStartsWith;
+        if (lookupText.length() > 2) {
+            if (lookupText.charAt(0) == '"' && lookupText.charAt(lookupText.length() - 1) == '"'
+                    || lookupText.charAt(0) == '“' && lookupText.charAt(lookupText.length() - 1) == '”') {
+                searchMode = SearchMode.TitleEquals;
+                lookupText = lookupText.substring(1, lookupText.length() - 1);
+            } else if (lookupText.charAt(0) == '*' && lookupText.charAt(lookupText.length() - 1) == '*') {
+                searchMode = SearchMode.TitleContains;
+                lookupText = lookupText.substring(1, lookupText.length() - 1);
+            } else if (lookupText.charAt(0) == '*') {
+                searchMode = SearchMode.TitleEndsWith;
+                lookupText = lookupText.substring(1);
+            } else if (lookupText.charAt(lookupText.length() - 1) == '*') {
+                searchMode = SearchMode.TitleStartsWith;
+                lookupText = lookupText.substring(0, lookupText.length() - 1);
+            }
+        } else if (lookupText.equals("*")) {
+            lookupText = "";
+            searchMode = SearchMode.TitleStartsWith;
+        }
+
+        lookupText = lookupText.isBlank() ? "" : ChineseConvertors.toHans(lookupText);
         finalQuery = lookupText;
 
         resultLimit += 1;
         final boolean finalQueryIsBlank = null == finalQuery || finalQuery.isBlank();
         List<SearchResultEntry> result = new ArrayList<>(1024);
         try {
-            Iterator<SearchResultEntry> iter = DictionaryApi.api().searchTitle(SearchMode.TitleStartsWith, finalQuery, null, null);
+            Iterator<SearchResultEntry> iter = DictionaryApi.api().searchTitle(searchMode, finalQuery, null, null);
             while (iter.hasNext()) {
                 result.add(iter.next());
                 if (finalQueryIsBlank && result.size() > resultLimit) {
