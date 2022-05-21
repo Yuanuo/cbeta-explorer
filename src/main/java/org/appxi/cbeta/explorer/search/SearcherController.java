@@ -23,6 +23,8 @@ import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
 import javafx.scene.control.cell.CheckBoxListCell;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.DataFormat;
 import javafx.scene.input.InputEvent;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -422,6 +424,21 @@ public class SearcherController extends WorkbenchMainViewController {
                 setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
                 getStyleClass().add("result-item");
                 setStyle(getStyle().concat("-fx-font-size: 110%;-fx-opacity:.9;"));
+                //
+                setTooltip(new Tooltip("鼠标右键点击可复制当前条目文字到剪贴板"));
+                setOnMouseClicked(event -> {
+                    if (event.getButton() == MouseButton.SECONDARY) {
+                        String copyText = "名称：" + nameLabel.getText() +
+                                "\n位置：" + locationLabel.getText() +
+                                "\n作译者：" + authorsLabel.getText() +
+                                "\n文本：\n" + textFlow.getChildren().stream().filter(n -> n instanceof Text)
+                                .map(n -> ((Text) n).getText())
+                                .collect(Collectors.joining());
+
+                        Clipboard.getSystemClipboard().setContent(Map.of(DataFormat.PLAIN_TEXT, copyText));
+                        app.toast("已复制到剪贴板！");
+                    }
+                });
             }
 
             Piece updatedItem;
