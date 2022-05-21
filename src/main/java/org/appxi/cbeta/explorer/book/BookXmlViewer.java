@@ -38,6 +38,7 @@ import org.appxi.cbeta.explorer.bookdata.BookmarksController;
 import org.appxi.cbeta.explorer.bookdata.FavoritesController;
 import org.appxi.cbeta.explorer.dao.Bookdata;
 import org.appxi.cbeta.explorer.dao.BookdataType;
+import org.appxi.cbeta.explorer.dict.DictionaryEvent;
 import org.appxi.cbeta.explorer.event.BookEvent;
 import org.appxi.cbeta.explorer.event.BookdataEvent;
 import org.appxi.cbeta.explorer.event.GenericEvent;
@@ -599,18 +600,17 @@ public class BookXmlViewer extends HtmlViewer<Chapter> {
     @Override
     protected void handleWebViewShortcuts(KeyEvent event) {
         if (!event.isConsumed() && event.isShortcutDown()) {
-//            // Ctrl + G, Ctrl + H
-//            if (event.getCode() == KeyCode.G || event.getCode() == KeyCode.H) {
-//                // 如果有选中文字，则按查找选中文字处理
-//                final String selText = webPane.executeScript("getValidSelectionText()");
-//                final String textToSearch = null == selText ? null :
-//                        AppContext.getDisplayHan() != HanLang.hantTW ? selText : "!".concat(selText);
-//                app.eventBus.fireEvent(event.getCode() == KeyCode.G
-//                        ? SearcherEvent.ofLookup(textToSearch) // LOOKUP
-//                        : SearcherEvent.ofSearch(textToSearch) // SEARCH
-//                );
-//                event.consume();
-//            }
+            // Ctrl + D
+            if (event.getCode() == KeyCode.D) {
+                // 如果有选中文字，则按选中文字处理
+                String origText = webPane.executeScript("getValidSelectionText()");
+                String trimText = null == origText ? null : origText.strip().replace('\n', ' ');
+                final String availText = StringHelper.isBlank(trimText) ? null : trimText;
+
+                final String str = null == availText ? null : StringHelper.trimChars(availText, 20, "");
+                app.eventBus.fireEvent(DictionaryEvent.ofSearch(str));
+                event.consume();
+            }
             // Ctrl + LEFT
             if (event.getCode() == KeyCode.LEFT) {
                 gotoPrev.fire();
@@ -713,8 +713,17 @@ public class BookXmlViewer extends HtmlViewer<Chapter> {
         MenuItem finder = new MenuItem("页内查找".concat(textTip));
         finder.setOnAction(event -> webFinder.find(availText));
         //
-        MenuItem dictionary = new MenuItem("查词典");
-        dictionary.setDisable(true);
+        MenuItem dictionary = new MenuItem();
+        if (null != availText) {
+            final String str = StringHelper.trimChars(availText, 10);
+            dictionary.setText("查词典：" + str);
+        } else {
+            dictionary.setText("查词典");
+        }
+        dictionary.setOnAction(event -> {
+            final String str = null == availText ? null : StringHelper.trimChars(availText, 20, "");
+            app.eventBus.fireEvent(DictionaryEvent.ofSearch(str));
+        });
 
         MenuItem pinyin = new MenuItem();
         if (null != availText) {

@@ -14,6 +14,7 @@ module appxi.cbetaExplorer {
     requires appxi.smartcn.pinyin;
     requires org.jsoup;
     requires org.json;
+    requires appxi.dictionary;
 
     requires java.sql;
     requires static com.h2database;
@@ -28,4 +29,5 @@ module appxi.cbetaExplorer {
     opens org.appxi.cbeta.explorer;
     opens org.appxi.cbeta.explorer.book; // for javafx
     opens org.appxi.cbeta.explorer.dao; // for ormlite, spring
+    opens org.appxi.cbeta.explorer.dict; // for javafx
 }

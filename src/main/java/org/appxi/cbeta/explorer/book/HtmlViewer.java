@@ -493,7 +493,7 @@ public abstract class HtmlViewer<T extends Attributes> extends WorkbenchMainView
         }
     }
 
-    protected static class WebIncl {
+    public static class WebIncl {
         private static final String[] includeNames = {
                 "jquery.min.js", "jquery.ext.js",
                 "jquery.isinviewport.js", "jquery.scrollto.js",

@@ -10,6 +10,7 @@ import org.appxi.cbeta.explorer.home.AboutController;
 import org.appxi.cbeta.explorer.home.PreferencesController;
 import org.appxi.cbeta.explorer.recent.RecentItemsController;
 import org.appxi.cbeta.explorer.recent.RecentViewsController;
+import org.appxi.cbeta.explorer.dict.DictionaryController;
 import org.appxi.cbeta.explorer.search.LookupController;
 import org.appxi.cbeta.explorer.search.SearchController;
 import org.appxi.cbeta.explorer.widget.WidgetsController;
@@ -130,6 +131,7 @@ public class App extends WorkbenchApp {
 
         result.add(new LookupController(workbench));
         result.add(new SearchController(workbench));
+        result.add(new DictionaryController(workbench));
         result.add(new WidgetsController(workbench));
 
         result.add(new PreferencesController(workbench));

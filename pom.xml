@@ -59,7 +59,7 @@
 		<dependency>
 			<groupId>org.json</groupId>
 			<artifactId>json</artifactId>
-			<version>20210307</version>
+			<version>20220302</version>
 		</dependency>
 
 		<dependency>
@@ -76,6 +76,11 @@
 			<groupId>org.appxi</groupId>
 			<artifactId>search-solr</artifactId>
 			<version>[1.0.0,)</version>
+		</dependency>
+		<dependency>
+			<groupId>org.appxi</groupId>
+			<artifactId>dictionary</artifactId>
+			<version>[22.05.14,)</version>
 		</dependency>
 	</dependencies>
 
