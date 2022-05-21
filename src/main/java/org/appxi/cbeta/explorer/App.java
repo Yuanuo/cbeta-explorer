@@ -31,7 +31,7 @@ import java.util.Optional;
 public class App extends WorkbenchApp {
     public static final String ID = "cbetaExplorer";
     public static final String NAME = "智悲乐藏";
-    public static final String VERSION = "22.04.02";
+    public static final String VERSION = "22.05.22";
     private static App instance;
 
     public App() {
