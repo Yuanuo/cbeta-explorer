@@ -17,6 +17,7 @@ import org.appxi.cbeta.explorer.event.GenericEvent;
 import org.appxi.cbeta.explorer.event.ProgressEvent;
 import org.appxi.cbeta.explorer.event.SearchedEvent;
 import org.appxi.cbeta.explorer.event.SearcherEvent;
+import org.appxi.javafx.control.OpaqueLayer;
 import org.appxi.javafx.helper.FxHelper;
 import org.appxi.javafx.settings.DefaultOption;
 import org.appxi.javafx.settings.SettingsList;
@@ -99,6 +100,9 @@ public class SearchController extends WorkbenchSideToolController {
     }
 
     private void openSearcherWithText(String text, Book scope) {
+        // 有从外部打开的全文搜索，此时需要隐藏透明层
+        OpaqueLayer.hideOpaqueLayer(app.getPrimaryGlass());
+
         // 优先查找可用的搜索视图，以避免打开太多未使用的搜索视图
         SearcherController searcher = workbench.mainViews.getTabs().stream()
                 .map(tab -> (tab.getUserData() instanceof SearcherController view && view.isNeverSearched()) ? view : null)
