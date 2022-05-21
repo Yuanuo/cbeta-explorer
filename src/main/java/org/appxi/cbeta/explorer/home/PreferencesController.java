@@ -47,6 +47,7 @@ public class PreferencesController extends WorkbenchSideToolController {
         dialog.initOwner(app.getPrimaryStage());
         dialog.setOnShown(evt -> FxHelper.runThread(100, () -> {
             dialog.setHeight(800);
+            dialog.setY(dialog.getOwner().getY() + (dialog.getOwner().getHeight() - dialog.getHeight()) / 2);
             if (dialog.getX() < 0) dialog.setX(0);
             if (dialog.getY() < 0) dialog.setY(0);
         }));
