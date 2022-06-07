@@ -72,31 +72,30 @@ function setScrollTop1BySelectors(selector, percent = 0) {
 }
 
 
-var dataApi;
+var javaApp;
 let resizeBodyTimer;
 let markedScrollTop1Selector;
 let documentLoaded = false;
 
-function beforeOnResizeBody() {
+function onBodyResizeBefore() {
     if (!documentLoaded) return;
     markedScrollTop1Selector = markedScrollTop1Selector || getScrollTop1Selector();
 }
 
-function handleOnResizeBody() {
-    if (!documentLoaded) return;
-    if (resizeBodyTimer) clearTimeout(resizeBodyTimer);
-    resizeBodyTimer = setTimeout(function () {
-        resizeBodyTimer = null;
-        if (!markedScrollTop1Selector) return;
-        setScrollTop1BySelectors(markedScrollTop1Selector, 0);
-        markedScrollTop1Selector = null;
-    }, 200);
-}
-
 $(document).ready(function () {
     documentLoaded = true;
-    document.body.onresize = handleOnResizeBody;
+    document.body.onresize = function () {
+        if (!documentLoaded) return;
+        if (resizeBodyTimer) clearTimeout(resizeBodyTimer);
+        resizeBodyTimer = setTimeout(function () {
+            resizeBodyTimer = null;
+            if (!markedScrollTop1Selector) return;
+            setScrollTop1BySelectors(markedScrollTop1Selector, 0);
+            markedScrollTop1Selector = null;
+        }, 200);
+    };
     if (rangy) rangy.init();
+    if (javaApp) javaApp.onDocumentReady();
 });
 
 function getValidSelection() {

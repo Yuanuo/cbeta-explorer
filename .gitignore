@@ -1,5 +1,7 @@
 # maven
 /target
+/app/target
+/app-packager/target
 
 # eclipse
 /.settings

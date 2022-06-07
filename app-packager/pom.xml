@@ -6,7 +6,7 @@
 
     <groupId>org.appxi</groupId>
     <artifactId>cbeta-explorer-packager</artifactId>
-    <version>22.05.22</version>
+    <version>22.06.07</version>
     <packaging>pom</packaging>
 
     <properties>
@@ -15,7 +15,7 @@
 
         <ext.nonMods>${project.build.directory}/jpacktool/jar</ext.nonMods>
         <ext.nonMods.lib>${project.build.directory}/jpacktool/jar/${project.version}</ext.nonMods.lib>
-        <ext.module>appxi.cbetaExplorer/org.appxi.cbeta.explorer.AppLauncher</ext.module>
+        <ext.module>appxi.cbetaExplorer/org.appxi.cbeta.app.AppLauncher</ext.module>
         <ext.jvmArgs>-Djpackage.app-dir=$APPDIR -XX:+UseG1GC -XX:+UseStringDeduplication -Dfile.encoding=UTF-8 --add-opens=javafx.web/javafx.scene.web=appxi.javafx --add-exports=javafx.web/com.sun.webkit=appxi.javafx --add-exports=javafx.web/com.sun.webkit.event=appxi.javafx --add-exports=javafx.web/com.sun.javafx.webkit=appxi.javafx --add-opens=javafx.graphics/com.sun.javafx.font=appxi.javafx -p $APPDIR/${project.version}</ext.jvmArgs>
     </properties>
 

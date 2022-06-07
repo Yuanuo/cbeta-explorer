@@ -5,7 +5,7 @@
 
 	<groupId>org.appxi</groupId>
 	<artifactId>cbeta-explorer</artifactId>
-	<version>22.05.22</version>
+	<version>22.06.07</version>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -35,21 +35,6 @@
 			<artifactId>timeago</artifactId>
 			<version>[1.0.0,)</version>
 		</dependency>
-		<dependency>
-			<groupId>org.appxi</groupId>
-			<artifactId>smartcn-convert</artifactId>
-			<version>[1.0.0,)</version>
-		</dependency>
-		<dependency>
-			<groupId>org.appxi</groupId>
-			<artifactId>smartcn-pinyin</artifactId>
-			<version>[1.0.0,)</version>
-		</dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-swing</artifactId>
-            <version>${javafx.version}</version>
-        </dependency>
 <!--        <dependency>-->
 <!--            <groupId>org.openjfx</groupId>-->
 <!--            <artifactId>javafx-fxml</artifactId>-->
@@ -76,11 +61,6 @@
 			<groupId>org.appxi</groupId>
 			<artifactId>search-solr</artifactId>
 			<version>[1.0.0,)</version>
-		</dependency>
-		<dependency>
-			<groupId>org.appxi</groupId>
-			<artifactId>dictionary</artifactId>
-			<version>[22.05.14,)</version>
 		</dependency>
 	</dependencies>
 
