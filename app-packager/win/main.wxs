@@ -111,7 +111,7 @@
           <RegistryValue Type="string" KeyPath="yes" Name="ProductCode" Value="[ProductCode]"></RegistryValue>
         </RegistryKey>
         <Shortcut Id="shortcut90fd2ef639ab330dacc658b24e95f5c1X" Name="$(var.JpAppTitle)" WorkingDirectory="INSTALLDIR" Advertise="no" IconIndex="0"
-            Target="[#file05979dca9ae9314cb4d275f7809fb6ab]" Icon="icon1499787010"></Shortcut>
+            Target="[#file05979dca9ae9314cb4d275f7809fb6ab]"></Shortcut>
       </Component>
     </DirectoryRef>
     <DirectoryRef Id="dira53499bf68e436af84e4bed0a79488d8X">
@@ -121,7 +121,7 @@
         </RegistryKey>
         <RemoveFolder Id="rm2c127805c97e37d6b1aebc7f290cd38c_1X" On="uninstall"></RemoveFolder>
         <Shortcut Id="shortcut634ebdfabc123a8290e09b019d9ab72fX" Name="$(var.JpAppTitle)" WorkingDirectory="INSTALLDIR" Advertise="no" IconIndex="0"
-            Target="[#file05979dca9ae9314cb4d275f7809fb6ab]" Icon="icon1499787010"></Shortcut>
+            Target="[#file05979dca9ae9314cb4d275f7809fb6ab]"></Shortcut>
       </Component>
     </DirectoryRef>
     <DirectoryRef Id="TARGETDIR">
