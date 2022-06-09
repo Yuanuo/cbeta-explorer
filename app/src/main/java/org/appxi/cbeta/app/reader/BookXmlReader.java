@@ -59,14 +59,16 @@ public class BookXmlReader extends WorkbenchPartController.MainView {
     /////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public final BookXmlViewer viewer() {
+        if (null == viewer) {
+            viewer = new BookXmlViewer(this, book, getViewport());
+        }
         return viewer;
     }
 
     @Override
     public void activeViewport(boolean firstTime) {
         if (firstTime) {
-            viewer = new BookXmlViewer(this, book, getViewport());
-            viewer.navigate(null);
+            viewer().navigate(null);
         } else {
             app.eventBus.fireEvent(new BookEvent(BookEvent.VIEW, book, viewer.chapter));
         }
@@ -74,6 +76,9 @@ public class BookXmlReader extends WorkbenchPartController.MainView {
 
     @Override
     public void inactiveViewport(boolean closing) {
+        if (null == viewer) {
+            return;
+        }
         if (closing) {
             app.eventBus.fireEvent(new BookEvent(BookEvent.CLOSE, this.book, viewer.chapter));
             viewer.uninstall();

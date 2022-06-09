@@ -134,9 +134,11 @@ public class BooklistExplorer extends WorkbenchPartController.SideView {
         FxHelper.runLater(() -> {
             Optional.ofNullable(this.treeView).ifPresent(TreeView::refresh);
             final BookXmlReader controller = new BookXmlReader(book, workbench);
-            controller.attr(Chapter.class, chapter);
             workbench.addWorkbenchPartAsMainView(controller, false);
             controller.initialize();
+            if (null != chapter) {
+                controller.viewer().setPosition(chapter);
+            }
             workbench.selectMainView(controller.id.get());
         });
     }

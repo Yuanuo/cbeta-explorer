@@ -50,6 +50,7 @@ import org.appxi.prefs.UserPrefs;
 import org.appxi.smartcn.convert.ChineseConvertors;
 import org.appxi.smartcn.pinyin.PinyinHelper;
 import org.appxi.util.StringHelper;
+import org.appxi.util.ext.Attributes;
 import org.appxi.util.ext.HanLang;
 import org.appxi.util.ext.LookupExpression;
 import org.json.JSONObject;
@@ -327,9 +328,12 @@ public class BookXmlViewer extends WebViewer {
             saveUserData();
         }
         //
-        final Chapter pos = null != item ? item : reader.removeAttr(Chapter.class);
-        if (null == item) item = bookBasic.selectChapter(this.book, pos);
-        else item = bookBasic.selectChapter(this.book, item);
+        final Attributes pos = null != item ? item : popPosition();
+        if (null == item && pos instanceof Chapter c) {
+            item = bookBasic.selectChapter(this.book, c);
+        } else {
+            item = bookBasic.selectChapter(this.book, item);
+        }
         if (null == item) return;
 
         // 升级旧数据，从原来以book粒度记录的进度位置升级成以volume为粒度
@@ -339,7 +343,7 @@ public class BookXmlViewer extends WebViewer {
 
         if (null != this.chapter && Objects.equals(item.path, this.chapter.path)) {
             this.chapter = item;
-            this.position = pos;
+            this.setPosition(pos);
             if (null != item.anchor && null != pos) {
                 pos.attr("anchor", item.anchor);
             }
@@ -350,7 +354,7 @@ public class BookXmlViewer extends WebViewer {
             return;
         }
         this.chapter = item;
-        this.position = pos;
+        this.setPosition(pos);
         //
         UserPrefs.recents.setProperty(book.id + ".chapter", this.chapter.id);
         //
