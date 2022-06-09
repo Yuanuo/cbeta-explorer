@@ -74,7 +74,7 @@ public class BookBasicController extends WorkbenchPartController.SideView {
         if (toc && null != treeItemValue.anchor) {
             treeItemValue.attr("anchor", treeItemValue.anchor);
         }
-        bookXmlReader.viewer().navigate(treeItemValue);
+        bookXmlReader.navigate(treeItemValue);
     }
 
     @Override

@@ -48,11 +48,11 @@ public class BookDataPlaceController extends WorkbenchPartController.SideView {
         app.eventBus.addEventHandler(BookEvent.VIEW, event -> {
             this.bookXmlReader = null;// always reset
             final WorkbenchPart mainView = workbench.getSelectedMainViewPart();
-            if (mainView instanceof BookXmlReader bookXmlReader) {
-                setTitles(AppContext.hanText(bookXmlReader.book.title));
+            if (mainView instanceof BookXmlReader bookXmlReader1) {
+                setTitles(AppContext.hanText(bookXmlReader1.book.title));
                 if (null != this.getViewport()) {
-                    this.getViewport().setCenter(bookXmlReader.viewer().sideViews);
-                } else this.bookXmlReader = bookXmlReader;
+                    this.getViewport().setCenter(bookXmlReader1.sideViews);
+                } else this.bookXmlReader = bookXmlReader1;
 
                 if (UserPrefs.prefs.getBoolean(PK_BOOK_DATA_SHOW, false)) {
                     workbench.selectSideTool(id.get());
@@ -87,7 +87,7 @@ public class BookDataPlaceController extends WorkbenchPartController.SideView {
     public void activeViewport(boolean firstTime) {
         if (null != bookXmlReader) {
             setTitles(AppContext.hanText(bookXmlReader.book.title));
-            this.getViewport().setCenter(bookXmlReader.viewer().sideViews);
+            this.getViewport().setCenter(bookXmlReader.sideViews);
             bookXmlReader = null;
         }
     }

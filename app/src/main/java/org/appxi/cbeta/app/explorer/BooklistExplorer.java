@@ -128,7 +128,7 @@ public class BooklistExplorer extends WorkbenchPartController.SideView {
         final BookXmlReader viewController = (BookXmlReader) workbench.findMainViewPart(book.id);
         if (null != viewController) {
             workbench.selectMainView(viewController.id.get());
-            FxHelper.runLater(() -> viewController.viewer().navigate(chapter));
+            FxHelper.runLater(() -> viewController.navigate(chapter));
             return;
         }
         FxHelper.runLater(() -> {
@@ -137,7 +137,7 @@ public class BooklistExplorer extends WorkbenchPartController.SideView {
             workbench.addWorkbenchPartAsMainView(controller, false);
             controller.initialize();
             if (null != chapter) {
-                controller.viewer().setPosition(chapter);
+                controller.setPosition(chapter);
             }
             workbench.selectMainView(controller.id.get());
         });
