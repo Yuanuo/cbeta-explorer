@@ -77,6 +77,10 @@
                                         <directory>${project.basedir}/../../appxi-dictionary/repo</directory>
                                         <targetPath>template/dict</targetPath>
                                     </resource>
+                                    <resource>
+                                        <directory>${project.basedir}/../../appxi-javafx/repo/web-incl</directory>
+                                        <targetPath>template/web-incl</targetPath>
+                                    </resource>
                                 </resources>
                             </packagingResources>
                             <!--   /////////////////////////////////////////////////////////////////  -->
@@ -139,6 +143,10 @@
                                         <directory>${project.basedir}/../../appxi-dictionary/repo</directory>
                                         <targetPath>template/dict</targetPath>
                                     </resource>
+                                    <resource>
+                                        <directory>${project.basedir}/../../appxi-javafx/repo/web-incl</directory>
+                                        <targetPath>template/web-incl</targetPath>
+                                    </resource>
                                 </resources>
                             </packagingResources>
                             <!--   /////////////////////////////////////////////////////////////////  -->
@@ -197,6 +205,10 @@
                                     <resource>
                                         <directory>${project.basedir}/../../appxi-dictionary/repo</directory>
                                         <targetPath>template/dict</targetPath>
+                                    </resource>
+                                    <resource>
+                                        <directory>${project.basedir}/../../appxi-javafx/repo/web-incl</directory>
+                                        <targetPath>template/web-incl</targetPath>
                                     </resource>
                                 </resources>
                             </packagingResources>
