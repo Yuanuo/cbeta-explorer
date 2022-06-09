@@ -9,12 +9,16 @@ import org.appxi.javafx.settings.SettingsList;
 import org.appxi.javafx.settings.SettingsPane;
 import org.appxi.javafx.visual.MaterialIcon;
 import org.appxi.javafx.workbench.WorkbenchPane;
-import org.appxi.javafx.workbench.views.WorkbenchSideToolController;
+import org.appxi.javafx.workbench.WorkbenchPart;
+import org.appxi.javafx.workbench.WorkbenchPartController;
 
-public class PreferencesController extends WorkbenchSideToolController {
+public class PreferencesController extends WorkbenchPartController implements WorkbenchPart.SideTool {
     public PreferencesController(WorkbenchPane workbench) {
-        super("PREFERENCES", workbench);
-        this.setTitles("设置");
+        super(workbench);
+
+        this.id.set("PREFERENCES");
+        this.title.set("设置");
+        this.tooltip.set("设置");
         this.graphic.set(MaterialIcon.TUNE.graphic());
     }
 
@@ -24,7 +28,7 @@ public class PreferencesController extends WorkbenchSideToolController {
     }
 
     @Override
-    public void onViewportShowing(boolean firstTime) {
+    public void activeViewport(boolean firstTime) {
         SettingsPane settingsPane = new SettingsPane();
 
         SettingsList.get().forEach(s -> settingsPane.getOptions().add(s.get()));

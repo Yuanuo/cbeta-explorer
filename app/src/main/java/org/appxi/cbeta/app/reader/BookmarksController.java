@@ -13,7 +13,8 @@ public class BookmarksController extends BookDataController {
 
     public BookmarksController(WorkbenchPane workbench, Book filterByBook) {
         super("BOOKMARKS", workbench, BookdataType.bookmark, filterByBook);
-        this.setTitles("书签");
+
+        this.tooltip.set("书签");
         this.graphic.set(MaterialIcon.BOOKMARK.graphic());
     }
 }

@@ -1,13 +1,12 @@
 package org.appxi.cbeta.app.widget;
 
 import javafx.scene.Node;
-import org.appxi.javafx.workbench.WorkbenchViewController;
 import org.appxi.util.ext.Attributes;
 
 abstract class Widget extends Attributes {
-    final WorkbenchViewController controller;
+    final WidgetsController controller;
 
-    protected Widget(WorkbenchViewController controller) {
+    protected Widget(WidgetsController controller) {
         this.controller = controller;
     }
 
@@ -15,5 +14,5 @@ abstract class Widget extends Attributes {
 
     abstract Node getViewport();
 
-    abstract void onViewportShowing(boolean firstTime);
+    abstract void activeViewport(boolean firstTime);
 }

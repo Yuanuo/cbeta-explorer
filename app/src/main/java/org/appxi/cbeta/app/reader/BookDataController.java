@@ -22,11 +22,12 @@ import org.appxi.cbeta.app.dao.DaoService;
 import org.appxi.cbeta.app.event.BookEvent;
 import org.appxi.cbeta.app.event.BookdataEvent;
 import org.appxi.cbeta.app.explorer.BooklistProfile;
+import org.appxi.holder.BoolHolder;
 import org.appxi.javafx.control.ListViewEx;
 import org.appxi.javafx.helper.FxHelper;
 import org.appxi.javafx.visual.MaterialIcon;
 import org.appxi.javafx.workbench.WorkbenchPane;
-import org.appxi.javafx.workbench.views.WorkbenchSideViewController;
+import org.appxi.javafx.workbench.WorkbenchPartController;
 import org.appxi.util.DateHelper;
 
 import java.sql.SQLException;
@@ -35,8 +36,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-public abstract class BookDataController extends WorkbenchSideViewController {
-    static final Object AK_FIRST_TIME = new Object();
+public abstract class BookDataController extends WorkbenchPartController.SideView {
+    private final BoolHolder activated = new BoolHolder();
 
     public final BookdataType dataType;
     public final Book filterByBook;
@@ -44,7 +45,10 @@ public abstract class BookDataController extends WorkbenchSideViewController {
 
     public BookDataController(String viewId, WorkbenchPane workbench,
                               BookdataType dataType, Book filterByBook) {
-        super(viewId, workbench);
+        super(workbench);
+
+        this.id.set(viewId);
+
         this.dataType = dataType;
         this.filterByBook = filterByBook;
     }
@@ -54,7 +58,7 @@ public abstract class BookDataController extends WorkbenchSideViewController {
         // not internal
         if (null == this.filterByBook) {
             app.eventBus.addEventHandler(BookdataEvent.CREATED, event -> {
-                if (event.data.type == dataType && hasAttr(AK_FIRST_TIME)) {
+                if (event.data.type == dataType && activated.value) {
                     FxHelper.runLater(() -> listView.getItems().add(0, event.data));
                 }
             });
@@ -68,7 +72,9 @@ public abstract class BookDataController extends WorkbenchSideViewController {
     }
 
     @Override
-    protected void initViewport(BorderPane viewport) {
+    public void createViewport(BorderPane viewport) {
+        super.createViewport(viewport);
+        //
         if (null != this.filterByBook)
             viewport.setTop(null);
 
@@ -165,15 +171,11 @@ public abstract class BookDataController extends WorkbenchSideViewController {
     }
 
     @Override
-    public void onViewportShowing(boolean firstTime) {
+    public void activeViewport(boolean firstTime) {
         if (firstTime) {
-            attr(AK_FIRST_TIME, true);
+            activated.value = true;
             refreshListView();
         }
-    }
-
-    @Override
-    public void onViewportHiding() {
     }
 
     private void refreshListView() {

@@ -2,7 +2,6 @@ package org.appxi.cbeta.app.reader;
 
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.scene.layout.BorderPane;
 import org.appxi.cbeta.app.AppContext;
 import org.appxi.cbeta.app.event.BookEvent;
 import org.appxi.event.EventHandler;
@@ -10,38 +9,36 @@ import org.appxi.javafx.settings.DefaultOption;
 import org.appxi.javafx.settings.SettingsList;
 import org.appxi.javafx.visual.MaterialIcon;
 import org.appxi.javafx.workbench.WorkbenchPane;
-import org.appxi.javafx.workbench.WorkbenchViewController;
-import org.appxi.javafx.workbench.views.WorkbenchSideViewController;
+import org.appxi.javafx.workbench.WorkbenchPart;
+import org.appxi.javafx.workbench.WorkbenchPartController;
 import org.appxi.prefs.UserPrefs;
 
 import java.util.Objects;
 
-public class BookDataPlaceController extends WorkbenchSideViewController {
+public class BookDataPlaceController extends WorkbenchPartController.SideView {
     private static final String PK_BOOK_DATA_SHOW = "book.data.show";
 
     private static BookDataPlaceController instance;
 
     public BookDataPlaceController(WorkbenchPane workbench) {
-        super("BOOK-DATA", workbench);
+        super(workbench);
         instance = null == instance ? this : instance;
+
+        this.id.set("BOOK-DATA");
         this.setTitles(null);
         this.graphic.set(MaterialIcon.IMPORT_CONTACTS.graphic());
     }
 
-    @Override
     protected void setTitles(String appendText) {
         String title = "在读";
         if (null != appendText)
             title = title.concat(" ").concat(appendText);
-        super.setTitles(title);
+        this.title.set(title);
+        this.tooltip.set(title);
     }
 
     public static BookDataPlaceController getInstance() {
         return instance;
-    }
-
-    @Override
-    protected void initViewport(BorderPane viewport) {
     }
 
     private BookXmlReader bookXmlReader;
@@ -50,7 +47,7 @@ public class BookDataPlaceController extends WorkbenchSideViewController {
     public void initialize() {
         app.eventBus.addEventHandler(BookEvent.VIEW, event -> {
             this.bookXmlReader = null;// always reset
-            final WorkbenchViewController mainView = workbench.getSelectedMainViewController();
+            final WorkbenchPart mainView = workbench.getSelectedMainViewPart();
             if (mainView instanceof BookXmlReader bookXmlReader) {
                 setTitles(AppContext.hanText(bookXmlReader.book.title));
                 if (null != this.getViewport()) {
@@ -87,15 +84,11 @@ public class BookDataPlaceController extends WorkbenchSideViewController {
     }
 
     @Override
-    public void onViewportShowing(boolean firstTime) {
+    public void activeViewport(boolean firstTime) {
         if (null != bookXmlReader) {
             setTitles(AppContext.hanText(bookXmlReader.book.title));
             this.getViewport().setCenter(bookXmlReader.viewer().sideViews);
             bookXmlReader = null;
         }
-    }
-
-    @Override
-    public void onViewportHiding() {
     }
 }

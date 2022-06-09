@@ -9,6 +9,7 @@ import org.appxi.cbeta.app.dao.DaoHelper;
 import org.appxi.cbeta.app.dao.DaoService;
 import org.appxi.cbeta.app.event.GenericEvent;
 import org.appxi.javafx.app.DesktopApp;
+import org.appxi.javafx.app.web.WebViewer;
 import org.appxi.javafx.settings.DefaultOptions;
 import org.appxi.javafx.settings.SettingsList;
 import org.appxi.prefs.Preferences;
@@ -152,14 +153,12 @@ public abstract class AppContext {
     }
 
     public static List<String> getWebIncludeURIs() {
+        List<String> result = WebViewer.getWebIncludeURIs();
         final Path dir = DesktopApp.appDir().resolve("template/web-incl");
-        return Stream.of("jquery.min.js", "jquery.ext.js",
-                        "jquery.isinviewport.js", "jquery.scrollto.js",
-                        "jquery.mark.js", "jquery.mark.finder.js",
-                        "popper.min.js", "tippy-bundle.umd.min.js",
-                        "rangy-core.js", "rangy-serializer.js",
-                        "app.css", "app.js")
+        result.addAll(Stream.of("app.css", "app.js")
                 .map(s -> dir.resolve(s).toUri().toString())
-                .toList();
+                .toList()
+        );
+        return result;
     }
 }

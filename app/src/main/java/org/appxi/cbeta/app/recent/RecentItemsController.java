@@ -3,7 +3,6 @@ package org.appxi.cbeta.app.recent;
 import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
-import javafx.scene.layout.BorderPane;
 import org.appxi.cbeta.Book;
 import org.appxi.cbeta.app.AppContext;
 import org.appxi.cbeta.app.event.BookEvent;
@@ -14,7 +13,7 @@ import org.appxi.javafx.app.AppEvent;
 import org.appxi.javafx.control.TreeViewEx;
 import org.appxi.javafx.visual.MaterialIcon;
 import org.appxi.javafx.workbench.WorkbenchPane;
-import org.appxi.javafx.workbench.views.WorkbenchSideViewController;
+import org.appxi.javafx.workbench.WorkbenchPartController;
 import org.appxi.prefs.Preferences;
 import org.appxi.prefs.PreferencesInProperties;
 import org.appxi.prefs.UserPrefs;
@@ -29,13 +28,15 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
-public class RecentItemsController extends WorkbenchSideViewController {
+public class RecentItemsController extends WorkbenchPartController.SideView {
     private final Map<String, RecentBook> recentBooksMap = new LinkedHashMap<>(128);
     private TreeViewEx<Object> treeView;
 
     public RecentItemsController(WorkbenchPane workbench) {
-        super("RECENT", workbench);
-        this.setTitles("已读");
+        super(workbench);
+
+        this.id.set("RECENT");
+        this.tooltip.set("已读");
         this.graphic.set(MaterialIcon.HISTORY.graphic());
     }
 
@@ -45,12 +46,12 @@ public class RecentItemsController extends WorkbenchSideViewController {
         app.eventBus.addEventHandler(BookEvent.CLOSE, event -> handleToSaveOrUpdateRecentBook(event.book));
         app.eventBus.addEventHandler(BookEvent.VIEW, event -> handleToSaveOrUpdateRecentBook(event.book));
         app.eventBus.addEventHandler(AppEvent.STOPPING, event -> saveRecentBooks());
-        if (!(UserPrefs.recents instanceof PreferencesInProperties))
+        if (!(UserPrefs.recents instanceof PreferencesInProperties)) {
             UserPrefs.recents = new PreferencesInProperties(UserPrefs.confDir().resolve(".recents"));
+        }
         loadRecentBooks();
         // 当书名显示风格改变时需要同步更新treeView
-        app.eventBus.addEventHandler(GenericEvent.BOOK_LABEL_STYLED,
-                event -> Optional.ofNullable(this.treeView).ifPresent(TreeView::refresh));
+        app.eventBus.addEventHandler(GenericEvent.BOOK_LABEL_STYLED, event -> Optional.ofNullable(this.treeView).ifPresent(TreeView::refresh));
     }
 
     private void handleToSaveOrUpdateRecentBook(Book book) {
@@ -64,12 +65,8 @@ public class RecentItemsController extends WorkbenchSideViewController {
         } else item.updateAt = new Date();
     }
 
-    private Preferences createRecentBooks(boolean load) {
-        return new PreferencesInProperties(UserPrefs.confDir().resolve(".recentbooks"), load);
-    }
-
     private void loadRecentBooks() {
-        final Preferences recent = AppContext.recentBooks = createRecentBooks(true);
+        final Preferences recent = AppContext.recentBooks = new PreferencesInProperties(UserPrefs.confDir().resolve(".recentbooks"), true);
         recent.getPropertyKeys().forEach(key -> {
             try {
                 final RecentBook rBook = new RecentBook();
@@ -86,7 +83,7 @@ public class RecentItemsController extends WorkbenchSideViewController {
     }
 
     private void saveRecentBooks() {
-        final Preferences recent = createRecentBooks(false);
+        final Preferences recent = new PreferencesInProperties(UserPrefs.confDir().resolve(".recentbooks"), false);
         this.recentBooksMap.values().forEach(rBook -> {
             final StringBuilder buf = new StringBuilder();
             buf.append(rBook.createAt.getTime()).append('|');
@@ -98,11 +95,7 @@ public class RecentItemsController extends WorkbenchSideViewController {
     }
 
     @Override
-    protected void initViewport(BorderPane viewport) {
-    }
-
-    @Override
-    public void onViewportShowing(boolean firstTime) {
+    public void activeViewport(boolean firstTime) {
         if (firstTime) {
             this.treeView = new TreeViewEx<>();
             this.treeView.setRoot(new TreeItem<>("ROOT"));
@@ -165,10 +158,6 @@ public class RecentItemsController extends WorkbenchSideViewController {
             treeRoot.getChildren().setAll(groups);
             treeRoot.getChildren().get(0).setExpanded(true);
         }
-    }
-
-    @Override
-    public void onViewportHiding() {
     }
 
     private static TimeAgo.Messages timeAgoI18N;

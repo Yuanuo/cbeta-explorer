@@ -24,23 +24,27 @@ import org.appxi.javafx.settings.DefaultOption;
 import org.appxi.javafx.settings.SettingsList;
 import org.appxi.javafx.visual.MaterialIcon;
 import org.appxi.javafx.workbench.WorkbenchPane;
-import org.appxi.javafx.workbench.WorkbenchViewController;
-import org.appxi.javafx.workbench.views.WorkbenchSideViewController;
+import org.appxi.javafx.workbench.WorkbenchPart;
+import org.appxi.javafx.workbench.WorkbenchPartController;
 
 import java.util.Objects;
 import java.util.Optional;
 
-public class BooklistExplorer extends WorkbenchSideViewController {
+public class BooklistExplorer extends WorkbenchPartController.SideView {
     private BooklistTreeView treeView;
 
     public BooklistExplorer(WorkbenchPane workbench) {
-        super("BOOKS", workbench);
-        this.setTitles("典籍");
+        super(workbench);
+
+        this.id.set("BOOKS");
+        this.title.set("典籍");
+        this.tooltip.set("典籍");
         this.graphic.set(MaterialIcon.LOCAL_LIBRARY.graphic());
     }
 
     @Override
-    protected void initViewport(BorderPane viewport) {
+    public void createViewport(BorderPane viewport) {
+        super.createViewport(viewport);
         //
         final Button btnProfile = MaterialIcon.PLAYLIST_ADD_CHECK.flatButton();
         btnProfile.setTooltip(new Tooltip("选择书单"));
@@ -69,7 +73,7 @@ public class BooklistExplorer extends WorkbenchSideViewController {
         btnLocate.setTooltip(new Tooltip("定位到当前打开的书籍（F3）"));
         app.getPrimaryScene().getAccelerators().put(new KeyCodeCombination(KeyCode.F3), btnLocate::fire);
         btnLocate.setOnAction(event -> {
-            WorkbenchViewController controller = workbench.getSelectedMainViewController();
+            WorkbenchPart controller = workbench.getSelectedMainViewPart();
             if (!(controller instanceof BookXmlReader bookXmlReader))
                 return;
             final TreeItem<Book> treeItem = TreeHelper.findFirstByValue(treeView.getRoot(), bookXmlReader.book);
@@ -98,7 +102,7 @@ public class BooklistExplorer extends WorkbenchSideViewController {
                         FxHelper.runLater(() -> BooklistProfile.ONE.selectProfile(BooklistProfile.ONE.profile()));
                     }
                 }).start());
-        app.eventBus.addEventHandler(GenericEvent.PROFILE_READY, event -> onViewportShowing(true));
+        app.eventBus.addEventHandler(GenericEvent.PROFILE_READY, event -> activeViewport(true));
         // 当显示汉字类型改变时需要同步更新treeView
         app.eventBus.addEventHandler(GenericEvent.HAN_LANG_CHANGED,
                 event -> Optional.ofNullable(this.treeView).ifPresent(TreeView::refresh));
@@ -121,7 +125,7 @@ public class BooklistExplorer extends WorkbenchSideViewController {
     private void handleEventToOpenBook(Event event, Book book, Chapter chapter) {
         if (null == book || book.id == null || book.path == null) return;
         event.consume();
-        final BookXmlReader viewController = (BookXmlReader) workbench.findMainViewController(book.id);
+        final BookXmlReader viewController = (BookXmlReader) workbench.findMainViewPart(book.id);
         if (null != viewController) {
             workbench.selectMainView(viewController.id.get());
             FxHelper.runLater(() -> viewController.viewer().navigate(chapter));
@@ -131,23 +135,19 @@ public class BooklistExplorer extends WorkbenchSideViewController {
             Optional.ofNullable(this.treeView).ifPresent(TreeView::refresh);
             final BookXmlReader controller = new BookXmlReader(book, workbench);
             controller.attr(Chapter.class, chapter);
-            workbench.addWorkbenchViewAsMainView(controller, false);
+            workbench.addWorkbenchPartAsMainView(controller, false);
             controller.initialize();
             workbench.selectMainView(controller.id.get());
         });
     }
 
     @Override
-    public void onViewportShowing(boolean firstTime) {
+    public void activeViewport(boolean firstTime) {
         if (firstTime && null != treeView && null != BooklistProfile.ONE.profile()) {
             final TreeItem<Book> rootItem = BooklistProfile.ONE.booklist().tree();
             if (treeView.getRoot() == rootItem) return;
             rootItem.setExpanded(true);
             FxHelper.runLater(() -> treeView.setRoot(rootItem));
         }
-    }
-
-    @Override
-    public void onViewportHiding() {
     }
 }

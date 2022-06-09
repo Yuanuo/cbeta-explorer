@@ -8,9 +8,8 @@ import org.appxi.holder.RawHolder;
 import org.appxi.javafx.app.AppEvent;
 import org.appxi.javafx.helper.FxHelper;
 import org.appxi.javafx.workbench.WorkbenchPane;
-import org.appxi.javafx.workbench.WorkbenchViewController;
-import org.appxi.javafx.workbench.views.WorkbenchMainViewController;
-import org.appxi.javafx.workbench.views.WorkbenchNoneViewController;
+import org.appxi.javafx.workbench.WorkbenchPart;
+import org.appxi.javafx.workbench.WorkbenchPartController;
 import org.appxi.prefs.Preferences;
 import org.appxi.prefs.PreferencesInProperties;
 import org.appxi.prefs.UserPrefs;
@@ -19,9 +18,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class RecentViewsController extends WorkbenchNoneViewController {
+public class RecentViewsController extends WorkbenchPartController {
     public RecentViewsController(WorkbenchPane workbench) {
-        super("recentViews", workbench);
+        super(workbench);
     }
 
     @Override
@@ -30,14 +29,14 @@ public class RecentViewsController extends WorkbenchNoneViewController {
         //
         app.eventBus.addEventHandler(GenericEvent.PROFILE_READY, event -> FxHelper.runThread(30, () -> {
             final Preferences recent = createRecentViews(true);
-            final RawHolder<WorkbenchMainViewController> swapRecentViewSelected = new RawHolder<>();
-            final List<WorkbenchMainViewController> swapRecentViews = new ArrayList<>();
-            WorkbenchMainViewController addedController = null;
+            final RawHolder<WorkbenchPart.MainView> swapRecentViewSelected = new RawHolder<>();
+            final List<WorkbenchPart.MainView> swapRecentViews = new ArrayList<>();
+            WorkbenchPart.MainView addedController = null;
             for (String key : recent.getPropertyKeys()) {
                 final Book book = BooklistProfile.ONE.getBook(key);
                 // 如果此书不存在于当前书单，则需要移除（如果存在）
                 if (null == book) {
-                    Optional.ofNullable(workbench.findMainViewHandler(key)).ifPresent(workbench.mainViews::closeTabs);
+                    Optional.ofNullable(workbench.findMainView(key)).ifPresent(workbench.mainViews::closeTabs);
                     continue;
                 }
                 //
@@ -45,21 +44,24 @@ public class RecentViewsController extends WorkbenchNoneViewController {
                     continue;
                 //
                 addedController = new BookXmlReader(book, workbench);
-                if (recent.getBoolean(key, false))
+                if (recent.getBoolean(key, false)) {
                     swapRecentViewSelected.value = addedController;
+                }
                 swapRecentViews.add(addedController);
             }
             if (!swapRecentViews.isEmpty()) {
-                for (WorkbenchMainViewController viewController : swapRecentViews) {
-                    workbench.addWorkbenchViewAsMainView(viewController, true);
+                for (WorkbenchPart.MainView viewController : swapRecentViews) {
+                    workbench.addWorkbenchPartAsMainView(viewController, true);
                 }
-                if (null == swapRecentViewSelected.value)
+                if (null == swapRecentViewSelected.value) {
                     swapRecentViewSelected.value = addedController;
+                }
             }
             if (!swapRecentViews.isEmpty()) {
-                swapRecentViews.forEach(WorkbenchViewController::initialize);
-                if (null != swapRecentViewSelected.value)
-                    workbench.selectMainView(swapRecentViewSelected.value.id.get());
+                swapRecentViews.forEach(WorkbenchPart::initialize);
+                if (null != swapRecentViewSelected.value) {
+                    workbench.selectMainView(swapRecentViewSelected.value.id().get());
+                }
             }
         }));
     }
@@ -76,9 +78,5 @@ public class RecentViewsController extends WorkbenchNoneViewController {
             }
         });
         recent.save();
-    }
-
-    @Override
-    public void onViewportShowing(boolean firstTime) {
     }
 }

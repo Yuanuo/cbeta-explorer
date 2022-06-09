@@ -16,7 +16,7 @@ import org.appxi.holder.RawHolder;
 import org.appxi.javafx.control.TreeViewEx;
 import org.appxi.javafx.helper.TreeHelper;
 import org.appxi.javafx.workbench.WorkbenchPane;
-import org.appxi.javafx.workbench.views.WorkbenchSideViewController;
+import org.appxi.javafx.workbench.WorkbenchPartController;
 import org.appxi.prefs.UserPrefs;
 import org.appxi.util.DigestHelper;
 import org.appxi.util.StringHelper;
@@ -25,7 +25,7 @@ import java.nio.charset.Charset;
 import java.util.Objects;
 import java.util.function.Predicate;
 
-public class BookBasicController extends WorkbenchSideViewController {
+public class BookBasicController extends WorkbenchPartController.SideView {
     final BookXmlReader bookXmlReader;
 
     Accordion accordion;
@@ -35,7 +35,10 @@ public class BookBasicController extends WorkbenchSideViewController {
     TreeItem<Chapter> selectedTreeItem;
 
     public BookBasicController(WorkbenchPane workbench, BookXmlReader bookXmlReader) {
-        super("BOOK-BASIC", workbench);
+        super(workbench);
+
+        this.id.set("BOOK-BASIC");
+
         this.bookXmlReader = bookXmlReader;
     }
 
@@ -44,7 +47,9 @@ public class BookBasicController extends WorkbenchSideViewController {
     }
 
     @Override
-    protected void initViewport(BorderPane viewport) {
+    public void createViewport(BorderPane viewport) {
+        super.createViewport(viewport);
+        //
         viewport.setTop(null);
 
         this.tocPane = new TitledPane("目次", this.tocTree = new TreeViewEx<>());
@@ -73,15 +78,11 @@ public class BookBasicController extends WorkbenchSideViewController {
     }
 
     @Override
-    public void onViewportShowing(boolean firstTime) {
+    public void activeViewport(boolean firstTime) {
         if (firstTime) {
             // init nav-view
             ChapterTree.parseBookChaptersToTree(bookXmlReader.book, this.tocTree, this.volTree);
         }
-    }
-
-    @Override
-    public void onViewportHiding() {
     }
 
     public Chapter selectChapter(Book book, Chapter chapter) {

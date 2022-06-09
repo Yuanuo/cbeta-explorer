@@ -2,26 +2,27 @@ package org.appxi.cbeta.app.widget;
 
 import javafx.scene.control.Accordion;
 import javafx.scene.control.TitledPane;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.appxi.javafx.visual.MaterialIcon;
 import org.appxi.javafx.workbench.WorkbenchPane;
-import org.appxi.javafx.workbench.views.WorkbenchSideViewController;
+import org.appxi.javafx.workbench.WorkbenchPartController;
 import org.appxi.util.StringHelper;
 import org.appxi.util.ext.Attributes;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class WidgetsController extends WorkbenchSideViewController {
+public class WidgetsController extends WorkbenchPartController.SideView {
     private static final Object AK_FIRST_TIME = new Object();
 
     final List<Widget> widgets = new ArrayList<>();
 
     public WidgetsController(WorkbenchPane workbench) {
-        super("WIDGETS", workbench);
-        this.setTitles("工具", "辅助工具集");
+        super(workbench);
+
+        this.id.set("WIDGETS");
+        this.tooltip.set("辅助工具集");
         this.graphic.set(MaterialIcon.NOW_WIDGETS.graphic());
     }
 
@@ -30,11 +31,7 @@ public class WidgetsController extends WorkbenchSideViewController {
     }
 
     @Override
-    protected void initViewport(BorderPane viewport) {
-    }
-
-    @Override
-    public void onViewportShowing(boolean firstTime) {
+    public void activeViewport(boolean firstTime) {
         // only init at first time
         if (!firstTime) return;
 
@@ -58,13 +55,9 @@ public class WidgetsController extends WorkbenchSideViewController {
             if (null == pane.getContent()) {
                 pane.setContent(widget.getViewport());
             }
-            widget.onViewportShowing(ensureFirstTime(widget));
+            widget.activeViewport(ensureFirstTime(widget));
         });
         this.getViewport().setCenter(accordion);
-    }
-
-    @Override
-    public void onViewportHiding() {
     }
 
     private static boolean ensureFirstTime(Attributes attrs) {

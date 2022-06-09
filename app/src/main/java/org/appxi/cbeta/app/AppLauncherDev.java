@@ -14,8 +14,8 @@ import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.layout.FlowPane;
 import org.appxi.javafx.visual.MaterialIcon;
 import org.appxi.javafx.workbench.WorkbenchPane;
-import org.appxi.javafx.workbench.WorkbenchViewController;
-import org.appxi.javafx.workbench.views.WorkbenchSideToolController;
+import org.appxi.javafx.workbench.WorkbenchPart;
+import org.appxi.javafx.workbench.WorkbenchPartController;
 
 import java.util.List;
 
@@ -31,37 +31,40 @@ public class AppLauncherDev extends AppLauncher {
 
     public static class AppDev extends App {
         @Override
-        protected List<WorkbenchViewController> createWorkbenchViews(WorkbenchPane workbench) {
-            final List<WorkbenchViewController> result = super.createWorkbenchViews(workbench);
+        protected List<WorkbenchPart> createWorkbenchParts(WorkbenchPane workbench) {
+            final List<WorkbenchPart> result = super.createWorkbenchParts(workbench);
             result.add(new MaterialIcons(workbench));
             result.add(new ScenicView(workbench));
             return result;
         }
     }
 
-    static class ScenicView extends WorkbenchSideToolController {
+    static class ScenicView extends WorkbenchPartController implements WorkbenchPart.SideTool {
         public ScenicView(WorkbenchPane workbench) {
-            super("ScenicView", workbench);
-            this.setTitles("ScenicView", "ScenicView");
+            super(workbench);
+
+            this.id.set("ScenicView");
+            this.tooltip.set("ScenicView");
             this.graphic.set(MaterialIcon.ACCESSIBILITY.graphic());
         }
 
         @Override
         public void initialize() {
-            app.getPrimaryScene().getAccelerators().put(new KeyCodeCombination(KeyCode.F12), () -> onViewportShowing(true));
+            app.getPrimaryScene().getAccelerators().put(new KeyCodeCombination(KeyCode.F12), () -> activeViewport(true));
         }
 
         @Override
-        public void onViewportShowing(boolean firstTime) {
+        public void activeViewport(boolean firstTime) {
             app.toastError("disabled sceneview.jar");
             //            javafx.application.Platform.runLater(() -> org.scenicview.ScenicView.show(app.getPrimaryScene()));
         }
     }
 
-    static class MaterialIcons extends WorkbenchSideToolController {
+    static class MaterialIcons extends WorkbenchPartController implements WorkbenchPart.SideTool {
         public MaterialIcons(WorkbenchPane application) {
-            super("MaterialIcons", application);
-            this.setTitles("FontIcon 图标 MaterialIcons", "MaterialIcons");
+            super(application);
+            this.id.set("MaterialIcons");
+            this.tooltip.set("MaterialIcons");
             this.graphic.set(MaterialIcon.PHOTO_LIBRARY.graphic());
         }
 
@@ -70,7 +73,7 @@ public class AppLauncherDev extends AppLauncher {
         }
 
         @Override
-        public void onViewportShowing(boolean firstTime) {
+        public void activeViewport(boolean firstTime) {
             final FlowPane iconsPane = new FlowPane(5, 5);
             for (MaterialIcon icon : MaterialIcon.values()) {
                 Label label = new Label(null, icon.graphic("-fx-font-size:3em;"));
@@ -96,7 +99,7 @@ public class AppLauncherDev extends AppLauncher {
             dialogPane.getButtonTypes().add(ButtonType.OK);
 
             final Alert alert = new Alert(Alert.AlertType.NONE);
-            alert.setTitle(title.get() + " Total " + MaterialIcon.values().length + " Icons");
+            alert.setTitle("MaterialIcons Total " + MaterialIcon.values().length + " Icons");
             alert.setDialogPane(dialogPane);
             alert.initOwner(app.getPrimaryStage());
             alert.show();

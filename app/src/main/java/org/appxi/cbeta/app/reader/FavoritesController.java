@@ -13,7 +13,8 @@ public class FavoritesController extends BookDataController {
 
     public FavoritesController(WorkbenchPane workbench, Book filterByBook) {
         super("FAVORITES", workbench, BookdataType.favorite, filterByBook);
-        this.setTitles("收藏");
+
+        this.tooltip.set("收藏");
         this.graphic.set(MaterialIcon.STAR.graphic());
     }
 }

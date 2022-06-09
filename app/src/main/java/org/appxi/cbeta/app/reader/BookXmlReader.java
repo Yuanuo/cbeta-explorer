@@ -1,25 +1,26 @@
 package org.appxi.cbeta.app.reader;
 
-import javafx.event.Event;
-import javafx.scene.layout.StackPane;
 import org.appxi.cbeta.Book;
 import org.appxi.cbeta.Chapter;
 import org.appxi.cbeta.app.AppContext;
 import org.appxi.cbeta.app.event.BookEvent;
 import org.appxi.javafx.workbench.WorkbenchPane;
-import org.appxi.javafx.workbench.views.WorkbenchMainViewController;
+import org.appxi.javafx.workbench.WorkbenchPartController;
 import org.appxi.util.StringHelper;
 
-public class BookXmlReader extends WorkbenchMainViewController {
+public class BookXmlReader extends WorkbenchPartController.MainView {
     public final Book book;
 
     private BookXmlViewer viewer;
 
     public BookXmlReader(Book book, WorkbenchPane workbench) {
-        super(book.id, workbench);
+        super(workbench);
+
         this.book = book;
+
+        this.id.set(book.id);
         this.appTitle.unbind();
-        this.setTitles((Chapter) null);
+        this.setTitles(null);
     }
 
     void setTitles(Chapter chapter) {
@@ -46,17 +47,13 @@ public class BookXmlReader extends WorkbenchMainViewController {
             mainTitle = mainTitle.concat(" by ").concat(authorInfo);
         }
 
-        this.title.set(viewTitle);
+        this.title.set(StringHelper.trimChars(viewTitle, 20));
         this.tooltip.set(viewTooltip);
         this.appTitle.set(mainTitle);
     }
 
     @Override
     public void initialize() {
-    }
-
-    @Override
-    protected void initViewport(StackPane viewport) {
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -66,7 +63,7 @@ public class BookXmlReader extends WorkbenchMainViewController {
     }
 
     @Override
-    public void onViewportShowing(boolean firstTime) {
+    public void activeViewport(boolean firstTime) {
         if (firstTime) {
             viewer = new BookXmlViewer(this, book, getViewport());
             viewer.navigate(null);
@@ -76,14 +73,13 @@ public class BookXmlReader extends WorkbenchMainViewController {
     }
 
     @Override
-    public void onViewportHiding() {
-        viewer.saveUserData();
-        app.eventBus.fireEvent(new BookEvent(BookEvent.HIDE, this.book, viewer.chapter));
-    }
-
-    @Override
-    public void onViewportClosing(Event event, boolean selected) {
-        app.eventBus.fireEvent(new BookEvent(BookEvent.CLOSE, this.book, viewer.chapter));
-        viewer.uninstall();
+    public void inactiveViewport(boolean closing) {
+        if (closing) {
+            app.eventBus.fireEvent(new BookEvent(BookEvent.CLOSE, this.book, viewer.chapter));
+            viewer.uninstall();
+        } else {
+            viewer.saveUserData();
+            app.eventBus.fireEvent(new BookEvent(BookEvent.HIDE, this.book, viewer.chapter));
+        }
     }
 }

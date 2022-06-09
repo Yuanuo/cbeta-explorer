@@ -38,7 +38,6 @@ import org.appxi.cbeta.app.event.GenericEvent;
 import org.appxi.cbeta.app.search.LookupLayerEx;
 import org.appxi.event.EventHandler;
 import org.appxi.holder.IntHolder;
-import org.appxi.javafx.app.dict.DictionaryEvent;
 import org.appxi.javafx.app.search.SearcherEvent;
 import org.appxi.javafx.app.web.WebCallback;
 import org.appxi.javafx.app.web.WebRenderer;
@@ -302,7 +301,7 @@ public class BookXmlViewer extends WebViewer {
     }
 
     protected void addTool_FindInPage() {
-        webFinder.setInputConvertor(inputText -> {
+        webFinder().setInputConvertor(inputText -> {
             // 允许输入简繁体汉字
             if (!inputText.isEmpty() && (inputText.charAt(0) == '!' || inputText.charAt(0) == '！')) {
                 // 为避免自动转换失误导致检索失败，此处特殊处理，允许以感叹号开始的字符串不自动转换简繁体
@@ -320,7 +319,7 @@ public class BookXmlViewer extends WebViewer {
     @Override
     protected void navigating(final Object location, boolean firstTime) {
         // init tree
-        this.bookBasic.onViewportShowing(firstTime);
+        this.bookBasic.activeViewport(firstTime);
         //
         Chapter item = (Chapter) location;
         // 在切换章节时先保存现有进度数据
@@ -358,8 +357,8 @@ public class BookXmlViewer extends WebViewer {
         //
         super.navigating(location, firstTime);
         //
-        this.bookmarks.onViewportShowing(firstTime);
-        this.favorites.onViewportShowing(firstTime);
+        this.bookmarks.activeViewport(firstTime);
+        this.favorites.activeViewport(firstTime);
     }
 
     @Override
@@ -385,7 +384,7 @@ public class BookXmlViewer extends WebViewer {
         app.eventBus.fireEvent(new BookEvent(BookEvent.VIEW, book));
         //
         FxHelper.runThread(100, () -> {
-            webFinder.clear.fire();
+            webFinder().clear.fire();
             //
             webPane().getTopBar().lookupAll(".toggle-button").forEach(node -> {
                 if (node instanceof ToggleButton toggle && toggle.isSelected()) {
@@ -403,17 +402,6 @@ public class BookXmlViewer extends WebViewer {
     @Override
     protected void handleWebViewShortcuts(KeyEvent event) {
         if (!event.isConsumed() && event.isShortcutDown()) {
-            // Ctrl + D
-            if (event.getCode() == KeyCode.D) {
-                // 如果有选中文字，则按选中文字处理
-                String origText = webPane().executeScript("getValidSelectionText()");
-                String trimText = null == origText ? null : origText.strip().replace('\n', ' ');
-                final String availText = StringHelper.isBlank(trimText) ? null : trimText;
-
-                final String str = null == availText ? null : StringHelper.trimChars(availText, 20, "");
-                app.eventBus.fireEvent(DictionaryEvent.ofSearch(str));
-                event.consume();
-            }
             // Ctrl + LEFT
             if (event.getCode() == KeyCode.LEFT) {
                 gotoPrev.fire();

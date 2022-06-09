@@ -15,15 +15,19 @@ import javafx.scene.web.WebView;
 import org.appxi.cbeta.app.App;
 import org.appxi.javafx.visual.MaterialIcon;
 import org.appxi.javafx.workbench.WorkbenchPane;
-import org.appxi.javafx.workbench.views.WorkbenchSideToolController;
+import org.appxi.javafx.workbench.WorkbenchPart;
+import org.appxi.javafx.workbench.WorkbenchPartController;
 import org.appxi.prefs.UserPrefs;
 
 import java.util.Optional;
 
-public class AboutController extends WorkbenchSideToolController {
+public class AboutController extends WorkbenchPartController implements WorkbenchPart.SideTool {
     public AboutController(WorkbenchPane workbench) {
-        super("ABOUT", workbench);
-        this.setTitles("关于");
+        super(workbench);
+
+        this.id.set("ABOUT");
+        this.title.set("关于");
+        this.tooltip.set("关于");
         this.graphic.set(MaterialIcon.INFO_OUTLINE.graphic());
     }
 
@@ -32,7 +36,7 @@ public class AboutController extends WorkbenchSideToolController {
     }
 
     @Override
-    public void onViewportShowing(boolean firstTime) {
+    public void activeViewport(boolean firstTime) {
         final Label head = new Label(App.NAME);
         head.setStyle("-fx-font-size: 2em; -fx-padding: .5em 0;");
         head.setMaxWidth(Double.MAX_VALUE);

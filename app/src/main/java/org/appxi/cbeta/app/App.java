@@ -20,7 +20,7 @@ import org.appxi.javafx.visual.VisualEvent;
 import org.appxi.javafx.web.WebPane;
 import org.appxi.javafx.workbench.WorkbenchApp;
 import org.appxi.javafx.workbench.WorkbenchPane;
-import org.appxi.javafx.workbench.WorkbenchViewController;
+import org.appxi.javafx.workbench.WorkbenchPart;
 
 import java.net.URL;
 import java.nio.file.Path;
@@ -119,8 +119,8 @@ public class App extends WorkbenchApp {
     }
 
     @Override
-    protected List<WorkbenchViewController> createWorkbenchViews(WorkbenchPane workbench) {
-        final List<WorkbenchViewController> result = new ArrayList<>();
+    protected List<WorkbenchPart> createWorkbenchParts(WorkbenchPane workbench) {
+        final List<WorkbenchPart> result = new ArrayList<>();
 
         result.add(new BooklistExplorer(workbench));
         result.add(new BookDataPlaceController(workbench));

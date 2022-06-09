@@ -2,7 +2,7 @@ package org.appxi.cbeta.app.search;
 
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.geometry.Pos;
+import javafx.geometry.HPos;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.input.KeyCode;
@@ -14,8 +14,9 @@ import org.appxi.cbeta.app.AppContext;
 import org.appxi.cbeta.app.event.BookEvent;
 import org.appxi.cbeta.app.event.GenericEvent;
 import org.appxi.cbeta.app.event.ProgressEvent;
-import org.appxi.cbeta.app.event.SearchedEvent;
 import org.appxi.cbeta.app.explorer.BooklistProfile;
+import org.appxi.holder.BoolHolder;
+import org.appxi.javafx.app.search.SearchedEvent;
 import org.appxi.javafx.app.search.SearcherEvent;
 import org.appxi.javafx.control.OpaqueLayer;
 import org.appxi.javafx.helper.FxHelper;
@@ -23,23 +24,31 @@ import org.appxi.javafx.settings.DefaultOption;
 import org.appxi.javafx.settings.SettingsList;
 import org.appxi.javafx.visual.MaterialIcon;
 import org.appxi.javafx.workbench.WorkbenchPane;
-import org.appxi.javafx.workbench.views.WorkbenchSideToolController;
+import org.appxi.javafx.workbench.WorkbenchPart;
+import org.appxi.javafx.workbench.WorkbenchPartController;
 import org.appxi.prefs.UserPrefs;
 import org.appxi.search.solr.Piece;
 import org.appxi.util.DigestHelper;
 
 import java.util.Objects;
 
-public class SearchController extends WorkbenchSideToolController {
+public class SearchController extends WorkbenchPartController implements WorkbenchPart.SideTool {
     private static final String PK_START_TYPE = "search.engine.start";
+    private final BoolHolder profileReadyState = new BoolHolder();
 
     private ProgressEvent indexingEvent;
 
     public SearchController(WorkbenchPane workbench) {
-        super("SEARCH", workbench);
-        this.setTitles("搜索", "全文检索 (Ctrl+H)");
-        this.attr(Pos.class, Pos.CENTER_LEFT);
+        super(workbench);
+
+        this.id.set("SEARCH");
+        this.tooltip.set("全文检索 (Ctrl+H)");
         this.graphic.set(MaterialIcon.SEARCH.graphic());
+    }
+
+    @Override
+    public HPos sideToolAlignment() {
+        return HPos.LEFT;
     }
 
     @Override
@@ -51,7 +60,7 @@ public class SearchController extends WorkbenchSideToolController {
         app.eventBus.addEventHandler(SearcherEvent.SEARCH, event -> openSearcherWithText(event.text, event.data()));
         app.eventBus.addEventHandler(ProgressEvent.INDEXING, event -> indexingEvent = event.isFinished() ? null : event);
         app.eventBus.addEventHandler(GenericEvent.PROFILE_READY, event -> {
-            this.attr(event.eventType, true);
+            profileReadyState.value = true;
             if (!UserPrefs.prefs.getBoolean(PK_START_TYPE, false)) return;
             if (IndexedManager.isBookcaseIndexable() || IndexedManager.isBooklistIndexable()) {
                 alertIndexable(null);
@@ -101,7 +110,7 @@ public class SearchController extends WorkbenchSideToolController {
     }
 
     @Override
-    public void onViewportShowing(boolean firstTime) {
+    public void activeViewport(boolean firstTime) {
         openSearcherWithText(null, null);
     }
 
@@ -117,7 +126,7 @@ public class SearchController extends WorkbenchSideToolController {
                 .orElseGet(() -> new SearcherController("SEARCHER-".concat(DigestHelper.uid()), workbench));
         FxHelper.runLater(() -> {
             if (!workbench.existsMainView(searcher.id.get())) {
-                workbench.addWorkbenchViewAsMainView(searcher, false);
+                workbench.addWorkbenchPartAsMainView(searcher, false);
                 searcher.initialize();
             }
             workbench.selectMainView(searcher.id.get());
@@ -133,7 +142,9 @@ public class SearchController extends WorkbenchSideToolController {
     }
 
     private void alertIndexable(SearcherController controller) {
-        if (!this.hasAttr(GenericEvent.PROFILE_READY)) return;
+        if (!profileReadyState.value) {
+            return;
+        }
         FxHelper.runThread(null == controller ? 5000 : 100, () -> {
             String contentText = null, headerText = null;
             if (IndexedManager.isBookcaseIndexable()) {

@@ -23,7 +23,6 @@ import org.appxi.cbeta.app.explorer.BooklistProfile;
 import org.appxi.holder.IntHolder;
 import org.appxi.holder.RawHolder;
 import org.appxi.javafx.helper.TreeHelper;
-import org.appxi.javafx.workbench.WorkbenchViewController;
 import org.appxi.util.DigestHelper;
 import org.appxi.util.FileHelper;
 import org.appxi.util.StringHelper;
@@ -36,7 +35,7 @@ import java.util.Map;
 import java.util.zip.ZipFile;
 
 class ImplEpubRenamer extends Widget {
-    ImplEpubRenamer(WorkbenchViewController controller) {
+    ImplEpubRenamer(WidgetsController controller) {
         super(controller);
     }
 
@@ -187,7 +186,7 @@ class ImplEpubRenamer extends Widget {
     }
 
     @Override
-    void onViewportShowing(boolean firstTime) {
+    void activeViewport(boolean firstTime) {
 
     }
 }

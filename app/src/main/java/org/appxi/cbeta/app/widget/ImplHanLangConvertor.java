@@ -9,12 +9,11 @@ import javafx.scene.control.TextArea;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import org.appxi.javafx.workbench.WorkbenchViewController;
 import org.appxi.smartcn.convert.ChineseConvertors;
 import org.appxi.util.ext.HanLang;
 
 class ImplHanLangConvertor extends Widget {
-    ImplHanLangConvertor(WorkbenchViewController controller) {
+    ImplHanLangConvertor(WidgetsController controller) {
         super(controller);
     }
 
@@ -52,7 +51,7 @@ class ImplHanLangConvertor extends Widget {
     }
 
     @Override
-    void onViewportShowing(boolean firstTime) {
+    void activeViewport(boolean firstTime) {
 
     }
 }
