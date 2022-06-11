@@ -6,7 +6,7 @@
 
     <groupId>org.appxi</groupId>
     <artifactId>cbeta-explorer-packager</artifactId>
-    <version>22.06.07</version>
+    <version>22.06.11</version>
     <packaging>pom</packaging>
 
     <properties>
