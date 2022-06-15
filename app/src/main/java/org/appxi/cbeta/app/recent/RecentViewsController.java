@@ -24,7 +24,7 @@ public class RecentViewsController extends WorkbenchPartController {
     }
 
     @Override
-    public void initialize() {
+    public void postConstruct() {
         app.eventBus.addEventHandler(AppEvent.STOPPING, event -> saveRecentViews());
         //
         app.eventBus.addEventHandler(GenericEvent.PROFILE_READY, event -> FxHelper.runThread(30, () -> {
@@ -58,7 +58,7 @@ public class RecentViewsController extends WorkbenchPartController {
                 }
             }
             if (!swapRecentViews.isEmpty()) {
-                swapRecentViews.forEach(WorkbenchPart::initialize);
+                swapRecentViews.forEach(WorkbenchPart::postConstruct);
                 if (null != swapRecentViewSelected.value) {
                     workbench.selectMainView(swapRecentViewSelected.value.id().get());
                 }

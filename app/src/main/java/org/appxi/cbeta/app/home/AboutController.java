@@ -32,7 +32,7 @@ public class AboutController extends WorkbenchPartController implements Workbenc
     }
 
     @Override
-    public void initialize() {
+    public void postConstruct() {
     }
 
     @Override

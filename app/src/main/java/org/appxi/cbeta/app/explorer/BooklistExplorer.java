@@ -91,7 +91,7 @@ public class BooklistExplorer extends WorkbenchPartController.SideView {
     }
 
     @Override
-    public void initialize() {
+    public void postConstruct() {
         app.eventBus.addEventHandler(BookEvent.OPEN, e -> handleEventToOpenBook(e, e.book, e.chapter));
         app.eventBus.addEventHandler(AppEvent.STARTING,
                 event -> new Thread(() -> {
@@ -135,7 +135,7 @@ public class BooklistExplorer extends WorkbenchPartController.SideView {
             Optional.ofNullable(this.treeView).ifPresent(TreeView::refresh);
             final BookXmlReader controller = new BookXmlReader(book, workbench);
             workbench.addWorkbenchPartAsMainView(controller, false);
-            controller.initialize();
+            controller.postConstruct();
             if (null != chapter) {
                 controller.setPosition(chapter);
             }

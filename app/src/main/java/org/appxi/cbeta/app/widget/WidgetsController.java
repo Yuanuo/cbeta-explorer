@@ -27,7 +27,7 @@ public class WidgetsController extends WorkbenchPartController.SideView {
     }
 
     @Override
-    public void initialize() {
+    public void postConstruct() {
     }
 
     @Override

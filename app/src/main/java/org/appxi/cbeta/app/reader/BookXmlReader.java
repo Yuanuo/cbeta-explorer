@@ -72,11 +72,9 @@ import java.util.regex.Pattern;
 
 public class BookXmlReader extends WebViewerPart.MainView {
     private final EventHandler<GenericEvent> _onHanLangChanged = event -> {
-        if (null != this.webPane()) {
-            saveUserData();
-            chapter = null;
-            navigate(null);
-        }
+        saveUserData();
+        chapter = null;
+        navigate(null);
     };
 
     private final BookDocument bookDocument;
@@ -130,7 +128,7 @@ public class BookXmlReader extends WebViewerPart.MainView {
     }
 
     @Override
-    public void initialize() {
+    public void postConstruct() {
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -167,14 +165,14 @@ public class BookXmlReader extends WebViewerPart.MainView {
     }
 
     @Override
-    public void uninstall() {
+    public void deinitialize() {
         app.eventBus.removeEventHandler(GenericEvent.HAN_LANG_CHANGED, _onHanLangChanged);
-        super.uninstall();
+        super.deinitialize();
     }
 
     @Override
-    public void install() {
-        super.install();
+    public void initialize() {
+        super.initialize();
         app.eventBus.addEventHandler(GenericEvent.HAN_LANG_CHANGED, _onHanLangChanged);
         //
         this.addTools();
@@ -198,18 +196,18 @@ public class BookXmlReader extends WebViewerPart.MainView {
 
     protected void addTools() {
         addTool_SideControl();
-        webPane().getTopBar().addLeft(new Separator(Orientation.VERTICAL));
+        webPane.getTopBar().addLeft(new Separator(Orientation.VERTICAL));
         addTool_Goto();
         addTool_Bookmark();
         addTool_Favorite();
-        webPane().getTopBar().addRight(new Separator(Orientation.VERTICAL));
+        webPane.getTopBar().addRight(new Separator(Orientation.VERTICAL));
         addTool_WrapLines();
         addTool_WrapPages();
         addTool_FirstLetterIndent();
-        webPane().getTopBar().addRight(new Separator(Orientation.VERTICAL));
+        webPane.getTopBar().addRight(new Separator(Orientation.VERTICAL));
         addTool_EditingMarks();
         //
-        webPane().getTopBar().addRight(new Separator(Orientation.VERTICAL));
+        webPane.getTopBar().addRight(new Separator(Orientation.VERTICAL));
         addTool_FindInPage();
     }
 
@@ -217,7 +215,7 @@ public class BookXmlReader extends WebViewerPart.MainView {
         final Button button = MaterialIcon.IMPORT_CONTACTS.flatButton();
         button.setTooltip(new Tooltip("显示本书相关数据（目录、书签等）"));
         button.setOnAction(event -> workbench.selectSideTool(BookDataPlaceController.getInstance().id.get()));
-        webPane().getTopBar().addLeft(button);
+        webPane.getTopBar().addLeft(button);
     }
 
     private Button gotoPrev, gotoNext, gotoMenu;
@@ -244,7 +242,7 @@ public class BookXmlReader extends WebViewerPart.MainView {
         });
 
         //
-        webPane().getTopBar().addLeft(gotoPrev, gotoNext, gotoMenu);
+        webPane.getTopBar().addLeft(gotoPrev, gotoNext, gotoMenu);
     }
 
     private void updateTool_Goto() {
@@ -270,23 +268,23 @@ public class BookXmlReader extends WebViewerPart.MainView {
     private void addTool_WrapLines() {
         final ToggleButton button = MaterialIcon.WRAP_TEXT.flatToggle();
         button.setTooltip(new Tooltip("折行显示"));
-        button.setOnAction(event -> webPane().executeScript("handleOnWrapLines()"));
-        webPane().getTopBar().addRight(button);
+        button.setOnAction(event -> webPane.executeScript("handleOnWrapLines()"));
+        webPane.getTopBar().addRight(button);
     }
 
     private void addTool_WrapPages() {
         final ToggleButton button = MaterialIcon.VIEW_DAY.flatToggle();
         button.setTooltip(new Tooltip("折页显示"));
-        button.setOnAction(event -> webPane().executeScript("handleOnWrapPages()"));
-        webPane().getTopBar().addRight(button);
+        button.setOnAction(event -> webPane.executeScript("handleOnWrapPages()"));
+        webPane.getTopBar().addRight(button);
     }
 
     private void addTool_FirstLetterIndent() {
         final ToggleButton button = MaterialIcon.FORMAT_INDENT_INCREASE.flatToggle();
         button.setTooltip(new Tooltip("首行标点对齐"));
         button.setSelected(true);
-        button.setOnAction(event -> webPane().executeScript("handleOnPrettyIndent()"));
-        webPane().getTopBar().addRight(button);
+        button.setOnAction(event -> webPane.executeScript("handleOnPrettyIndent()"));
+        webPane.getTopBar().addRight(button);
     }
 
     private void addTool_EditingMarks() {
@@ -326,24 +324,24 @@ public class BookXmlReader extends WebViewerPart.MainView {
         marksGroup.getToggles().setAll(markOrigInline, markModInline, markModSharp, markModColor, markModPopover);
         marksGroup.selectedToggleProperty().addListener((o, ov, nv) -> {
             UserPrefs.prefs.setProperty("viewer.edit.marks", null == nv ? -1 : nv.getUserData());
-            webPane().executeScript("handleOnEditMark(" + (null == nv ? -1 : nv.getUserData()) + ")");
+            webPane.executeScript("handleOnEditMark(" + (null == nv ? -1 : nv.getUserData()) + ")");
         });
 
-        webPane().getTopBar().addRight(markOrigInline, markModInline, markModSharp, markModColor, markModPopover);
+        webPane.getTopBar().addRight(markOrigInline, markModInline, markModSharp, markModColor, markModPopover);
     }
 
     private void addTool_Bookmark() {
         final Button button = MaterialIcon.BOOKMARK_OUTLINE.flatButton();
         button.setTooltip(new Tooltip("添加书签"));
         button.setOnAction(event -> this.handleEventToCreateBookData(BookdataType.bookmark));
-        webPane().getTopBar().addRight(button);
+        webPane.getTopBar().addRight(button);
     }
 
     private void addTool_Favorite() {
         final Button button = MaterialIcon.STAR_BORDER.flatButton();
         button.setTooltip(new Tooltip("添加收藏"));
         button.setOnAction(event -> this.handleEventToCreateBookData(BookdataType.favorite));
-        webPane().getTopBar().addRight(button);
+        webPane.getTopBar().addRight(button);
     }
 
     protected void addTool_FindInPage() {
@@ -435,7 +433,7 @@ public class BookXmlReader extends WebViewerPart.MainView {
         FxHelper.runThread(100, () -> {
             webFinder().clear.fire();
             //
-            webPane().getTopBar().lookupAll(".toggle-button").forEach(node -> {
+            webPane.getTopBar().lookupAll(".toggle-button").forEach(node -> {
                 if (node instanceof ToggleButton toggle && toggle.isSelected()) {
                     if (toggle.getToggleGroup() == null) {
                         toggle.fireEvent(new ActionEvent());
@@ -475,7 +473,7 @@ public class BookXmlReader extends WebViewerPart.MainView {
 
     @Override
     protected ContextMenu createWebViewContextMenu() {
-        String origText = webPane().executeScript("getValidSelectionText()");
+        String origText = webPane.executeScript("getValidSelectionText()");
         String trimText = null == origText ? null : origText.strip().replace('\n', ' ');
         final String availText = StringHelper.isBlank(trimText) ? null : trimText;
         //
@@ -483,7 +481,7 @@ public class BookXmlReader extends WebViewerPart.MainView {
         copyRef.setDisable(null == availText || !book.path.startsWith("toc/"));
         copyRef.setOnAction(event -> {
             try {
-                String refInfoStr = webPane().executeScript("getValidSelectionReferenceInfo2()");
+                String refInfoStr = webPane.executeScript("getValidSelectionReferenceInfo2()");
                 String[] refInfo = refInfoStr.split("\\|", 3);
                 if (refInfo.length < 2) return;
                 if (refInfo[0].isBlank()) return;
@@ -563,7 +561,7 @@ public class BookXmlReader extends WebViewerPart.MainView {
 
     private void handleEventToCreateBookData(BookdataType dataType) {
         try {
-            final String anchorInfo = webPane().executeScript("getFavoriteAnchorInfo()");
+            final String anchorInfo = webPane.executeScript("getFavoriteAnchorInfo()");
             BookDataController dataHandle = null;
             if (dataType == BookdataType.bookmark) {
                 dataHandle = this.bookmarks;
@@ -794,7 +792,7 @@ public class BookXmlReader extends WebViewerPart.MainView {
         @Override
         public void hide() {
             super.hide();
-            webPane().webView().requestFocus();
+            webPane.webView().requestFocus();
         }
     }
 

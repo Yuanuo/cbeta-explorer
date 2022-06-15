@@ -23,7 +23,7 @@ public class PreferencesController extends WorkbenchPartController implements Wo
     }
 
     @Override
-    public void initialize() {
+    public void postConstruct() {
         app.visualProvider.addSettings();
     }
 

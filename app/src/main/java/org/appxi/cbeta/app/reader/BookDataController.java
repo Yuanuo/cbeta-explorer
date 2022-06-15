@@ -54,7 +54,7 @@ public abstract class BookDataController extends WorkbenchPartController.SideVie
     }
 
     @Override
-    public void initialize() {
+    public void postConstruct() {
         // not internal
         if (null == this.filterByBook) {
             app.eventBus.addEventHandler(BookdataEvent.CREATED, event -> {

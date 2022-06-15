@@ -49,7 +49,7 @@ public class AppLauncherDev extends AppLauncher {
         }
 
         @Override
-        public void initialize() {
+        public void postConstruct() {
             app.getPrimaryScene().getAccelerators().put(new KeyCodeCombination(KeyCode.F12), () -> activeViewport(true));
         }
 
@@ -69,7 +69,7 @@ public class AppLauncherDev extends AppLauncher {
         }
 
         @Override
-        public void initialize() {
+        public void postConstruct() {
         }
 
         @Override

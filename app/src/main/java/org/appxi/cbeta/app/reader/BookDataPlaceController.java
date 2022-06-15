@@ -44,7 +44,7 @@ public class BookDataPlaceController extends WorkbenchPartController.SideView {
     private BookXmlReader bookXmlReader;
 
     @Override
-    public void initialize() {
+    public void postConstruct() {
         app.eventBus.addEventHandler(BookEvent.VIEW, event -> {
             this.bookXmlReader = null;// always reset
             final WorkbenchPart mainView = workbench.getSelectedMainViewPart();

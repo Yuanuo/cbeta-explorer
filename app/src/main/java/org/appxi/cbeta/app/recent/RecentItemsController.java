@@ -41,7 +41,7 @@ public class RecentItemsController extends WorkbenchPartController.SideView {
     }
 
     @Override
-    public void initialize() {
+    public void postConstruct() {
         app.eventBus.addEventHandler(BookEvent.OPEN, event -> handleToSaveOrUpdateRecentBook(event.book));
         app.eventBus.addEventHandler(BookEvent.CLOSE, event -> handleToSaveOrUpdateRecentBook(event.book));
         app.eventBus.addEventHandler(BookEvent.VIEW, event -> handleToSaveOrUpdateRecentBook(event.book));
