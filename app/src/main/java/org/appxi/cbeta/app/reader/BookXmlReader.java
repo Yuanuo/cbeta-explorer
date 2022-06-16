@@ -40,8 +40,7 @@ import org.appxi.cbeta.app.search.LookupLayerEx;
 import org.appxi.event.EventHandler;
 import org.appxi.holder.IntHolder;
 import org.appxi.javafx.app.search.SearcherEvent;
-import org.appxi.javafx.app.web.WebCallback;
-import org.appxi.javafx.app.web.WebRenderer;
+import org.appxi.javafx.app.web.WebViewer;
 import org.appxi.javafx.app.web.WebViewerPart;
 import org.appxi.javafx.control.TabPaneEx;
 import org.appxi.javafx.helper.FxHelper;
@@ -409,8 +408,8 @@ public class BookXmlReader extends WebViewerPart.MainView {
     }
 
     @Override
-    protected WebCallback createWebCallback() {
-        return new WebCallbackImpl(this);
+    protected WebCallbackImpl createWebCallback() {
+        return new WebCallbackImpl();
     }
 
     @Override
@@ -796,11 +795,7 @@ public class BookXmlReader extends WebViewerPart.MainView {
         }
     }
 
-    public class WebCallbackImpl extends WebCallback {
-        public WebCallbackImpl(WebRenderer webRenderer) {
-            super(webRenderer);
-        }
-
+    public class WebCallbackImpl extends WebViewer.WebCallbackImpl {
         /**
          * 用于将输入文字转换成与实际显示的相同，以方便页内查找
          */
