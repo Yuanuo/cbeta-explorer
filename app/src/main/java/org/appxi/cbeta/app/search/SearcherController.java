@@ -84,6 +84,7 @@ public class SearcherController extends WorkbenchPartController.MainView {
             title = title + "：" + (appendText.isBlank() ? "*" : StringHelper.trimChars(appendText, 16));
         this.title.set(title);
         this.tooltip.set(title);
+        this.appTitle.set(title);
     }
 
     @Override
