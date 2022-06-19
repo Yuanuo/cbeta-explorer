@@ -33,7 +33,7 @@ import java.util.stream.Stream;
 public class App extends WorkbenchApp {
     public static final String ID = "cbetaExplorer";
     public static final String NAME = "智悲乐藏";
-    public static final String VERSION = "22.06.11";
+    public static final String VERSION = "22.06.19";
     private static App instance;
 
     public App() {
