@@ -145,13 +145,6 @@ public abstract class AppContext {
 
     public static Preferences recentBooks = new PreferencesInMemory();
 
-    public static List<InputStream> getWebIncludeCSSs() {
-        return Stream.of("web.css")
-                .map(App.class::getResourceAsStream)
-                .filter(Objects::nonNull)
-                .toList();
-    }
-
     public static List<String> getWebIncludeURIs() {
         List<String> result = WebViewer.getWebIncludeURIs();
         final Path dir = DesktopApp.appDir().resolve("template/web-incl");
@@ -159,6 +152,7 @@ public abstract class AppContext {
                 .map(s -> dir.resolve(s).toUri().toString())
                 .toList()
         );
+        result.add(App.app().visualProvider.getWebStyleSheetLocationURI());
         return result;
     }
 }

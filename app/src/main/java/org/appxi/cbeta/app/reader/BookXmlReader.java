@@ -56,7 +56,6 @@ import org.appxi.util.ext.HanLang;
 import org.appxi.util.ext.LookupExpression;
 import org.json.JSONObject;
 
-import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -156,11 +155,6 @@ public class BookXmlReader extends WebViewerPart.MainView {
     @Override
     protected String locationId() {
         return book.id + "." + BookHelper.getVolume(chapter);
-    }
-
-    @Override
-    protected List<InputStream> getAdditionalStyleSheets() {
-        return AppContext.getWebIncludeCSSs();
     }
 
     @Override
