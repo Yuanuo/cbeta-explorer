@@ -58,8 +58,8 @@ class LookupDatabase {
             // 统一生成卷数的拼音（目前似乎最大为600卷，但仍生成1-999）
             IntStream.range(1, 999).mapToObj(String::valueOf)
                     .forEach(i -> cachedAsciiMap.put(i.concat("卷"), i.concat("juan")));
-            logger.warn("init lookup-in-memory items used time: " + (System.currentTimeMillis() - st));
-            logger.warn("init lookup-in-memory items size: " + cachedDatabase.size());
+            logger.info("init lookup-in-memory items used time: " + (System.currentTimeMillis() - st));
+            logger.info("init lookup-in-memory items size: " + cachedDatabase.size());
             System.gc();
         }).start();
     }

@@ -93,7 +93,7 @@ public abstract class AppContext {
                     }
                 };
                 App.app().eventBus.fireEvent(new GenericEvent(GenericEvent.BEANS_READY));
-                App.app().logger.warn(StringHelper.concat("beans init after: ",
+                App.app().logger.info(StringHelper.concat("beans init after: ",
                         System.currentTimeMillis() - App.app().startTime));
             } catch (Throwable t) {
                 t.printStackTrace();
