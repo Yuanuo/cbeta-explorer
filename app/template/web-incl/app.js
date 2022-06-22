@@ -24,8 +24,6 @@ $(document).ready(function () {
         }, 200);
     };
 
-    if (typeof handleOnPrettyIndent === 'function') handleOnPrettyIndent();
-
     try {
         if (rangy) rangy.init();
     } catch (err) {
