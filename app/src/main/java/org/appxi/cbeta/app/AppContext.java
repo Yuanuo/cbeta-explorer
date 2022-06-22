@@ -8,8 +8,6 @@ import org.appxi.cbeta.TripitakaMap;
 import org.appxi.cbeta.app.dao.DaoHelper;
 import org.appxi.cbeta.app.dao.DaoService;
 import org.appxi.cbeta.app.event.GenericEvent;
-import org.appxi.javafx.app.DesktopApp;
-import org.appxi.javafx.app.web.WebViewer;
 import org.appxi.javafx.settings.DefaultOptions;
 import org.appxi.javafx.settings.SettingsList;
 import org.appxi.prefs.Preferences;
@@ -28,9 +26,7 @@ import org.springframework.core.io.UrlResource;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Objects;
-import java.util.stream.Stream;
 
 public abstract class AppContext {
     private static Bookcase bookcase;
@@ -143,15 +139,4 @@ public abstract class AppContext {
     }
 
     public static Preferences recentBooks = new PreferencesInMemory();
-
-    public static List<String> getWebIncludeURIs() {
-        List<String> result = WebViewer.getWebIncludeURIs();
-        final Path dir = DesktopApp.appDir().resolve("template/web-incl");
-        result.addAll(Stream.of("app.css", "app.js")
-                .map(s -> dir.resolve(s).toUri().toString())
-                .toList()
-        );
-        result.add(App.app().visualProvider.getWebStyleSheetLocationURI());
-        return result;
-    }
 }

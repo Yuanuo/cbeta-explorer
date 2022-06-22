@@ -8,6 +8,7 @@ import org.appxi.cbeta.app.home.PreferencesController;
 import org.appxi.cbeta.app.reader.BookDataPlaceController;
 import org.appxi.cbeta.app.reader.BookmarksController;
 import org.appxi.cbeta.app.reader.FavoritesController;
+import org.appxi.cbeta.app.reader.HtmlBasedViewer;
 import org.appxi.cbeta.app.recent.RecentItemsController;
 import org.appxi.cbeta.app.recent.RecentViewsController;
 import org.appxi.cbeta.app.search.LookupController;
@@ -131,7 +132,7 @@ public class App extends WorkbenchApp {
 
         result.add(new LookupController(workbench));
         result.add(new SearchController(workbench));
-        result.add(new DictionaryController(workbench, AppContext::getWebIncludeURIs));
+        result.add(new DictionaryController(workbench, HtmlBasedViewer::getWebIncludeURIsEx));
         result.add(new WidgetsController(workbench));
 
         result.add(new PreferencesController(workbench));

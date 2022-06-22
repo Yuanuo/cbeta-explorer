@@ -41,7 +41,6 @@ import org.appxi.event.EventHandler;
 import org.appxi.holder.IntHolder;
 import org.appxi.javafx.app.search.SearcherEvent;
 import org.appxi.javafx.app.web.WebViewer;
-import org.appxi.javafx.app.web.WebViewerPart;
 import org.appxi.javafx.control.TabPaneEx;
 import org.appxi.javafx.helper.FxHelper;
 import org.appxi.javafx.helper.TreeHelper;
@@ -68,7 +67,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class BookXmlReader extends WebViewerPart.MainView {
+public class BookXmlReader extends HtmlBasedViewer {
     private final EventHandler<GenericEvent> _onHanLangChanged = event -> {
         saveUserData();
         chapter = null;
@@ -86,7 +85,7 @@ public class BookXmlReader extends WebViewerPart.MainView {
     Chapter chapter;
 
     public BookXmlReader(Book book, WorkbenchPane workbench) {
-        super(workbench, null);
+        super(workbench);
 
         this.book = book;
         this.bookDocument = new BookDocumentEx(AppContext.bookcase(), book);
@@ -410,7 +409,7 @@ public class BookXmlReader extends WebViewerPart.MainView {
     protected Object createWebContent() {
         final String htmlFile = bookDocument.getVolumeHtmlDocument(chapter.path, AppContext.hanLang(),
                 body -> AppContext.hanText(StringHelper.concat("<body><article>", body.html(), "</article></body>")),
-                AppContext.getWebIncludeURIs().toArray(new String[0])
+                HtmlBasedViewer.getWebIncludeURIsEx().toArray(new String[0])
         );
         return Path.of(htmlFile);
     }
