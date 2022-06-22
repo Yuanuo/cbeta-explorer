@@ -25,7 +25,6 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 
-import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
