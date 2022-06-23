@@ -9,7 +9,7 @@ function onBodyResizeBefore() {
 
 $(document).ready(function () {
     if (urlParams.has('theme')) {
-        document.body.setAttribute('class', urlParams.get('theme'));
+        setWebStyleTheme(urlParams.get('theme'));
     }
 
     documentLoaded = true;

@@ -5,7 +5,6 @@ import javafx.geometry.Orientation;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
-import javafx.scene.control.ContextMenu;
 import javafx.scene.control.DialogPane;
 import javafx.scene.control.Labeled;
 import javafx.scene.control.MenuItem;
@@ -439,32 +438,35 @@ public class BookXmlReader extends HtmlBasedViewer {
     }
 
     @Override
-    protected void handleWebViewShortcuts(KeyEvent event) {
-        if (!event.isConsumed() && event.isShortcutDown()) {
-            // Ctrl + LEFT
-            if (event.getCode() == KeyCode.LEFT) {
-                gotoPrev.fire();
-                event.consume();
-                return;
-            }
-            // Ctrl + RIGHT
-            if (event.getCode() == KeyCode.RIGHT) {
-                gotoNext.fire();
-                event.consume();
-                return;
-            }
-            // Ctrl + T
-            if (event.getCode() == KeyCode.T) {
-                gotoMenu.fire();
-                event.consume();
-                return;
-            }
+    protected void onWebPaneShortcutsPressed(KeyEvent event) {
+        if (event.isConsumed()) {
+            return;
         }
-        super.handleWebViewShortcuts(event);
+        // Ctrl + LEFT
+        if (event.isShortcutDown() && event.getCode() == KeyCode.LEFT) {
+            gotoPrev.fire();
+            event.consume();
+            return;
+        }
+        // Ctrl + RIGHT
+        if (event.isShortcutDown() && event.getCode() == KeyCode.RIGHT) {
+            gotoNext.fire();
+            event.consume();
+            return;
+        }
+        // Ctrl + T
+        if (event.isShortcutDown() && event.getCode() == KeyCode.T) {
+            gotoMenu.fire();
+            event.consume();
+            return;
+        }
+        super.onWebPaneShortcutsPressed(event);
     }
 
     @Override
-    protected ContextMenu createWebViewContextMenu() {
+    protected void onWebViewContextMenuRequest(List<MenuItem> model) {
+        super.onWebViewContextMenuRequest(model);
+        //
         String origText = webPane.executeScript("getValidSelectionText()");
         String trimText = null == origText ? null : origText.strip().replace('\n', ' ');
         final String availText = StringHelper.isBlank(trimText) ? null : trimText;
@@ -533,22 +535,20 @@ public class BookXmlReader extends HtmlBasedViewer {
         favorite.setOnAction(event -> this.handleEventToCreateBookData(BookdataType.favorite));
 
         //
-        return new ContextMenu(
-                createMenu_copy(origText, availText),
-                copyRef,
-                new SeparatorMenuItem(),
-                createMenu_search(textTip, textForSearch),
-                createMenu_searchExact(textTip, textForSearch),
-                searchInBook,
-                createMenu_lookup(textTip, textForSearch),
-                createMenu_finder(textTip, availText),
-                new SeparatorMenuItem(),
-                createMenu_dict(availText),
-                createMenu_pinyin(availText),
-                new SeparatorMenuItem(),
-                bookmark,
-                favorite
-        );
+        model.add(createMenu_copy(origText, availText));
+        model.add(copyRef);
+        model.add(new SeparatorMenuItem());
+        model.add(createMenu_search(textTip, textForSearch));
+        model.add(createMenu_searchExact(textTip, textForSearch));
+        model.add(searchInBook);
+        model.add(createMenu_lookup(textTip, textForSearch));
+        model.add(createMenu_finder(textTip, availText));
+        model.add(new SeparatorMenuItem());
+        model.add(createMenu_dict(availText));
+        model.add(createMenu_pinyin(availText));
+        model.add(new SeparatorMenuItem());
+        model.add(bookmark);
+        model.add(favorite);
     }
 
     private void handleEventToCreateBookData(BookdataType dataType) {

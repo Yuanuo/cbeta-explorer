@@ -17,7 +17,7 @@ public abstract class HtmlBasedViewer extends WebViewerPart.MainView {
                 .map(s -> dir.resolve(s).toUri().toString())
                 .toList()
         );
-        result.add(App.app().visualProvider.getWebStyleSheetURI());
+        result.add("<link id=\"CSS\" rel=\"stylesheet\" type=\"text/css\" href=\"" + App.app().visualProvider.getWebStyleSheetURI() + "\">");
         return result;
     }
 
