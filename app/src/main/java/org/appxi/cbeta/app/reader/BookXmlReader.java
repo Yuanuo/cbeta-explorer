@@ -16,8 +16,6 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.Tooltip;
-import javafx.scene.input.Clipboard;
-import javafx.scene.input.DataFormat;
 import javafx.scene.input.InputEvent;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -44,6 +42,7 @@ import org.appxi.javafx.control.TabPaneEx;
 import org.appxi.javafx.helper.FxHelper;
 import org.appxi.javafx.helper.TreeHelper;
 import org.appxi.javafx.visual.MaterialIcon;
+import org.appxi.javafx.web.WebSelection;
 import org.appxi.javafx.workbench.WorkbenchPane;
 import org.appxi.prefs.UserPrefs;
 import org.appxi.smartcn.convert.ChineseConvertors;
@@ -59,7 +58,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -400,8 +398,8 @@ public class BookXmlReader extends HtmlBasedViewer {
     }
 
     @Override
-    protected WebCallbackImpl createWebCallback() {
-        return new WebCallbackImpl();
+    protected WebJavaBridgeImpl createWebJavaBridge() {
+        return new WebJavaBridgeImpl();
     }
 
     @Override
@@ -464,15 +462,11 @@ public class BookXmlReader extends HtmlBasedViewer {
     }
 
     @Override
-    protected void onWebViewContextMenuRequest(List<MenuItem> model) {
-        super.onWebViewContextMenuRequest(model);
-        //
-        String origText = webPane.executeScript("getValidSelectionText()");
-        String trimText = null == origText ? null : origText.strip().replace('\n', ' ');
-        final String availText = StringHelper.isBlank(trimText) ? null : trimText;
+    protected void onWebViewContextMenuRequest(List<MenuItem> model, WebSelection selection) {
+        super.onWebViewContextMenuRequest(model, selection);
         //
         MenuItem copyRef = new MenuItem("复制为引用");
-        copyRef.setDisable(null == availText || !book.path.startsWith("toc/"));
+        copyRef.setDisable(!selection.hasTrims || !book.path.startsWith("toc/"));
         copyRef.setOnAction(event -> {
             try {
                 String refInfoStr = webPane.executeScript("getValidSelectionReferenceInfo2()");
@@ -494,7 +488,7 @@ public class BookXmlReader extends HtmlBasedViewer {
                 }
 
                 buff.append("：「");
-                buff.append(null == availText ? "" : availText);
+                buff.append(selection.hasTrims ? selection.trims : "");
                 buff.append("」(CBETA ").append(AppContext.bookcase().getQuarterlyVersion()).append(", ");
                 buff.append(book.tripitakaId).append(serial);
                 buff.append(", no. ").append(book.number.replaceAll("^0+", "")).append(", p. ");
@@ -515,15 +509,15 @@ public class BookXmlReader extends HtmlBasedViewer {
                 }
                 //
                 buff.append(")");
-                Clipboard.getSystemClipboard().setContent(Map.of(DataFormat.PLAIN_TEXT, buff.toString()));
+                FxHelper.copyText(buff.toString());
                 app.toast("已复制到剪贴板");
             } catch (Throwable t) {
                 t.printStackTrace(); // for debug
             }
         });
         //
-        String textTip = null == availText ? "" : "：".concat(StringHelper.trimChars(availText, 8));
-        String textForSearch = null == availText ? null : AppContext.hanLang() != HanLang.hantTW ? availText : "!".concat(availText);
+        String textTip = selection.hasTrims ? "：" + StringHelper.trimChars(selection.trims, 8) : "";
+        String textForSearch = selection.hasTrims ? AppContext.hanLang() != HanLang.hantTW ? selection.trims : "!" + selection.trims : null;
 
         MenuItem searchInBook = new MenuItem("全文检索（检索本书）".concat(textTip));
         searchInBook.setOnAction(event -> app.eventBus.fireEvent(SearcherEvent.ofSearch(textForSearch, book)));
@@ -535,17 +529,17 @@ public class BookXmlReader extends HtmlBasedViewer {
         favorite.setOnAction(event -> this.handleEventToCreateBookData(BookdataType.favorite));
 
         //
-        model.add(createMenu_copy(origText, availText));
+        model.add(createMenu_copy(selection));
         model.add(copyRef);
         model.add(new SeparatorMenuItem());
         model.add(createMenu_search(textTip, textForSearch));
         model.add(createMenu_searchExact(textTip, textForSearch));
         model.add(searchInBook);
         model.add(createMenu_lookup(textTip, textForSearch));
-        model.add(createMenu_finder(textTip, availText));
+        model.add(createMenu_finder(textTip, selection));
         model.add(new SeparatorMenuItem());
-        model.add(createMenu_dict(availText));
-        model.add(createMenu_pinyin(availText));
+        model.add(createMenu_dict(selection));
+        model.add(createMenu_pinyin(selection));
         model.add(new SeparatorMenuItem());
         model.add(bookmark);
         model.add(favorite);
@@ -788,7 +782,7 @@ public class BookXmlReader extends HtmlBasedViewer {
         }
     }
 
-    public class WebCallbackImpl extends WebViewer.WebCallbackImpl {
+    public class WebJavaBridgeImpl extends WebViewer.WebJavaBridgeImpl {
         /**
          * 用于将输入文字转换成与实际显示的相同，以方便页内查找
          */

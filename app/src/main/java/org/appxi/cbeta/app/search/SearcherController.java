@@ -19,8 +19,6 @@ import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
 import javafx.scene.control.cell.CheckBoxListCell;
-import javafx.scene.input.Clipboard;
-import javafx.scene.input.DataFormat;
 import javafx.scene.input.InputEvent;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -436,8 +434,7 @@ public class SearcherController extends WorkbenchPartController.MainView {
                                 "\n文本：\n" + textFlow.getChildren().stream().filter(n -> n instanceof Text)
                                 .map(n -> ((Text) n).getText())
                                 .collect(Collectors.joining());
-
-                        Clipboard.getSystemClipboard().setContent(Map.of(DataFormat.PLAIN_TEXT, copyText));
+                        FxHelper.copyText(copyText);
                         app.toast("已复制到剪贴板！");
                     }
                 });
