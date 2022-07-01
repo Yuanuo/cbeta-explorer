@@ -62,6 +62,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -266,7 +267,7 @@ class SearcherController extends WorkbenchPartController.MainView {
 
         final List<String> filterCategories = new ArrayList<>();
         // 当搜索条件（关键词）未改变时，已经搜索过一次，此时认为是在根据facet条件过滤，否则开启一个新的搜索
-        if (inputText.equals(finalQuery) && null != facetAndHighlightPage && facetAndHighlightPage.getTotalElements() > 0) {
+        if (Objects.equals(inputText, finalQuery) && null != facetAndHighlightPage && facetAndHighlightPage.getTotalElements() > 0) {
             facet.value = false;
             filterTabs.getTabs().stream()
                     .filter(t -> t instanceof FacetsTab)
