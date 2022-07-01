@@ -47,7 +47,7 @@ public class BookBasicController extends WorkbenchPartController.SideView {
     }
 
     @Override
-    public void createViewport(BorderPane viewport) {
+    protected void createViewport(BorderPane viewport) {
         super.createViewport(viewport);
         //
         viewport.setTop(null);

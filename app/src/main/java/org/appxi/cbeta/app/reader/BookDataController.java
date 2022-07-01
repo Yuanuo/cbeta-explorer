@@ -72,7 +72,7 @@ public abstract class BookDataController extends WorkbenchPartController.SideVie
     }
 
     @Override
-    public void createViewport(BorderPane viewport) {
+    protected void createViewport(BorderPane viewport) {
         super.createViewport(viewport);
         //
         if (null != this.filterByBook)

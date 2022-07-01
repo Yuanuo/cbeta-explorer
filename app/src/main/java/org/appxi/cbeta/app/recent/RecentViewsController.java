@@ -58,7 +58,6 @@ public class RecentViewsController extends WorkbenchPartController {
                 }
             }
             if (!swapRecentViews.isEmpty()) {
-                swapRecentViews.forEach(WorkbenchPart::postConstruct);
                 if (null != swapRecentViewSelected.value) {
                     workbench.selectMainView(swapRecentViewSelected.value.id().get());
                 }

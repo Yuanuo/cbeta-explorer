@@ -43,7 +43,7 @@ public class BooklistExplorer extends WorkbenchPartController.SideView {
     }
 
     @Override
-    public void createViewport(BorderPane viewport) {
+    protected void createViewport(BorderPane viewport) {
         super.createViewport(viewport);
         //
         final Button btnProfile = MaterialIcon.PLAYLIST_ADD_CHECK.flatButton();
@@ -135,7 +135,6 @@ public class BooklistExplorer extends WorkbenchPartController.SideView {
             Optional.ofNullable(this.treeView).ifPresent(TreeView::refresh);
             final BookXmlReader controller = new BookXmlReader(book, workbench);
             workbench.addWorkbenchPartAsMainView(controller, false);
-            controller.postConstruct();
             if (null != chapter) {
                 controller.setPosition(chapter);
             }
