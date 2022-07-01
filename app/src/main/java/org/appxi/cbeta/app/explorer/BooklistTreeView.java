@@ -4,6 +4,7 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TreeItem;
 import org.appxi.cbeta.Book;
+import org.appxi.cbeta.app.AppContext;
 import org.appxi.cbeta.app.event.BookEvent;
 import org.appxi.javafx.app.search.SearcherEvent;
 import org.appxi.javafx.control.TreeViewEx;
@@ -51,11 +52,11 @@ class BooklistTreeView extends TreeViewEx<Book> {
             menuItem = new MenuItem("从这里搜索");
             menuItem.setGraphic(MaterialIcon.FIND_IN_PAGE.graphic());
             menuItem.setOnAction(event1 -> {
-                if (null == book.id) {
-                    book.attr("scope", "nav/".concat(BooklistProfile.ONE.profile().template().name())
-                            .concat("/").concat(TreeHelper.path(selectedItem)));
-                }
-                app.eventBus.fireEvent(SearcherEvent.ofSearch(null, book));
+                Book data = book.clone();
+                data.title = (null == data.id ? "【目录】" : "【典籍】") + AppContext.hanText(BookLabelStyle.format(data));
+                data.path = "nav/" + BooklistProfile.ONE.profile().template().name() + "/" + TreeHelper.path(selectedItem);
+
+                app.eventBus.fireEvent(SearcherEvent.ofSearch(null, data));
             });
             menuItems.add(menuItem);
         }

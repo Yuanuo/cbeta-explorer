@@ -2,6 +2,7 @@ package org.appxi.cbeta.app;
 
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.scene.input.DataFormat;
 import org.appxi.cbeta.BookMap;
 import org.appxi.cbeta.Bookcase;
 import org.appxi.cbeta.TripitakaMap;
@@ -29,6 +30,8 @@ import java.nio.file.Path;
 import java.util.Objects;
 
 public abstract class AppContext {
+    public static final DataFormat DND_ITEM = new DataFormat("application/x-item-serialized-object");
+
     private static Bookcase bookcase;
     private static BookMap bookMap;
 

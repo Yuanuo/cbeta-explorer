@@ -13,6 +13,7 @@ import org.appxi.cbeta.app.AppContext;
 import org.appxi.cbeta.app.event.BookEvent;
 import org.appxi.cbeta.app.event.GenericEvent;
 import org.appxi.cbeta.app.event.ProgressEvent;
+import org.appxi.cbeta.app.explorer.BookLabelStyle;
 import org.appxi.cbeta.app.explorer.BooklistProfile;
 import org.appxi.holder.BoolHolder;
 import org.appxi.javafx.app.search.SearchedEvent;
@@ -28,6 +29,7 @@ import org.appxi.javafx.workbench.WorkbenchPartController;
 import org.appxi.prefs.UserPrefs;
 import org.appxi.search.solr.Piece;
 import org.appxi.util.DigestHelper;
+import org.appxi.util.ext.RawVal;
 
 import java.util.Objects;
 
@@ -126,10 +128,13 @@ public class SearchController extends WorkbenchPartController implements Workben
         FxHelper.runLater(() -> {
             if (!workbench.existsMainView(searcher.id.get())) {
                 workbench.addWorkbenchPartAsMainView(searcher, false);
-                searcher.postConstruct();
             }
             workbench.selectMainView(searcher.id.get());
-            searcher.setSearchScope(scope);
+            if (null == scope) {
+                searcher.setSearchScopes();
+            } else {
+                searcher.setSearchScopes(RawVal.kv(scope.title, scope.path + "/" + (null == scope.id ? "" : scope.id)));
+            }
             if (null != indexingEvent) {
                 searcher.handleEventOnIndexingToBlocking.handle(indexingEvent);
             } else if (IndexedManager.isBookcaseIndexable() || IndexedManager.isBooklistIndexable()) {
