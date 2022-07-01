@@ -37,15 +37,24 @@ public interface PiecesRepository extends PieceRepository {
 
         //
         if (null != scopes && !scopes.isEmpty()) {
-            scopes.forEach(s -> {
-                if (s.startsWith("nav/")) {
-                    query.addFilterQuery(new SimpleFilterQuery(
-                            new SimpleStringCriteria("category_ss:" + PieceRepository.wrapWhitespace(s) + "*")));
+            Criteria criteria = null;
+            for (String scope : scopes) {
+                scope = PieceRepository.wrapWhitespace(scope);
+                if (null == criteria) {
+                    if (scope.startsWith("nav/")) {
+                        criteria = Criteria.where("category_ss").startsWith(scope);
+                    } else {
+                        criteria = Criteria.where("field_book_s").is(scope);
+                    }
                 } else {
-                    query.addFilterQuery(new SimpleFilterQuery(
-                            new SimpleStringCriteria("field_book_s:" + s)));
+                    if (scope.startsWith("nav/")) {
+                        criteria = criteria.or("category_ss").startsWith(scope);
+                    } else {
+                        criteria = criteria.or("field_book_s").is(scope);
+                    }
                 }
-            });
+            }
+            query.addFilterQuery(new SimpleFilterQuery(criteria));
         }
         //
         query.addFilterQuery(new SimpleFilterQuery(Criteria.where("type_s").is("article")));
@@ -59,9 +68,11 @@ public interface PiecesRepository extends PieceRepository {
         query.addCriteria(new SimpleStringCriteria(queryString));
 
         if (null != categories && !categories.isEmpty()) {
-            query.addFilterQuery(new SimpleFilterQuery(new SimpleStringCriteria("category_ss:(" +
+            query.addFilterQuery(new SimpleFilterQuery(new SimpleStringCriteria(
+                    "category_ss:(" +
                     categories.stream().map(PieceRepository::wrapWhitespace).collect(Collectors.joining(" OR "))
-                    + ")")));
+                    + ")"
+            )));
         }
 
         if (facet) {
