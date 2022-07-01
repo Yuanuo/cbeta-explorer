@@ -16,11 +16,19 @@ import org.springframework.data.solr.core.query.SimpleStringCriteria;
 import org.springframework.data.solr.core.query.result.FacetAndHighlightPage;
 import org.springframework.stereotype.Repository;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Repository
 public interface PiecesRepository extends PieceRepository {
+    static String escapeChars(String str) {
+        str = PieceRepository.wrapWhitespace(str);
+        str = str.replace("(", "\\(").replace(")", "\\)");
+        return str;
+    }
+
     default FacetAndHighlightPage<Piece> search(String profile, Collection<String> scopes,
                                                 final String input,
                                                 Collection<String> categories, boolean facet, Pageable pageable) {
@@ -37,24 +45,34 @@ public interface PiecesRepository extends PieceRepository {
 
         //
         if (null != scopes && !scopes.isEmpty()) {
-            Criteria criteria = null;
-            for (String scope : scopes) {
-                scope = PieceRepository.wrapWhitespace(scope);
-                if (null == criteria) {
-                    if (scope.startsWith("nav/")) {
-                        criteria = Criteria.where("category_ss").startsWith(scope);
-                    } else {
-                        criteria = Criteria.where("field_book_s").is(scope);
-                    }
-                } else {
-                    if (scope.startsWith("nav/")) {
-                        criteria = criteria.or("category_ss").startsWith(scope);
-                    } else {
-                        criteria = criteria.or("field_book_s").is(scope);
-                    }
-                }
+            final List<String> navScopes = scopes.stream().filter(s -> s.startsWith("nav/")).toList();
+            final List<String> idsScopes = new ArrayList<>(scopes);
+            idsScopes.removeAll(navScopes);
+
+            final Criteria navCriteria = navScopes.isEmpty()
+                    ? null
+                    : new SimpleStringCriteria(
+                    "category_ss:("
+                    + navScopes.stream().map(str -> escapeChars(str) + "*").collect(Collectors.joining(" OR "))
+                    + ")"
+            );
+            final Criteria idsCriteria = idsScopes.isEmpty()
+                    ? null
+                    : new SimpleStringCriteria(
+                    "field_book_s:("
+                    + String.join(" OR ", idsScopes)
+                    + ")"
+            );
+
+            Criteria criteria = navCriteria;
+            if (null == criteria) {
+                criteria = idsCriteria;
+            } else if (null != idsCriteria) {
+                criteria = criteria.or(idsCriteria);
             }
-            query.addFilterQuery(new SimpleFilterQuery(criteria));
+            if (null != criteria) {
+                query.addFilterQuery(new SimpleFilterQuery(criteria));
+            }
         }
         //
         query.addFilterQuery(new SimpleFilterQuery(Criteria.where("type_s").is("article")));
@@ -70,7 +88,7 @@ public interface PiecesRepository extends PieceRepository {
         if (null != categories && !categories.isEmpty()) {
             query.addFilterQuery(new SimpleFilterQuery(new SimpleStringCriteria(
                     "category_ss:(" +
-                    categories.stream().map(PieceRepository::wrapWhitespace).collect(Collectors.joining(" OR "))
+                    categories.stream().map(PiecesRepository::escapeChars).collect(Collectors.joining(" OR "))
                     + ")"
             )));
         }
@@ -91,8 +109,7 @@ public interface PiecesRepository extends PieceRepository {
 
         try {
             SolrTemplate solrTemplate = AppContext.getBean(SolrTemplate.class);
-            return null == solrTemplate ? null
-                    : solrTemplate.queryForFacetAndHighlightPage(Piece.REPO, query, Piece.class);
+            return null == solrTemplate ? null : solrTemplate.queryForFacetAndHighlightPage(Piece.REPO, query, Piece.class);
         } catch (Throwable e) {
             return null;
         }
