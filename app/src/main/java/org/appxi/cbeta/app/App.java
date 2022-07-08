@@ -132,7 +132,7 @@ public class App extends WorkbenchApp {
 
         result.add(new LookupController(workbench));
         result.add(new SearchController(workbench));
-        result.add(new DictionaryController(workbench, HtmlBasedViewer::getWebIncludeURIsEx));
+        result.add(new DictionaryController(workbench, HtmlBasedViewer::getWebIncludeURIsEx, AppContext::hanText));
         result.add(new WidgetsController(workbench));
 
         result.add(new PreferencesController(workbench));
