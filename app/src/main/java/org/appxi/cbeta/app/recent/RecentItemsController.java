@@ -61,7 +61,6 @@ public class RecentItemsController extends WorkbenchPartController.SideView {
             item.id = book.id;
             item.name = book.title;
             recentBooksMap.put(book.id, item);
-            AppContext.recentBooks.setProperty(book.id, "");
         } else item.updateAt = new Date();
     }
 

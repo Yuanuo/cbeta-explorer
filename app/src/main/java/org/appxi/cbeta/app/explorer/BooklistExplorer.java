@@ -11,6 +11,7 @@ import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.layout.BorderPane;
 import org.appxi.cbeta.Book;
 import org.appxi.cbeta.Chapter;
+import org.appxi.cbeta.app.AppContext;
 import org.appxi.cbeta.app.event.BookEvent;
 import org.appxi.cbeta.app.event.GenericEvent;
 import org.appxi.cbeta.app.event.ProgressEvent;
@@ -131,7 +132,12 @@ public class BooklistExplorer extends WorkbenchPartController.SideView {
             FxHelper.runLater(() -> viewController.navigate(chapter));
             return;
         }
+        // 记录此book为已访问状态
+        if (!AppContext.recentBooks.containsProperty(book.id)) {
+            AppContext.recentBooks.setProperty(book.id, "");
+        }
         FxHelper.runLater(() -> {
+            // 刷新典籍视图，比如已访问过的典籍需求改变显示颜色等
             Optional.ofNullable(this.treeView).ifPresent(TreeView::refresh);
             final BookXmlReader controller = new BookXmlReader(book, workbench);
             workbench.addWorkbenchPartAsMainView(controller, false);
