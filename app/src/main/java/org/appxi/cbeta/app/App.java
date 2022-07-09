@@ -34,7 +34,7 @@ import java.util.stream.Stream;
 public class App extends WorkbenchApp {
     public static final String ID = "cbetaExplorer";
     public static final String NAME = "智悲乐藏";
-    public static final String VERSION = "22.07.08";
+    public static final String VERSION = "22.07.09";
     private static App instance;
 
     public App() {
