@@ -22,11 +22,11 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import org.appxi.book.Chapter;
 import org.appxi.cbeta.Book;
 import org.appxi.cbeta.BookDocument;
 import org.appxi.cbeta.BookDocumentEx;
 import org.appxi.cbeta.BookHelper;
-import org.appxi.cbeta.Chapter;
 import org.appxi.cbeta.app.AppContext;
 import org.appxi.cbeta.app.dao.Bookdata;
 import org.appxi.cbeta.app.dao.BookdataType;
@@ -214,12 +214,12 @@ public class BookXmlReader extends HtmlBasedViewer {
         gotoPrev = MaterialIcon.ARROW_BACK.flatButton();
         gotoPrev.setTooltip(new Tooltip("上一卷 (Ctrl+左方向键)"));
         gotoPrev.setDisable(true);
-        gotoPrev.setOnAction(event -> navigate((Chapter) gotoPrev.getUserData()));
+        gotoPrev.setOnAction(event -> navigate(gotoPrev.getUserData()));
 
         gotoNext = MaterialIcon.ARROW_FORWARD.flatButton();
         gotoNext.setTooltip(new Tooltip("下一卷 (Ctrl+右方向键)"));
         gotoNext.setDisable(true);
-        gotoNext.setOnAction(event -> navigate((Chapter) gotoNext.getUserData()));
+        gotoNext.setOnAction(event -> navigate(gotoNext.getUserData()));
 
         gotoMenu = MaterialIcon.NEAR_ME.flatButton();
         gotoMenu.setTooltip(new Tooltip("转到 (Ctrl+T)"));
@@ -490,7 +490,7 @@ public class BookXmlReader extends HtmlBasedViewer {
                 buff.append("：「");
                 buff.append(selection.hasTrims ? selection.trims : "");
                 buff.append("」(CBETA ").append(AppContext.bookcase().getQuarterlyVersion()).append(", ");
-                buff.append(book.tripitakaId).append(serial);
+                buff.append(book.library).append(serial);
                 buff.append(", no. ").append(book.number.replaceAll("^0+", "")).append(", p. ");
                 // span#p0154b10|span#p0154b15
                 if (refInfo[0].matches("span#p\\d+[a-z]\\d+")) {
@@ -762,7 +762,7 @@ public class BookXmlReader extends HtmlBasedViewer {
             if (data instanceof String str) {
                 String[] arr = str.split("#", 2);
                 if (arr[0].isEmpty()) return;
-                chapter = new Chapter();
+                chapter = book.ofChapter();
                 chapter.id = "#";
                 chapter.path = arr[0];
             } else if (data instanceof Chapter item) {

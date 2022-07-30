@@ -1,8 +1,8 @@
 package org.appxi.cbeta.app.explorer;
 
 import javafx.scene.control.TreeItem;
+import org.appxi.book.Chapter;
 import org.appxi.cbeta.Book;
-import org.appxi.cbeta.Chapter;
 import org.appxi.cbeta.ChapterTreeParser;
 import org.appxi.cbeta.app.AppContext;
 import org.appxi.javafx.control.TreeViewEx;

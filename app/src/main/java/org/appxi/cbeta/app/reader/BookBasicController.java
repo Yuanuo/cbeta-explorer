@@ -9,8 +9,8 @@ import javafx.scene.input.InputEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import org.appxi.book.Chapter;
 import org.appxi.cbeta.Book;
-import org.appxi.cbeta.Chapter;
 import org.appxi.cbeta.app.explorer.ChapterTree;
 import org.appxi.holder.RawHolder;
 import org.appxi.javafx.control.TreeViewEx;
@@ -131,7 +131,7 @@ public class BookBasicController extends WorkbenchPartController.SideView {
         if (null != chapter && null != chapter.path) {
             Predicate<TreeItem<Chapter>> findByPath = itm ->
                     itm.isLeaf() && chapter.path.equals(itm.getValue().path)
-                            && (null == chapter.anchor || chapter.anchor.equals(itm.getValue().anchor));
+                    && (null == chapter.anchor || chapter.anchor.equals(itm.getValue().anchor));
             detectAvailTarget(targetPane, targetTree, targetTreeItem, findByPath);
         }
         if (null == targetTreeItem.value) {

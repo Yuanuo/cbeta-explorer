@@ -99,7 +99,7 @@ record IndexingTask(WorkbenchApp app) implements Runnable {
                     if (breaking.value) throw new RuntimeException();
                     //
                     try {
-                        Tripitaka tripitaka = null == book.tripitakaId ? null : tripitakaMap.data().get(book.tripitakaId);
+                        Tripitaka tripitaka = null == book.library ? null : tripitakaMap.data().get(book.library);
                         IndexingHelper.prepareBookBasic(null, null, tripitaka, book);
                         IndexingHelper.prepareBookChapters(book);
                         IndexingHelper.prepareBookContents(book, false);

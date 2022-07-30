@@ -1,8 +1,8 @@
 package org.appxi.cbeta.app.search;
 
+import org.appxi.book.Chapter;
 import org.appxi.cbeta.Book;
 import org.appxi.cbeta.BookDocument;
-import org.appxi.cbeta.Chapter;
 import org.appxi.cbeta.ChapterTree;
 import org.appxi.cbeta.Tripitaka;
 import org.appxi.cbeta.VolumeDocument;
@@ -25,33 +25,6 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 abstract class IndexingHelper {
-    static class ChapterEx extends Chapter {
-        public ChapterEx() {
-        }
-
-        public List<Paragraph> paragraphs;
-
-        public Chapter addParagraph(String caption, String content) {
-            if (null == this.paragraphs)
-                this.paragraphs = new ArrayList<>();
-            this.paragraphs.add(new Paragraph(caption, content));
-            return this;
-        }
-
-        public boolean hasParagraphs() {
-            return null != this.paragraphs && !this.paragraphs.isEmpty();
-        }
-
-        public static final class Paragraph {
-            public String caption, content;
-
-            public Paragraph(String caption, String content) {
-                this.caption = caption;
-                this.content = content;
-            }
-        }
-    }
-
     static void prepareBookBasic(final String dataProject, final String dataVersion, final Tripitaka tripitaka, final Book book) {
         if (null == book || null == book.path) return;
         book.attr("project", dataProject);
@@ -75,12 +48,7 @@ abstract class IndexingHelper {
         if (null == book || null == book.path) return;
         if (book.hasAttr("tocChapters") || book.hasAttr("volChapters")) return;
         //
-        final ChapterTree chapterTree = new ChapterTree(AppContext.bookcase(), book) {
-            @Override
-            protected Chapter createChapter() {
-                return new ChapterEx();
-            }
-        };
+        final ChapterTree chapterTree = new ChapterTree(AppContext.bookcase(), book);
         final Node<Chapter> tocChapters = chapterTree.getTocChapters();
         book.attr("tocChapters", tocChapters);
         final Node<Chapter> volChapters = chapterTree.getVolChapters();
@@ -101,7 +69,7 @@ abstract class IndexingHelper {
                 //
                 VolumeDocument volDocument = bookDoc.getVolumeDocument(tocChapter.path);
                 // change vol chapters
-                ((ChapterEx) tocChapter).addParagraph(null, volDocument.getStandardHtml().text());
+                tocChapter.addParagraph(null, volDocument.getStandardHtml().text());
             });
             return;
         }
@@ -155,12 +123,12 @@ abstract class IndexingHelper {
                         tocChapter.type = "link";
                         tocChapter.attr("linkTarget", null == tocChapter.anchor ? volChapter.id : (volChapter.id + "#" + tocChapter.anchor));
                         tocChapter.attr("linkTargetType", "article");
-                        if (((ChapterEx) volChapter).hasParagraphs())
-                            ((ChapterEx) volChapter).paragraphs.clear();
+                        if (volChapter.hasParagraphs())
+                            volChapter.paragraphs().clear();
                     }
                 }
                 // change vol chapters
-                ((ChapterEx) volChapter).addParagraph(null, volDocument.getStandardHtml().text());
+                volChapter.addParagraph(null, volDocument.getStandardHtml().text());
             }
         });
         //
@@ -171,9 +139,9 @@ abstract class IndexingHelper {
             //
             if (!volChapter.title.startsWith(book.title))
                 volChapter.title = StringHelper.concat(book.title, " ", volChapter.title);
-            if (!((ChapterEx) volChapter).hasParagraphs()) {
+            if (!volChapter.hasParagraphs()) {
                 VolumeDocument volDocument = bookDoc.getVolumeDocument(volChapter.path);
-                ((ChapterEx) volChapter).addParagraph(null, volDocument.getStandardHtml().text());
+                volChapter.addParagraph(null, volDocument.getStandardHtml().text());
                 return true;
             }
             return true;
@@ -247,7 +215,7 @@ abstract class IndexingHelper {
             currFilter = new LinkedXmlFilter(filter.startFilter, filter.stopFilter, (contentEle) -> {
                 String contentTxt = contentEle.text();
                 if (StringHelper.isNotBlank(contentTxt)) {
-                    ((ChapterEx) filter.chapter).addParagraph(null, contentTxt);
+                    filter.chapter.addParagraph(null, contentTxt);
                 }
             });
             if (null == rootFilter)
@@ -264,7 +232,7 @@ abstract class IndexingHelper {
         filterInfos.forEach(filter -> filteredChapters.add(filter.chapter));
         Chapter lastFilteredChapterWithData = null;
         for (Chapter filteredChapter : filteredChapters) {
-            if (!((ChapterEx) filteredChapter).hasParagraphs()) {
+            if (!filteredChapter.hasParagraphs()) {
                 if (null == lastFilteredChapterWithData)
                     throw new RuntimeException("chapter data is empty, and no at least one avail");
                 // link current toc-chapter to last one with data
@@ -273,7 +241,7 @@ abstract class IndexingHelper {
                 filteredChapter.attr("linkTargetType", lastFilteredChapterWithData.type);
             } else {
                 // link this toc-chapter with in vol-chapter
-                ((ChapterEx) volChapter).addParagraph("@", filteredChapter.id);
+                volChapter.addParagraph("@", filteredChapter.id);
                 // keep for next
                 lastFilteredChapterWithData = filteredChapter;
             }
@@ -341,14 +309,14 @@ abstract class IndexingHelper {
         return pieces;
     }
 
-    private static void buildBookChapters(List<Piece> pieces, Book book, Node<Chapter> chapterNode) {
+    private static void buildBookChapters(List<Piece> pieces, Book book, Node<? extends Chapter> chapterNode) {
         if (null != chapterNode.parent()) {
             if ("title".equals(chapterNode.value.type)) {
                 // do nothing
             } else if ("link".equals(chapterNode.value.type)) {
                 // do nothing
             } else if (!chapterNode.hasChildren()) {
-                final ChapterEx chapter = (ChapterEx) chapterNode.value;
+                final Chapter chapter = chapterNode.value;
                 final boolean dataReplacedByParas = chapter.hasAttr("data", "para");
                 final Piece piece = Piece.of();
                 pieces.add(piece);
@@ -386,7 +354,7 @@ abstract class IndexingHelper {
                     //
                 } else if (chapter.hasParagraphs()) {
                     final StringBuilder buf = new StringBuilder();
-                    chapter.paragraphs.forEach(paragraph -> {
+                    chapter.paragraphs().forEach(paragraph -> {
                         if (StringHelper.isNotBlank(paragraph.caption) && !paragraph.caption.equals(chapter.title))
                             buf.append(paragraph.caption).append("。");
                         if (StringHelper.isNotBlank(paragraph.content))
@@ -404,7 +372,7 @@ abstract class IndexingHelper {
                 buildBookCategories(piece, chapter.path, chapter, book);
             }
         }
-        for (Node<Chapter> child : chapterNode.children())
+        for (Node<? extends Chapter> child : chapterNode.children())
             buildBookChapters(pieces, book, child);
     }
 

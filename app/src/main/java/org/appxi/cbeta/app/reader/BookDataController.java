@@ -13,8 +13,8 @@ import javafx.scene.input.InputEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import org.appxi.book.Chapter;
 import org.appxi.cbeta.Book;
-import org.appxi.cbeta.Chapter;
 import org.appxi.cbeta.app.AppContext;
 import org.appxi.cbeta.app.dao.Bookdata;
 import org.appxi.cbeta.app.dao.BookdataType;
@@ -162,7 +162,7 @@ public abstract class BookDataController extends WorkbenchPartController.SideVie
         if (null == item)
             return;
         final Book book = BooklistProfile.ONE.getBook(item.book);
-        final Chapter chapter = new Chapter();
+        final Chapter chapter = book.ofChapter();
         chapter.path = item.volume;
         chapter.anchor = item.anchor;
         if (null != item.anchor)

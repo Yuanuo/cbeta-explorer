@@ -1,7 +1,7 @@
 package org.appxi.cbeta.app.event;
 
+import org.appxi.book.Chapter;
 import org.appxi.cbeta.Book;
-import org.appxi.cbeta.Chapter;
 import org.appxi.event.Event;
 import org.appxi.event.EventType;
 

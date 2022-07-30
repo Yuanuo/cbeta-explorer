@@ -7,13 +7,12 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
+import org.appxi.book.Chapter;
 import org.appxi.cbeta.Book;
-import org.appxi.cbeta.Chapter;
 import org.appxi.cbeta.app.AppContext;
 import org.appxi.cbeta.app.event.BookEvent;
 import org.appxi.cbeta.app.event.GenericEvent;
 import org.appxi.cbeta.app.event.ProgressEvent;
-import org.appxi.cbeta.app.explorer.BookLabelStyle;
 import org.appxi.cbeta.app.explorer.BooklistProfile;
 import org.appxi.holder.BoolHolder;
 import org.appxi.javafx.app.search.SearchedEvent;
@@ -80,7 +79,7 @@ public class SearchController extends WorkbenchPartController implements Workben
             String file = piece.field("file_s");
             if (null != file) {
                 // open as chapter
-                chapter = new Chapter();
+                chapter = book.ofChapter();
                 chapter.path = file;
                 chapter.anchor = piece.field("anchor_s");
                 if (null != chapter.anchor) {

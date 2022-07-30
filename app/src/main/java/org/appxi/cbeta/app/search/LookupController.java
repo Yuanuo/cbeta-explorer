@@ -6,8 +6,8 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
+import org.appxi.book.Chapter;
 import org.appxi.cbeta.Book;
-import org.appxi.cbeta.Chapter;
 import org.appxi.cbeta.app.AppContext;
 import org.appxi.cbeta.app.event.BookEvent;
 import org.appxi.cbeta.app.event.GenericEvent;
@@ -197,13 +197,13 @@ public class LookupController extends WorkbenchPartController implements Workben
 
             Chapter chapter = null;
             if (Objects.equals(item.extra, "#")) {
-                chapter = new Chapter();
+                chapter = book.ofChapter();
                 chapter.id = "#";
                 chapter.path = item.chapter;
             } else if (null != item.chapter) {
                 // open as chapter
                 String[] tmpArr = item.chapter.split("#", 2);
-                chapter = new Chapter();
+                chapter = book.ofChapter();
                 chapter.path = tmpArr[0];
                 if (tmpArr.length == 2) {
                     chapter.anchor = "#".concat(tmpArr[1]);
