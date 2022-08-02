@@ -6,7 +6,7 @@
 
     <groupId>org.appxi</groupId>
     <artifactId>cbeta-explorer-packager</artifactId>
-    <version>22.07.09</version>
+    <version>22.08.03</version>
     <packaging>pom</packaging>
 
     <properties>
@@ -30,7 +30,7 @@
         <plugins>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.1</version>
+                <version>3.10.1</version>
             </plugin>
         </plugins>
     </build>
