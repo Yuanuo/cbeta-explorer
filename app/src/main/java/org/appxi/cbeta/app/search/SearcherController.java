@@ -93,7 +93,7 @@ class SearcherController extends WorkbenchPartController.MainView {
     public void postConstruct() {
     }
 
-    private FirstView firstView;
+    private EnterView enterView;
     private TextField input;
     private TabPane filterTabs;
     private BorderPane resultPane;
@@ -105,7 +105,7 @@ class SearcherController extends WorkbenchPartController.MainView {
     protected void createViewport(StackPane viewport) {
         super.createViewport(viewport);
         //
-        firstView = new FirstView(this::search);
+        enterView = new EnterView(this::search);
         //
         final SplitPane splitPane = new SplitPane();
         HBox.setHgrow(splitPane, Priority.ALWAYS);
@@ -145,7 +145,7 @@ class SearcherController extends WorkbenchPartController.MainView {
         splitPane.getItems().setAll(vBox, resultPane);
         splitPane.setDividerPositions(.3);
 
-        viewport.getChildren().addAll(splitPane, firstView);
+        viewport.getChildren().addAll(splitPane, enterView);
 
         //
         app.eventBus.addEventHandler(ProgressEvent.INDEXING, handleEventOnIndexingToBlocking);
@@ -189,8 +189,8 @@ class SearcherController extends WorkbenchPartController.MainView {
 
     @Override
     public void activeViewport(boolean firstTime) {
-        if (null != firstView) {
-            firstView.requestFocus();
+        if (null != enterView) {
+            enterView.requestFocus();
         }
     }
 
@@ -203,7 +203,7 @@ class SearcherController extends WorkbenchPartController.MainView {
 
     boolean isNeverSearched() {
         // inputView还在显示时，此视图尚未执行过搜索
-        return null != firstView;
+        return null != enterView;
     }
 
     void setSearchScopes(RawVal<String>... scopes) {
@@ -216,10 +216,10 @@ class SearcherController extends WorkbenchPartController.MainView {
     void search(String text) {
         if (null == text)
             return;
-        if (null != firstView) {
+        if (null != enterView) {
             FxHelper.runLater(() -> {
-                getViewport().getChildren().remove(firstView);
-                firstView = null;
+                getViewport().getChildren().remove(enterView);
+                enterView = null;
             });
             input.setText(text);
         }
@@ -638,10 +638,10 @@ class SearcherController extends WorkbenchPartController.MainView {
         }
     }
 
-    class FirstView extends BorderPane {
+    class EnterView extends BorderPane {
         final TextField _input;
 
-        FirstView(Consumer<String> enterAction) {
+        EnterView(Consumer<String> enterAction) {
             super();
             this.getStyleClass().add("input-view");
             this.setStyle(";-fx-background-color:-fx-background;");
