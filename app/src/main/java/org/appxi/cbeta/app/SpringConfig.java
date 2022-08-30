@@ -7,6 +7,7 @@ import org.apache.solr.core.NodeConfig;
 import org.appxi.javafx.app.DesktopApp;
 import org.appxi.prefs.UserPrefs;
 import org.appxi.search.solr.Piece;
+import org.appxi.util.FileHelper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.solr.core.SolrTemplate;
@@ -23,6 +24,7 @@ class SpringConfig {
         final Path solrHome = UserPrefs.dataDir().resolve(".solr");
         final Path confHome = DesktopApp.appDir().resolve("template");
 
+        FileHelper.makeDirs(solrHome);
         final NodeConfig config = new NodeConfig.NodeConfigBuilder(Piece.REPO, solrHome)
                 .setConfigSetBaseDirectory(confHome.toString())
                 .setAllowPaths(Set.of(Path.of("_ALL_"), solrHome))
