@@ -5,12 +5,11 @@
 
 	<groupId>org.appxi</groupId>
 	<artifactId>cbeta-explorer</artifactId>
-	<version>22.08.03</version>
+	<version>22.08.30</version>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.release>18</maven.compiler.release>
-        <javafx.version>20-ea+1</javafx.version>
 		<slf4j.version>2.0.0-alpha6</slf4j.version>
 	</properties>
 
@@ -35,11 +34,6 @@
 			<artifactId>timeago</artifactId>
 			<version>[1.0.0,)</version>
 		</dependency>
-<!--        <dependency>-->
-<!--            <groupId>org.openjfx</groupId>-->
-<!--            <artifactId>javafx-fxml</artifactId>-->
-<!--            <version>${javafx.version}</version>-->
-<!--        </dependency>-->
 
 		<dependency>
 			<groupId>org.json</groupId>
