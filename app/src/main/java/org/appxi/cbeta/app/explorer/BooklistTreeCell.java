@@ -60,7 +60,7 @@ class BooklistTreeCell implements Callback<TreeView<Book>, TreeCell<Book>> {
 
         ClipboardContent content = new ClipboardContent();
         content.putString((null == data.id ? "【目录】" : "【典籍】") + AppContext.hanText(BookLabelStyle.format(data)));
-        data.path = "nav/" + BooklistProfile.ONE.profile().template().name() + "/" + TreeHelper.path(draggedItem);
+        data.path = "nav/" + BooksProfile.ONE.profile().template().name() + "/" + TreeHelper.path(draggedItem);
         content.put(DND_ITEM, data);
 
         Dragboard db = treeCell.startDragAndDrop(TransferMode.ANY);

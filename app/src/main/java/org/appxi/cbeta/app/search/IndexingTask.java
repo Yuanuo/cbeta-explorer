@@ -3,15 +3,15 @@ package org.appxi.cbeta.app.search;
 import javafx.scene.control.TreeItem;
 import org.appxi.cbeta.Book;
 import org.appxi.cbeta.BookHelper;
-import org.appxi.cbeta.BookMap;
-import org.appxi.cbeta.Booklist;
+import org.appxi.cbeta.BooksMap;
+import org.appxi.cbeta.BooksList;
 import org.appxi.cbeta.Tripitaka;
 import org.appxi.cbeta.TripitakaMap;
 import org.appxi.cbeta.app.App;
 import org.appxi.cbeta.app.AppContext;
 import org.appxi.cbeta.app.dao.PiecesRepository;
 import org.appxi.cbeta.app.event.ProgressEvent;
-import org.appxi.cbeta.app.explorer.BooklistProfile;
+import org.appxi.cbeta.app.explorer.BooksProfile;
 import org.appxi.event.EventHandler;
 import org.appxi.holder.BoolHolder;
 import org.appxi.holder.IntHolder;
@@ -56,29 +56,29 @@ record IndexingTask(WorkbenchApp app) implements Runnable {
     }
 
     private void running(PiecesRepository repository, BoolHolder breaking) {
-        final BooklistProfile.Profile profile = BooklistProfile.ONE.profile();
+        final BooksProfile.Profile profile = BooksProfile.ONE.profile();
         final TripitakaMap tripitakaMap = new TripitakaMap(AppContext.bookcase());
-        final BookMap bookMap = new BookMap(tripitakaMap);
+        final BooksMap booksMap = new BooksMap(tripitakaMap);
         boolean updated = false;
         if (IndexedManager.isBookcaseIndexable()) {
             repository.deleteAll();
 
-            final Booklist<TreeItem<Book>> buleiBooklist, simpleBooklist, advanceBooklist;
-            buleiBooklist = new BooklistProfile.BooklistTree(bookMap, BooklistProfile.Profile.bulei);
-            simpleBooklist = new BooklistProfile.BooklistTree(bookMap, BooklistProfile.Profile.simple);
-            advanceBooklist = new BooklistProfile.BooklistTree(bookMap, BooklistProfile.Profile.advance);
+            final BooksList<TreeItem<Book>> buleiBooksList, simpleBooksList, advanceBooksList;
+            buleiBooksList = new BooksProfile.BooksListTree(booksMap, BooksProfile.Profile.bulei);
+            simpleBooksList = new BooksProfile.BooksListTree(booksMap, BooksProfile.Profile.simple);
+            advanceBooksList = new BooksProfile.BooksListTree(booksMap, BooksProfile.Profile.advance);
 
             final IntHolder step = new IntHolder(0);
             final IntHolder steps = new IntHolder(1);
-            TreeHelper.walkLeafs(buleiBooklist.tree(), (treeItem, book) -> steps.value++);
+            TreeHelper.walkLeafs(buleiBooksList.tree(), (treeItem, book) -> steps.value++);
             try {
                 final Map<String, String> simpleBookPaths = new HashMap<>(512);
-                TreeHelper.walkLeafs(simpleBooklist.tree(), (treeItem, book) -> {
+                TreeHelper.walkLeafs(simpleBooksList.tree(), (treeItem, book) -> {
                     if (null == book || null == book.path) return;
                     simpleBookPaths.put(book.id, "nav/simple/".concat(TreeHelper.path(treeItem)));
                 });
                 final Map<String, String> advanceBookPaths = new HashMap<>(512);
-                TreeHelper.walkLeafs(advanceBooklist.tree(), (treeItem, book) -> {
+                TreeHelper.walkLeafs(advanceBooksList.tree(), (treeItem, book) -> {
                     if (null == book || null == book.path) return;
                     advanceBookPaths.put(book.id, "nav/advance/".concat(TreeHelper.path(treeItem)));
                 });
@@ -86,14 +86,14 @@ record IndexingTask(WorkbenchApp app) implements Runnable {
                 final HashSet<String> managedBooks = new HashSet<>(512);
                 final boolean profileManaged = profile.isManaged();
                 if (profileManaged) {
-                    Booklist<TreeItem<Book>> booklist = new BooklistProfile.BooklistFilteredTree(bookMap, profile);
-                    TreeHelper.walkLeafs(booklist.tree(), (treeItem, book) -> managedBooks.add(book.id));
+                    BooksList<TreeItem<Book>> booksList = new BooksProfile.BooksListFilteredTree(booksMap, profile);
+                    TreeHelper.walkLeafs(booksList.tree(), (treeItem, book) -> managedBooks.add(book.id));
                 }
 
                 Preferences cacheProfiles = new PreferencesInProperties(UserPrefs.confDir().resolve(".profiles"), false);
                 String cacheProfilesStr = StringHelper.join(",",
                         new HashSet<>(Arrays.asList("bulei", "simple", "advance", profile.name())));
-                TreeHelper.walkLeafs(buleiBooklist.tree(), (treeItem, book) -> {
+                TreeHelper.walkLeafs(buleiBooksList.tree(), (treeItem, book) -> {
                     step.value++;
                     if (null == book || null == book.path) return;
                     if (breaking.value) throw new RuntimeException();
@@ -140,8 +140,8 @@ record IndexingTask(WorkbenchApp app) implements Runnable {
             if (null == solrTemplate) return;
             App.app().eventBus.fireEvent(new ProgressEvent(ProgressEvent.INDEXING, -1, 1, "正在更新。。。"));
 
-            final BooklistProfile.BooklistFilteredTree booklist;
-            booklist = new BooklistProfile.BooklistFilteredTree(bookMap, BooklistProfile.ONE.profile());
+            final BooksProfile.BooksListFilteredTree booklist;
+            booklist = new BooksProfile.BooksListFilteredTree(booksMap, BooksProfile.ONE.profile());
             try {
                 final HashSet<String> managedBooks = new HashSet<>(512);
                 TreeHelper.walkLeafs(booklist.tree(), (treeItem, book) -> managedBooks.add(book.id));

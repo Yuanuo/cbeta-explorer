@@ -49,11 +49,11 @@ public class BooklistExplorer extends WorkbenchPartController.SideView {
         //
         final Button btnProfile = MaterialIcon.PLAYLIST_ADD_CHECK.flatButton();
         btnProfile.setTooltip(new Tooltip("选择书单"));
-        btnProfile.setOnAction(event -> BooklistProfile.ONE.selectProfile(null));
+        btnProfile.setOnAction(event -> BooksProfile.ONE.selectProfile(null));
         //
         final Button btnProfiles = MaterialIcon.EDIT_NOTE.flatButton();
         btnProfiles.setTooltip(new Tooltip("管理我的书单"));
-        btnProfiles.setOnAction(event -> BooklistProfile.ONE.manageProfiles());
+        btnProfiles.setOnAction(event -> BooksProfile.ONE.manageProfiles());
         //
         app.eventBus.addEventHandler(ProgressEvent.INDEXING, event -> {
             if (event.isFinished()) {
@@ -97,10 +97,10 @@ public class BooklistExplorer extends WorkbenchPartController.SideView {
         app.eventBus.addEventHandler(AppEvent.STARTING,
                 event -> new Thread(() -> {
                     // 在启动过程中尝试加载booklistProfile，正常情况下会成功加载（如果过早加载成功，有的监听器可能不被执行！）
-                    if (!BooklistProfile.ONE.loadProfile()) {
+                    if (!BooksProfile.ONE.loadProfile()) {
                         FxHelper.sleepSilently(100);
                         // 如果未加载成功，此时则给予提示并让用户选择
-                        FxHelper.runLater(() -> BooklistProfile.ONE.selectProfile(BooklistProfile.ONE.profile()));
+                        FxHelper.runLater(() -> BooksProfile.ONE.selectProfile(BooksProfile.ONE.profile()));
                     }
                 }).start());
         app.eventBus.addEventHandler(GenericEvent.PROFILE_READY, event -> activeViewport(true));
@@ -150,8 +150,8 @@ public class BooklistExplorer extends WorkbenchPartController.SideView {
 
     @Override
     public void activeViewport(boolean firstTime) {
-        if (firstTime && null != treeView && null != BooklistProfile.ONE.profile()) {
-            final TreeItem<Book> rootItem = BooklistProfile.ONE.booklist().tree();
+        if (firstTime && null != treeView && null != BooksProfile.ONE.profile()) {
+            final TreeItem<Book> rootItem = BooksProfile.ONE.booklist().tree();
             if (treeView.getRoot() == rootItem) return;
             rootItem.setExpanded(true);
             FxHelper.runLater(() -> treeView.setRoot(rootItem));

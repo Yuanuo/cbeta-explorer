@@ -8,7 +8,7 @@ import org.appxi.cbeta.app.AppContext;
 import org.appxi.cbeta.app.event.BookEvent;
 import org.appxi.cbeta.app.event.GenericEvent;
 import org.appxi.cbeta.app.explorer.BookLabelStyle;
-import org.appxi.cbeta.app.explorer.BooklistProfile;
+import org.appxi.cbeta.app.explorer.BooksProfile;
 import org.appxi.javafx.app.AppEvent;
 import org.appxi.javafx.control.TreeViewEx;
 import org.appxi.javafx.visual.MaterialIcon;
@@ -101,7 +101,7 @@ public class RecentItemsController extends WorkbenchPartController.SideView {
             this.treeView.setEnterOrDoubleClickAction((e, treeItem) -> {
                 if (!(treeItem.getValue() instanceof RecentBook rBook))
                     return;
-                final Book book = BooklistProfile.ONE.getBook(rBook.id);
+                final Book book = BooksProfile.ONE.getBook(rBook.id);
                 if (null != book)
                     app.eventBus.fireEvent(new BookEvent(BookEvent.OPEN, book));
             });
@@ -120,7 +120,7 @@ public class RecentItemsController extends WorkbenchPartController.SideView {
                         this.setGraphic(getTreeItem().isExpanded() ? MaterialIcon.FOLDER_OPEN.graphic() : MaterialIcon.FOLDER.graphic());
                     } else if (item instanceof RecentBook rBook) {
                         this.setGraphic(null);
-                        final Book book = BooklistProfile.ONE.getBook(rBook.id);
+                        final Book book = BooksProfile.ONE.getBook(rBook.id);
                         if (null != book) {
                             text = AppContext.hanText(BookLabelStyle.format(book));
                         } else {

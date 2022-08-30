@@ -14,12 +14,12 @@ import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import org.appxi.cbeta.Book;
-import org.appxi.cbeta.BookMap;
-import org.appxi.cbeta.Booklist;
+import org.appxi.cbeta.BooksMap;
+import org.appxi.cbeta.BooksList;
 import org.appxi.cbeta.TripitakaMap;
 import org.appxi.cbeta.app.App;
 import org.appxi.cbeta.app.AppContext;
-import org.appxi.cbeta.app.explorer.BooklistProfile;
+import org.appxi.cbeta.app.explorer.BooksProfile;
 import org.appxi.holder.IntHolder;
 import org.appxi.holder.RawHolder;
 import org.appxi.javafx.helper.TreeHelper;
@@ -70,11 +70,11 @@ class ImplEpubRenamer extends Widget {
         Label targetTypeLabel = new Label("使用目录模式");
         targetTypeLabel.setStyle("-fx-padding: 1em 0;");
 
-        ComboBox<BooklistProfile.Profile> targetTypeBox = new ComboBox<>();
+        ComboBox<BooksProfile.Profile> targetTypeBox = new ComboBox<>();
         targetTypeBox.getItems().addAll(
-                BooklistProfile.Profile.bulei,
-                BooklistProfile.Profile.simple,
-                BooklistProfile.Profile.advance);
+                BooksProfile.Profile.bulei,
+                BooksProfile.Profile.simple,
+                BooksProfile.Profile.advance);
         targetTypeBox.getSelectionModel().select(0);
 
         Label targetPathLabel = new Label("输出到文件夹");
@@ -115,7 +115,7 @@ class ImplEpubRenamer extends Widget {
                 applyBtnHBox);
     }
 
-    private String handleApplyAction(String sourcePath, BooklistProfile.Profile profile, String targetPath) {
+    private String handleApplyAction(String sourcePath, BooksProfile.Profile profile, String targetPath) {
         if (sourcePath.isBlank() || profile == null || targetPath.isBlank())
             return "未指定 输入文件 或 目录模式 或 输出目录";
 
@@ -128,11 +128,11 @@ class ImplEpubRenamer extends Widget {
             return "输出目录不正确";
 
         final TripitakaMap tripitakaMap = new TripitakaMap(AppContext.bookcase());
-        final BookMap bookMap = new BookMap(tripitakaMap);
-        final Booklist<TreeItem<Book>> booklist = new BooklistProfile.BooklistTree(bookMap, profile);
+        final BooksMap booksMap = new BooksMap(tripitakaMap);
+        final BooksList<TreeItem<Book>> booksList = new BooksProfile.BooksListTree(booksMap, profile);
 
         final Map<String, TreeItem<Book>> booklistNodes = new HashMap<>(512);
-        TreeHelper.walkLeafs(booklist.tree(), (treeItem, book) -> {
+        TreeHelper.walkLeafs(booksList.tree(), (treeItem, book) -> {
             if (null == book || null == book.path) return;
             booklistNodes.put(book.id, treeItem);
         });

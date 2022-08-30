@@ -13,7 +13,7 @@ import org.appxi.cbeta.app.AppContext;
 import org.appxi.cbeta.app.event.BookEvent;
 import org.appxi.cbeta.app.event.GenericEvent;
 import org.appxi.cbeta.app.event.ProgressEvent;
-import org.appxi.cbeta.app.explorer.BooklistProfile;
+import org.appxi.cbeta.app.explorer.BooksProfile;
 import org.appxi.holder.BoolHolder;
 import org.appxi.javafx.app.search.SearchedEvent;
 import org.appxi.javafx.app.search.SearcherEvent;
@@ -74,7 +74,7 @@ public class SearchController extends WorkbenchPartController implements Workben
             Piece piece = event.data();
             if (null == piece)
                 return;
-            Book book = BooklistProfile.ONE.getBook(piece.field("book_s"));
+            Book book = BooksProfile.ONE.getBook(piece.field("book_s"));
             Chapter chapter = null;
             String file = piece.field("file_s");
             if (null != file) {

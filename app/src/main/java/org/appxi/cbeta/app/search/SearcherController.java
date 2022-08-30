@@ -40,7 +40,7 @@ import org.appxi.cbeta.app.AppContext;
 import org.appxi.cbeta.app.dao.PiecesRepository;
 import org.appxi.cbeta.app.event.GenericEvent;
 import org.appxi.cbeta.app.event.ProgressEvent;
-import org.appxi.cbeta.app.explorer.BooklistProfile;
+import org.appxi.cbeta.app.explorer.BooksProfile;
 import org.appxi.event.EventHandler;
 import org.appxi.holder.BoolHolder;
 import org.appxi.javafx.app.search.SearchedEvent;
@@ -286,7 +286,7 @@ class SearcherController extends WorkbenchPartController.MainView {
 
         finalQuery = inputText;
         // 搜索
-        facetAndHighlightPage = repository.search(BooklistProfile.ONE.profile().name(), filterScopes,
+        facetAndHighlightPage = repository.search(BooksProfile.ONE.profile().name(), filterScopes,
                 finalQuery, filterCategories, facet.value, new SolrPageRequest(0, PAGE_SIZE));
         // debug
         if (null == facetAndHighlightPage) {
@@ -363,7 +363,7 @@ class SearcherController extends WorkbenchPartController.MainView {
             highlightPage = facetAndHighlightPage;
         } else {
             // query for next page
-            highlightPage = repository.search(BooklistProfile.ONE.profile().name(), filterScopes,
+            highlightPage = repository.search(BooksProfile.ONE.profile().name(), filterScopes,
                     finalQuery, filterCategories, false, new SolrPageRequest(pageIdx, PAGE_SIZE));
         }
         if (null == highlightPage)
@@ -634,7 +634,7 @@ class SearcherController extends WorkbenchPartController.MainView {
 
             locationLabel.setText(null);
             if (item.categories != null && !item.categories.isEmpty()) {
-                final String navPrefix = "nav/".concat(BooklistProfile.ONE.profile().template().name()).concat("/");
+                final String navPrefix = "nav/".concat(BooksProfile.ONE.profile().template().name()).concat("/");
                 item.categories.stream().filter(s -> s.startsWith(navPrefix)).findFirst()
                         .ifPresent(s -> locationLabel.setText(AppContext.hanText(s.substring(navPrefix.length()))));
             }

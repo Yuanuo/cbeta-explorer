@@ -54,7 +54,7 @@ class BooklistTreeView extends TreeViewEx<Book> {
             menuItem.setOnAction(event1 -> {
                 Book data = book.clone();
                 data.title = (null == data.id ? "【目录】" : "【典籍】") + AppContext.hanText(BookLabelStyle.format(data));
-                data.path = "nav/" + BooklistProfile.ONE.profile().template().name() + "/" + TreeHelper.path(selectedItem);
+                data.path = "nav/" + BooksProfile.ONE.profile().template().name() + "/" + TreeHelper.path(selectedItem);
 
                 app.eventBus.fireEvent(SearcherEvent.ofSearch(null, data));
             });

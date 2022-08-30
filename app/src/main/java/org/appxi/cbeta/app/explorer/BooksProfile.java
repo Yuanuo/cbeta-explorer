@@ -17,8 +17,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.appxi.cbeta.Book;
-import org.appxi.cbeta.BookMap;
-import org.appxi.cbeta.Booklist;
+import org.appxi.cbeta.BooksMap;
+import org.appxi.cbeta.BooksList;
 import org.appxi.cbeta.app.App;
 import org.appxi.cbeta.app.AppContext;
 import org.appxi.cbeta.app.event.GenericEvent;
@@ -48,17 +48,17 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-public class BooklistProfile {
-    public static final BooklistProfile ONE = new BooklistProfile();
+public class BooksProfile {
+    public static final BooksProfile ONE = new BooksProfile();
     private static final Path profileDir = UserPrefs.dataDir().resolve(".profiles");
     private static final Preferences profileMgr = new PreferencesInProperties(profileDir.resolve(".list"));
 
     private Profile profile;
     private String profileVersion;
-    private Booklist<TreeItem<Book>> booklist;
+    private BooksList<TreeItem<Book>> booksList;
     private final Map<String, Book> managedBooks = new HashMap<>(1024);
 
-    public BooklistProfile() {
+    public BooksProfile() {
     }
 
     public Profile profile() {
@@ -73,8 +73,8 @@ public class BooklistProfile {
         return managedBooks.values();
     }
 
-    public Booklist<TreeItem<Book>> booklist() {
-        return booklist;
+    public BooksList<TreeItem<Book>> booklist() {
+        return booksList;
     }
 
     public boolean loadProfile() {
@@ -94,7 +94,7 @@ public class BooklistProfile {
         }
         try {
             if (profile.isManaged()) {
-                this.booklist = new BooklistFilteredTree(AppContext.booksMap(), profile) {
+                this.booksList = new BooksListFilteredTree(AppContext.booksMap(), profile) {
                     @Override
                     protected TreeItem<Book> createTreeItem(Element item, Book itemValue) {
                         if (null != itemValue && null != itemValue.id)
@@ -103,7 +103,7 @@ public class BooklistProfile {
                     }
                 };
             } else {
-                this.booklist = new BooklistTree(AppContext.booksMap(), profile) {
+                this.booksList = new BooksListTree(AppContext.booksMap(), profile) {
                     @Override
                     protected TreeItem<Book> createTreeItem(Element item, Book itemValue) {
                         if (null != itemValue && null != itemValue.id)
@@ -119,7 +119,7 @@ public class BooklistProfile {
             profileMgr.save();
             //
             ProgressLayer.showAndWait(App.app().getPrimaryGlass(), progressLayer -> {
-                this.booklist.tree();
+                this.booksList.tree();
                 App.app().eventBus.fireEvent(new GenericEvent(GenericEvent.PROFILE_READY, profile));
             });
             return true;
@@ -233,7 +233,7 @@ public class BooklistProfile {
     }
 
     private static class ProfileEditor extends DialogPane {
-        final BooklistProfile.Profile profile;
+        final BooksProfile.Profile profile;
         final VBox form;
 
         TextField title, description;
@@ -241,7 +241,7 @@ public class BooklistProfile {
         TreeView<Book> treeView;
         ChoiceBox<String> rules;
 
-        public ProfileEditor(BooklistProfile.Profile profile) {
+        public ProfileEditor(BooksProfile.Profile profile) {
             super();
             this.profile = profile;
 
@@ -473,7 +473,7 @@ public class BooklistProfile {
         }
 
         private void setBooklist(Profile profile) {
-            final BooklistStatefulTree booklist = new BooklistStatefulTree(AppContext.booksMap(), profile);
+            final BooksListStatefulTree booklist = new BooksListStatefulTree(AppContext.booksMap(), profile);
             final CheckBoxTreeItem<Book> rootItem = booklist.tree();
             rootItem.setExpanded(true);
             rootItem.setIndependent(true);
@@ -500,9 +500,9 @@ public class BooklistProfile {
         return null;
     }
 
-    public static class BooklistTree extends Booklist<TreeItem<Book>> {
-        public BooklistTree(BookMap bookMap, Profile profile) {
-            super(bookMap, new TreeItem<>(null), getProfileStream(profile));
+    public static class BooksListTree extends BooksList<TreeItem<Book>> {
+        public BooksListTree(BooksMap booksMap, Profile profile) {
+            super(booksMap, new TreeItem<>(null), getProfileStream(profile));
         }
 
         @Override
@@ -516,11 +516,11 @@ public class BooklistProfile {
         }
     }
 
-    public static class BooklistFilteredTree extends BooklistTree {
+    public static class BooksListFilteredTree extends BooksListTree {
         protected final boolean isProfileManaged;
 
-        public BooklistFilteredTree(BookMap bookMap, Profile profile) {
-            super(bookMap, profile);
+        public BooksListFilteredTree(BooksMap booksMap, Profile profile) {
+            super(booksMap, profile);
             isProfileManaged = profile.isManaged();
         }
 
@@ -533,9 +533,9 @@ public class BooklistProfile {
         }
     }
 
-    public static class BooklistStatefulTree extends Booklist<CheckBoxTreeItem<Book>> {
-        public BooklistStatefulTree(BookMap bookMap, Profile profile) {
-            super(bookMap, new CheckBoxTreeItem<>(null), getProfileStream(profile));
+    public static class BooksListStatefulTree extends BooksList<CheckBoxTreeItem<Book>> {
+        public BooksListStatefulTree(BooksMap booksMap, Profile profile) {
+            super(booksMap, new CheckBoxTreeItem<>(null), getProfileStream(profile));
         }
 
         @Override

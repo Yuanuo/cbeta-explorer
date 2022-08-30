@@ -11,7 +11,7 @@ import org.appxi.cbeta.Book;
 import org.appxi.cbeta.app.AppContext;
 import org.appxi.cbeta.app.event.BookEvent;
 import org.appxi.cbeta.app.event.GenericEvent;
-import org.appxi.cbeta.app.explorer.BooklistProfile;
+import org.appxi.cbeta.app.explorer.BooksProfile;
 import org.appxi.javafx.app.search.SearcherEvent;
 import org.appxi.javafx.control.LookupLayer;
 import org.appxi.javafx.visual.MaterialIcon;
@@ -168,7 +168,7 @@ public class LookupController extends WorkbenchPartController implements Workben
                 lineOrVolume = false;
             }
             if (null != bookId) {
-                Book book = BooklistProfile.ONE.getBook(bookId);
+                Book book = BooksProfile.ONE.getBook(bookId);
                 String title = null == book ? "???" : "《".concat(book.title).concat("》");
                 if (!lineOrVolume) {
                     chapter = chapter.length() >= 3 ? chapter.substring(0, 3) : StringHelper.padLeft(chapter, 3, '0');
@@ -192,7 +192,7 @@ public class LookupController extends WorkbenchPartController implements Workben
         protected void handleEnterOrDoubleClickActionOnSearchResultList(InputEvent event, Object data) {
             if (!(data instanceof LookupDatabase.LookupData item)) return;
             if (null == item.bookId) return;
-            Book book = BooklistProfile.ONE.getBook(item.bookId);
+            Book book = BooksProfile.ONE.getBook(item.bookId);
             if (null == book) return;
 
             Chapter chapter = null;

@@ -9,7 +9,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Tooltip;
 import javafx.scene.input.DataFormat;
 import javafx.stage.FileChooser;
-import org.appxi.cbeta.BookMap;
+import org.appxi.cbeta.BooksMap;
 import org.appxi.cbeta.Bookcase;
 import org.appxi.cbeta.BookcaseInZip;
 import org.appxi.cbeta.TripitakaMap;
@@ -43,7 +43,7 @@ public abstract class AppContext {
     public static final DataFormat DND_ITEM = new DataFormat("application/x-item-serialized-object");
 
     private static Bookcase bookcase;
-    private static BookMap bookMap;
+    private static BooksMap booksMap;
 
     static void setupBookcase(Bookcase bookcase) {
         try {
@@ -60,7 +60,7 @@ public abstract class AppContext {
         }
         //
         AppContext.bookcase = AppContext.bookcase == null ? bookcase : AppContext.bookcase;
-        AppContext.bookMap = bookMap == null ? new BookMap(new TripitakaMap(AppContext.bookcase)) : bookMap;
+        AppContext.booksMap = booksMap == null ? new BooksMap(new TripitakaMap(AppContext.bookcase)) : booksMap;
 //        // 如果以上执行出错，程序也尚未初始化完成，只有在基础数据正常时，再加载更多数据
 
         // 在此设置数据库基本环境，以供后续的功能正常使用
@@ -77,8 +77,8 @@ public abstract class AppContext {
         return bookcase;
     }
 
-    public static BookMap booksMap() {
-        return bookMap;
+    public static BooksMap booksMap() {
+        return booksMap;
     }
 
     private static AnnotationConfigApplicationContext beans;

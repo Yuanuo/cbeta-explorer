@@ -21,7 +21,7 @@ import org.appxi.cbeta.app.dao.BookdataType;
 import org.appxi.cbeta.app.dao.DaoService;
 import org.appxi.cbeta.app.event.BookEvent;
 import org.appxi.cbeta.app.event.BookdataEvent;
-import org.appxi.cbeta.app.explorer.BooklistProfile;
+import org.appxi.cbeta.app.explorer.BooksProfile;
 import org.appxi.holder.BoolHolder;
 import org.appxi.javafx.control.ListViewEx;
 import org.appxi.javafx.helper.FxHelper;
@@ -131,7 +131,7 @@ public abstract class BookDataController extends WorkbenchPartController.SideVie
                 textLabel.setText(item.data);
                 timeLabel.setText(DateHelper.format(item.updateAt));
                 if (null == filterByBook && null != bookLabel) {
-                    Book book = BooklistProfile.ONE.getBook(item.book);
+                    Book book = BooksProfile.ONE.getBook(item.book);
                     bookLabel.setText(null == book ? null : AppContext.hanText(book.title));
                 }
                 setGraphic(cardBox);
@@ -161,7 +161,7 @@ public abstract class BookDataController extends WorkbenchPartController.SideVie
     protected void handleOnEnterOrDoubleClickAction(InputEvent inputEvent, Bookdata item) {
         if (null == item)
             return;
-        final Book book = BooklistProfile.ONE.getBook(item.book);
+        final Book book = BooksProfile.ONE.getBook(item.book);
         final Chapter chapter = book.ofChapter();
         chapter.path = item.volume;
         chapter.anchor = item.anchor;

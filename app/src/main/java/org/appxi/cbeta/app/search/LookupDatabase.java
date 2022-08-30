@@ -3,7 +3,7 @@ package org.appxi.cbeta.app.search;
 import org.appxi.cbeta.Book;
 import org.appxi.cbeta.BookHelper;
 import org.appxi.cbeta.app.AppContext;
-import org.appxi.cbeta.app.explorer.BooklistProfile;
+import org.appxi.cbeta.app.explorer.BooksProfile;
 import org.appxi.javafx.helper.FxHelper;
 import org.appxi.smartcn.pinyin.PinyinHelper;
 import org.appxi.util.StringHelper;
@@ -28,7 +28,7 @@ class LookupDatabase {
         new Thread(() -> {
             cachedDatabase.clear();
             FxHelper.sleepSilently(500);
-            final Collection<Book> books = new ArrayList<>(BooklistProfile.ONE.getManagedBooks());
+            final Collection<Book> books = new ArrayList<>(BooksProfile.ONE.getManagedBooks());
             books.parallelStream().forEachOrdered(book -> {
                 cachedDatabase.add(new LookupData(
                         book.path.startsWith("toc/"),
