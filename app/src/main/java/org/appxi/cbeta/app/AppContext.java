@@ -48,7 +48,7 @@ public abstract class AppContext {
     static void setupBookcase(Bookcase bookcase) {
         try {
             // 尝试优先使用绿色版数据
-            final Path bookcaseDir = Path.of(bookcase.getPath()).resolve("../".concat(AppLauncher.dataDirName));
+            final Path bookcaseDir = Path.of(bookcase.getPath()).getParent().resolve(AppLauncher.dataDirName);
             if (Files.exists(bookcaseDir) && Files.isDirectory(bookcaseDir) && Files.isWritable(bookcaseDir)) {
                 //
                 UserPrefs.prefs.save();
