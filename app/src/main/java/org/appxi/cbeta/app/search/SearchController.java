@@ -63,7 +63,7 @@ public class SearchController extends WorkbenchPartController implements Workben
         app.eventBus.addEventHandler(ProgressEvent.INDEXING, event -> indexingEvent = event.isFinished() ? null : event);
         app.eventBus.addEventHandler(GenericEvent.PROFILE_READY, event -> {
             profileReadyState.value = true;
-            if (!UserPrefs.prefs.getBoolean(PK_START_TYPE, false)) return;
+            if (!UserPrefs.prefs.getBoolean(PK_START_TYPE, true)) return;
             if (IndexedManager.isBookcaseIndexable() || IndexedManager.isBooklistIndexable()) {
                 alertIndexable(null);
             } else {
@@ -100,7 +100,7 @@ public class SearchController extends WorkbenchPartController implements Workben
         //
         SettingsList.add(() -> {
             final BooleanProperty valueProperty = new SimpleBooleanProperty();
-            valueProperty.set(UserPrefs.prefs.getBoolean(PK_START_TYPE, false));
+            valueProperty.set(UserPrefs.prefs.getBoolean(PK_START_TYPE, true));
             valueProperty.addListener((o, ov, nv) -> {
                 if (null != ov && !Objects.equals(ov, nv)) {
                     UserPrefs.prefs.setProperty(PK_START_TYPE, nv);
