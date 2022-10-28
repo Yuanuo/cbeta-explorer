@@ -2,7 +2,9 @@ package org.appxi.cbeta.app.explorer;
 
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Tooltip;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
@@ -27,6 +29,9 @@ import org.appxi.javafx.visual.MaterialIcon;
 import org.appxi.javafx.workbench.WorkbenchPane;
 import org.appxi.javafx.workbench.WorkbenchPart;
 import org.appxi.javafx.workbench.WorkbenchPartController;
+import org.appxi.prefs.UserPrefs;
+import org.appxi.util.StringHelper;
+import org.appxi.util.ext.HanLang;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -103,7 +108,27 @@ public class BooklistExplorer extends WorkbenchPartController.SideView {
                         FxHelper.runLater(() -> BooksProfile.ONE.selectProfile(BooksProfile.ONE.profile()));
                     }
                 }).start());
-        app.eventBus.addEventHandler(GenericEvent.PROFILE_READY, event -> activeViewport(true));
+        app.eventBus.addEventHandler(GenericEvent.PROFILE_READY, event -> {
+            activeViewport(true);
+            // 仅在用户未手动设置过时才提示
+            if (StringHelper.isBlank(UserPrefs.prefs.getString("display.han", ""))) {
+                FxHelper.runThread(2000, () -> {
+                    Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
+                            "选择以 简体/繁体 显示经名标题、阅读视图等经藏数据。",
+                            new ButtonType("简体"), new ButtonType("繁体"), new ButtonType("稍后在选项中设置"));
+                    alert.setTitle("简繁体");
+                    alert.setHeaderText("选择简/繁体");
+                    alert.initOwner(app.getPrimaryStage());
+                    alert.showAndWait().ifPresent(buttonType -> {
+                        if ("稍后在选项中设置".equals(buttonType.getText())) return;
+
+                        HanLang hanLang = "简体".equals(buttonType.getText()) ? HanLang.hans : HanLang.hantTW;
+                        UserPrefs.prefs.setProperty("display.han", hanLang.lang);
+                        app.eventBus.fireEvent(new GenericEvent(GenericEvent.HAN_LANG_CHANGED, hanLang));
+                    });
+                });
+            }
+        });
         // 当显示汉字类型改变时需要同步更新treeView
         app.eventBus.addEventHandler(GenericEvent.HAN_LANG_CHANGED,
                 event -> Optional.ofNullable(this.treeView).ifPresent(TreeView::refresh));
