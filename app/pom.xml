@@ -5,12 +5,12 @@
 
 	<groupId>org.appxi</groupId>
 	<artifactId>cbeta-explorer</artifactId>
-	<version>22.09.23</version>
+	<version>22.10.28</version>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.release>18</maven.compiler.release>
-		<slf4j.version>2.0.0-alpha6</slf4j.version>
+		<slf4j.version>2.0.3</slf4j.version>
 	</properties>
 
 	<dependencies>
