@@ -4,6 +4,7 @@ import javafx.collections.ObservableList;
 import javafx.scene.control.Accordion;
 import javafx.scene.control.Label;
 import javafx.scene.control.TitledPane;
+import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.input.InputEvent;
 import javafx.scene.layout.BorderPane;
@@ -11,6 +12,8 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.appxi.book.Chapter;
 import org.appxi.cbeta.Book;
+import org.appxi.cbeta.app.AppContext;
+import org.appxi.cbeta.app.event.GenericEvent;
 import org.appxi.cbeta.app.explorer.ChapterTree;
 import org.appxi.holder.RawHolder;
 import org.appxi.javafx.control.TreeViewEx;
@@ -63,6 +66,21 @@ public class BookBasicController extends WorkbenchPartController.SideView {
         //
         this.tocTree.setEnterOrDoubleClickAction((event, treeItem) -> onTreeItemAction(event, treeItem, true));
         this.volTree.setEnterOrDoubleClickAction((event, treeItem) -> onTreeItemAction(event, treeItem, false));
+
+        //
+        this.tocTree.setCellFactory(v -> new TreeCell<>() {
+            @Override
+            protected void updateItem(Chapter item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    this.setText(null);
+                    return;
+                }
+                this.setText(AppContext.hanText(item.title));
+            }
+        });
+        // 当显示汉字类型改变时需要同步更新treeView
+        app.eventBus.addEventHandler(GenericEvent.HAN_LANG_CHANGED, event -> this.tocTree.refresh());
     }
 
     void onTreeItemAction(final InputEvent event, final TreeItem<Chapter> treeItem, boolean toc) {
