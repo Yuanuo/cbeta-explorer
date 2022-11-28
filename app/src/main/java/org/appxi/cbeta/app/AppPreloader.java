@@ -44,7 +44,7 @@ public class AppPreloader extends Preloader {
         primaryStage.show();
         setupBookcase(primaryStage);
         //
-        FontFaceHelper.fixing();
+        FontFaceHelper.fixFontFamilies();
         //
         if (OSVersions.isLinux || OSVersions.isMac) {
             new javafx.scene.control.TextField("");
