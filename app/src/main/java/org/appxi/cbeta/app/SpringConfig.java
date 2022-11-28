@@ -24,6 +24,9 @@ class SpringConfig {
         final Path solrHome = UserPrefs.dataDir().resolve(".solr");
         final Path confHome = DesktopApp.appDir().resolve("template");
 
+        System.setProperty("solr.dns.prevent.reverse.lookup", "true");
+        System.setProperty("solr.install.dir", solrHome.toString());
+
         FileHelper.makeDirs(solrHome);
         final NodeConfig config = new NodeConfig.NodeConfigBuilder(Piece.REPO, solrHome)
                 .setConfigSetBaseDirectory(confHome.toString())
