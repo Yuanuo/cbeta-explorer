@@ -21,6 +21,7 @@ import org.appxi.javafx.web.WebPane;
 import org.appxi.javafx.workbench.WorkbenchApp;
 import org.appxi.javafx.workbench.WorkbenchPane;
 import org.appxi.javafx.workbench.WorkbenchPart;
+import org.appxi.util.OSVersions;
 
 import java.net.URL;
 import java.nio.file.Path;
@@ -55,14 +56,18 @@ public class App extends WorkbenchApp {
     @Override
     protected void showing(Stage primaryStage) {
         super.showing(primaryStage);
+        String cssByOS = "desktop@" + OSVersions.osName.toLowerCase().replace(" ", "") + ".css";
         if (DesktopApp.productionMode) {
             Optional.ofNullable(App.class.getResource("app_desktop.css"))
+                    .ifPresent(v -> primaryStage.getScene().getStylesheets().add(v.toExternalForm()));
+            Optional.ofNullable(App.class.getResource("app_" + cssByOS))
                     .ifPresent(v -> primaryStage.getScene().getStylesheets().add(v.toExternalForm()));
         } else {
             Scene scene = primaryStage.getScene();
             visualProvider.visual().unAssign(scene);
             watchCss(scene, Path.of("../../appxi-javafx/src/main/resources/org/appxi/javafx/visual/visual_desktop.css"));
             watchCss(scene, Path.of("src/main/resources/org/appxi/cbeta/app/app_desktop.css"));
+            watchCss(scene, Path.of("src/main/resources/org/appxi/cbeta/app/app_"+ cssByOS));
             scene.getStylesheets().forEach(System.out::println);
         }
 

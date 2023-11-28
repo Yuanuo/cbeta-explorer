@@ -1,0 +1,6 @@
+.main-views {
+    -fx-background-image: url('app-hint@macosx.png');
+}
+.theme-dark .main-views {
+    -fx-background-image: url('app-hint-dark@macosx.png');
+}
