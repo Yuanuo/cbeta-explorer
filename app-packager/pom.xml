@@ -6,12 +6,12 @@
 
     <groupId>org.appxi</groupId>
     <artifactId>cbeta-explorer-packager</artifactId>
-    <version>22.11.30</version>
+    <version>23.11.30</version>
     <packaging>pom</packaging>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.release>18</maven.compiler.release>
+        <maven.compiler.release>21</maven.compiler.release>
 
         <ext.nonMods>${project.build.directory}/jpacktool/jar</ext.nonMods>
         <ext.nonMods.lib>${project.build.directory}/jpacktool/jar/${project.version}</ext.nonMods.lib>
@@ -74,12 +74,20 @@
                                         <targetPath>template</targetPath>
                                     </resource>
                                     <resource>
-                                        <directory>${project.basedir}/../../appxi-dictionary/repo</directory>
-                                        <targetPath>template/dict</targetPath>
-                                    </resource>
-                                    <resource>
                                         <directory>${project.basedir}/../../appxi-javafx/repo/web-incl</directory>
                                         <targetPath>template/web-incl</targetPath>
+                                    </resource>
+                                    <resource>
+                                        <directory>${project.basedir}/../../appxi-dictionary.dd/1</directory>
+                                        <targetPath>dict/1</targetPath>
+                                    </resource>
+                                    <resource>
+                                        <directory>${project.basedir}/../../appxi-dictionary.dd/2</directory>
+                                        <targetPath>dict/2</targetPath>
+                                    </resource>
+                                    <resource>
+                                        <directory>${project.basedir}/../../appxi-dictionary.dd/3</directory>
+                                        <targetPath>dict/3</targetPath>
                                     </resource>
                                 </resources>
                             </packagingResources>
@@ -140,12 +148,20 @@
                                         <targetPath>template</targetPath>
                                     </resource>
                                     <resource>
-                                        <directory>${project.basedir}/../../appxi-dictionary/repo</directory>
-                                        <targetPath>template/dict</targetPath>
-                                    </resource>
-                                    <resource>
                                         <directory>${project.basedir}/../../appxi-javafx/repo/web-incl</directory>
                                         <targetPath>template/web-incl</targetPath>
+                                    </resource>
+                                    <resource>
+                                        <directory>${project.basedir}/../../appxi-dictionary.dd/1</directory>
+                                        <targetPath>dict/1</targetPath>
+                                    </resource>
+                                    <resource>
+                                        <directory>${project.basedir}/../../appxi-dictionary.dd/2</directory>
+                                        <targetPath>dict/2</targetPath>
+                                    </resource>
+                                    <resource>
+                                        <directory>${project.basedir}/../../appxi-dictionary.dd/3</directory>
+                                        <targetPath>dict/3</targetPath>
                                     </resource>
                                 </resources>
                             </packagingResources>
@@ -203,12 +219,20 @@
                                         <targetPath>template</targetPath>
                                     </resource>
                                     <resource>
-                                        <directory>${project.basedir}/../../appxi-dictionary/repo</directory>
-                                        <targetPath>template/dict</targetPath>
-                                    </resource>
-                                    <resource>
                                         <directory>${project.basedir}/../../appxi-javafx/repo/web-incl</directory>
                                         <targetPath>template/web-incl</targetPath>
+                                    </resource>
+                                    <resource>
+                                        <directory>${project.basedir}/../../appxi-dictionary.dd/1</directory>
+                                        <targetPath>dict/1</targetPath>
+                                    </resource>
+                                    <resource>
+                                        <directory>${project.basedir}/../../appxi-dictionary.dd/2</directory>
+                                        <targetPath>dict/2</targetPath>
+                                    </resource>
+                                    <resource>
+                                        <directory>${project.basedir}/../../appxi-dictionary.dd/3</directory>
+                                        <targetPath>dict/3</targetPath>
                                     </resource>
                                 </resources>
                             </packagingResources>
