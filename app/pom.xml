@@ -60,6 +60,12 @@
 			<groupId>org.appxi</groupId>
 			<artifactId>dictionary-app</artifactId>
 			<version>[23.05.16,)</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.openjfx</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 	</dependencies>
 
