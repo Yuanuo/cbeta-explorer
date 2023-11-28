@@ -12,6 +12,7 @@ module appxi.cbetaExplorer {
     requires static ormlite.jdbc;
 
     requires appxi.search.solr;
+    requires appxi.dictionary;
 
 //    requires org.scenicview.scenicview; // for debug
 

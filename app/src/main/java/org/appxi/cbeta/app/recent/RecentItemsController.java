@@ -19,6 +19,7 @@ import org.appxi.prefs.PreferencesInProperties;
 import org.appxi.prefs.UserPrefs;
 import org.appxi.timeago.TimeAgo;
 import org.appxi.util.NumberHelper;
+import org.appxi.util.ext.HanLang;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -135,7 +136,7 @@ public class RecentItemsController extends WorkbenchPartController.SideView {
             });
             this.getViewport().setCenter(this.treeView);
             //
-            app.eventBus.addEventHandler(GenericEvent.HAN_LANG_CHANGED, event -> this.treeView.refresh());
+            app.eventBus.addEventHandler(HanLang.Event.CHANGED, event -> this.treeView.refresh());
         }
 
         final TreeItem<Object> treeRoot = this.treeView.getRoot();

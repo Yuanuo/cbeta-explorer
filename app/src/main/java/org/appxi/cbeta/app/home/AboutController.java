@@ -13,6 +13,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.web.WebView;
 import org.appxi.cbeta.app.App;
+import org.appxi.cbeta.app.AppContext;
 import org.appxi.javafx.visual.MaterialIcon;
 import org.appxi.javafx.workbench.WorkbenchPane;
 import org.appxi.javafx.workbench.WorkbenchPart;
@@ -69,6 +70,12 @@ public class AboutController extends WorkbenchPartController implements Workbenc
         final StringBuilder buf = new StringBuilder();
         buf.append("Product Version").append("\n");
         buf.append(App.NAME).append(" ").append(App.VERSION).append("\n\n");
+
+        buf.append("DATA Info").append("\n");
+        buf.append(AppContext.bookcase().getVersion())
+                .append(" / ").append(AppContext.bookcase().getQuarterlyVersion())
+                .append(" / ").append(AppContext.bookcase().getPath())
+                .append("\n\n");
 
         buf.append("Java Version").append("\n");
         buf.append(System.getProperty("java.runtime.version")).append("\n\n");

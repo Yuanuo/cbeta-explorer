@@ -1,5 +1,6 @@
 package org.appxi.cbeta.app.search;
 
+import javafx.event.ActionEvent;
 import javafx.scene.control.Labeled;
 import javafx.scene.input.InputEvent;
 import javafx.scene.input.KeyCode;
@@ -14,11 +15,13 @@ import org.appxi.cbeta.app.event.GenericEvent;
 import org.appxi.cbeta.app.explorer.BooksProfile;
 import org.appxi.javafx.app.search.SearcherEvent;
 import org.appxi.javafx.control.LookupLayer;
+import org.appxi.javafx.helper.FxHelper;
 import org.appxi.javafx.visual.MaterialIcon;
 import org.appxi.javafx.workbench.WorkbenchPane;
 import org.appxi.javafx.workbench.WorkbenchPart;
 import org.appxi.javafx.workbench.WorkbenchPartController;
 import org.appxi.util.StringHelper;
+import org.appxi.util.ext.HanLang;
 
 import java.util.Collection;
 import java.util.List;
@@ -66,7 +69,7 @@ public class LookupController extends WorkbenchPartController implements Workben
             lookupDatabase.reload();
         });
         // 当显示汉字类型改变时需要同步更新lookupView
-        app.eventBus.addEventHandler(GenericEvent.HAN_LANG_CHANGED,
+        app.eventBus.addEventHandler(HanLang.Event.CHANGED,
                 event -> Optional.ofNullable(this.lookupLayer).ifPresent(LookupLayer::refresh));
     }
 
@@ -102,13 +105,14 @@ public class LookupController extends WorkbenchPartController implements Workben
         }
 
         @Override
-        protected String getUsagesText() {
-            return """
-                    >> 支持简繁汉字匹配（以感叹号起始则强制区分）；支持按拼音（全拼）匹配，使用双引号包含则实行精确匹配；
-                    >> 支持复杂条件(+/AND,默认为OR)：例1：1juan +"bu kong" AND 仪轨；例2：1juan +("bu kong" 仪轨 OR "yi gui")
-                    >> 空格分隔任意字/词/短语匹配；书名/书号ID/作者/译者/时域/卷数任意匹配；#号起始开启经卷行定位；
-                    >> 快捷键：双击Shift 或 Ctrl+G 开启；ESC 或 点击透明区 退出此界面；上/下方向键选择列表项；回车键打开；
-                    """;
+        protected void helpButtonAction(ActionEvent actionEvent) {
+            FxHelper.showTextViewerWindow(app, "appFindByNames.helpWindow", "快捷检索使用方法",
+                    """
+                            >> 支持简繁汉字匹配（以感叹号起始则强制区分）；支持按拼音（全拼）匹配，使用双引号包含则实行精确匹配；
+                            >> 支持复杂条件(+/AND,默认为OR)：例1：1juan +"bu kong" AND 仪轨；例2：1juan +("bu kong" 仪轨 OR "yi gui")
+                            >> 空格分隔任意字/词/短语匹配；书名/书号ID/作者/译者/时域/卷数任意匹配；#号起始开启经卷行定位；
+                            >> 快捷键：双击Shift 或 Ctrl+G 开启；ESC 或 点击透明区 退出此界面；上/下方向键选择列表项；回车键打开；
+                                    """);
         }
 
         @Override

@@ -11,7 +11,6 @@ import org.appxi.javafx.control.LookupLayer;
 import org.appxi.smartcn.convert.ChineseConvertors;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -73,7 +72,7 @@ public abstract class LookupLayerEx extends LookupLayer<Object> {
     }
 
     @Override
-    protected final Collection<Object> lookupByKeywords(String lookupText, int resultLimit) {
+    protected final LookupResult<Object> lookupByKeywords(String lookupText, int resultLimit) {
         if (!lookupText.isEmpty() && lookupText.matches("[(（“\"]+")) return null;
 
         //
@@ -86,16 +85,17 @@ public abstract class LookupLayerEx extends LookupLayer<Object> {
         // 如果此时的输入并无必要进行搜索，允许子类实现中返回null以中断并保持现状
         if (lookupText == null) return null;
 
-        List<LookupResultItem> lookupResult = new ArrayList<>(resultLimit);
+        List<LookupResultItem> result = new ArrayList<>(resultLimit);
 
-        lookupByKeywords(lookupText, resultLimit, lookupResult, usedKeywords = new LinkedHashSet<>());
+        lookupByKeywords(lookupText, resultLimit, result, usedKeywords = new LinkedHashSet<>());
         if (!lookupText.isEmpty()) {
             // 默认时无输入，不需对结果进行排序
-            lookupResult.sort(Comparator.comparingDouble(LookupResultItem::score).reversed());
-            if (lookupResult.size() > resultLimit + 1)
-                lookupResult = lookupResult.subList(0, resultLimit + 1);
+            result.sort(Comparator.comparingDouble(LookupResultItem::score).reversed());
+            if (result.size() > resultLimit + 1)
+                result = result.subList(0, resultLimit + 1);
         }
-        return lookupResult.stream().map(LookupResultItem::data).toList();
+        List<Object> resultList = result.stream().map(LookupResultItem::data).toList();
+        return new LookupResult<>(resultList.size(), resultList.size(), resultList);
     }
 
     protected abstract void lookupByKeywords(String lookupText, int resultLimit,

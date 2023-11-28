@@ -13,7 +13,6 @@ import javafx.scene.layout.VBox;
 import org.appxi.book.Chapter;
 import org.appxi.cbeta.Book;
 import org.appxi.cbeta.app.AppContext;
-import org.appxi.cbeta.app.event.GenericEvent;
 import org.appxi.cbeta.app.explorer.ChapterTree;
 import org.appxi.holder.RawHolder;
 import org.appxi.javafx.control.TreeViewEx;
@@ -23,6 +22,7 @@ import org.appxi.javafx.workbench.WorkbenchPartController;
 import org.appxi.prefs.UserPrefs;
 import org.appxi.util.DigestHelper;
 import org.appxi.util.StringHelper;
+import org.appxi.util.ext.HanLang;
 
 import java.nio.charset.Charset;
 import java.util.Objects;
@@ -80,7 +80,7 @@ public class BookBasicController extends WorkbenchPartController.SideView {
             }
         });
         // 当显示汉字类型改变时需要同步更新treeView
-        app.eventBus.addEventHandler(GenericEvent.HAN_LANG_CHANGED, event -> this.tocTree.refresh());
+        app.eventBus.addEventHandler(HanLang.Event.CHANGED, event -> this.tocTree.refresh());
     }
 
     void onTreeItemAction(final InputEvent event, final TreeItem<Chapter> treeItem, boolean toc) {

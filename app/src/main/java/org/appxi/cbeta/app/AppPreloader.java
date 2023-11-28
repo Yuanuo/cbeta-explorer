@@ -11,6 +11,7 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import org.appxi.cbeta.BookcaseInDir;
 import org.appxi.cbeta.BookcaseInZip;
+import org.appxi.javafx.app.DesktopApp;
 import org.appxi.javafx.control.CardChooser;
 import org.appxi.javafx.helper.FontFaceHelper;
 import org.appxi.javafx.visual.MaterialIcon;
@@ -61,22 +62,27 @@ public class AppPreloader extends Preloader {
     static void setupBookcase(Stage primaryStage) {
         final String key = "bookcase";
         while (true) {
-            // 1，优先使用已经选择的数据包
-            // 2，非正规方法，尝试加载当前目录下的数据包
+            // 1，优先使用App集成数据包
+            // 2，优先使用当前目录下的数据包
             for (String path : new String[]{
-                    UserPrefs.prefs.getString(key, ""),
+                    DesktopApp.appDir().resolve("bookcase.zip").toString(),
                     "../cbeta.zip",
-                    "cbeta.zip",
                     "../bookcase.zip",
+                    "cbeta.zip",
                     "bookcase.zip",
             }) {
-                if (path.endsWith(".zip")) {
-                    try {
-                        AppContext.setupBookcase(new BookcaseInZip(path));
-                        return;
-                    } catch (Throwable ignore) {
-                    }
+                try {
+                    AppContext.setupBookcase(new BookcaseInZip(path), false);
+                    return;
+                } catch (Throwable ignore) {
                 }
+            }
+            // 3，优先使用已经选择的数据包
+            try {
+                AppContext.setupBookcase(new BookcaseInZip(UserPrefs.prefs.getString(key, "")), true);
+                return;
+            } catch (Throwable ignore) {
+                ignore.printStackTrace();
             }
             if (!themed) {
                 primaryStage.getScene().getRoot().setStyle("-fx-font-size: 16px;");
@@ -123,7 +129,7 @@ public class AppPreloader extends Preloader {
                         String path = selected.getAbsolutePath();
                         BookcaseInZip bookcase = new BookcaseInZip(path);
                         UserPrefs.prefs.setProperty(key, path);
-                        AppContext.setupBookcase(bookcase);
+                        AppContext.setupBookcase(bookcase, true);
                         return;
                     } catch (Throwable ignore) {
                     }
@@ -139,7 +145,7 @@ public class AppPreloader extends Preloader {
                         try {
                             BookcaseInDir bookcase = new BookcaseInDir(path);
                             UserPrefs.prefs.setProperty(key, path);
-                            AppContext.setupBookcase(bookcase);
+                            AppContext.setupBookcase(bookcase, true);
                             return;
                         } catch (Throwable ignore) {
                         }
@@ -154,7 +160,7 @@ public class AppPreloader extends Preloader {
                         String path = selected.getAbsolutePath();
                         BookcaseInDir bookcase = new BookcaseInDir(path);
                         UserPrefs.prefs.setProperty(key, path);
-                        AppContext.setupBookcase(bookcase);
+                        AppContext.setupBookcase(bookcase, true);
                         return;
                     } catch (Throwable ignore) {
                     }

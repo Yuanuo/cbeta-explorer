@@ -5,7 +5,6 @@ import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBoxTreeItem;
-import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
@@ -17,8 +16,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.appxi.cbeta.Book;
-import org.appxi.cbeta.BooksMap;
 import org.appxi.cbeta.BooksList;
+import org.appxi.cbeta.BooksMap;
 import org.appxi.cbeta.app.App;
 import org.appxi.cbeta.app.AppContext;
 import org.appxi.cbeta.app.event.GenericEvent;
@@ -230,6 +229,10 @@ public class BooksProfile {
             return !this.isManaged() ? AppContext.bookcase().getVersion()
                     : profileMgr.getString(name().concat(".ver"), "");
         }
+
+        public String indexesId() {
+            return this.isManaged() ? this.name() : "profile0";
+        }
     }
 
     private static class ProfileEditor extends DialogPane {
@@ -239,7 +242,6 @@ public class BooksProfile {
         TextField title, description;
         Profile template;
         TreeView<Book> treeView;
-        ChoiceBox<String> rules;
 
         public ProfileEditor(BooksProfile.Profile profile) {
             super();
@@ -251,7 +253,6 @@ public class BooksProfile {
             this.edit_title();
             this.edit_description();
             this.edit_booklist();
-            this.edit_rules();
             //
             this.setContent(form);
 
@@ -306,15 +307,15 @@ public class BooksProfile {
                         }
                     }));
             //
-            Button selAll = new Button("全部选择");
+            Button selAll = new Button("全选");
             selAll.setOnAction(event -> TreeHelper.walkLeafs(treeView.getRoot(),
                     (treeItem, book) -> ((CheckBoxTreeItem<Book>) treeItem).setSelected(true)));
             //
-            Button selNone = new Button("全部不选");
+            Button selNone = new Button("全不选");
             selNone.setOnAction(event -> TreeHelper.walkLeafs(treeView.getRoot(),
                     (treeItem, book) -> ((CheckBoxTreeItem<Book>) treeItem).setSelected(false)));
             //
-            Button selInvert = new Button("反向选择");
+            Button selInvert = new Button("反选");
             selInvert.setOnAction(event -> TreeHelper.walkLeafs(treeView.getRoot(),
                     (treeItem, book) -> ((CheckBoxTreeItem<Book>) treeItem).setSelected(!((CheckBoxTreeItem<Book>) treeItem).isSelected())));
 
@@ -322,6 +323,7 @@ public class BooksProfile {
 
             treeView = new TreeViewEx<>();
             treeView.setCellFactory(CheckBoxTreeCell.forTreeView());
+            VBox.setVgrow(treeView, Priority.ALWAYS);
             //
             VBox vBox = new VBox(10, toolbar, treeView);
             HBox.setHgrow(vBox, Priority.ALWAYS);
@@ -330,27 +332,6 @@ public class BooksProfile {
             VBox.setVgrow(hBox, Priority.ALWAYS);
             this.form.getChildren().addAll(hBox);
         }
-
-        private void edit_rules() {
-            final Label label = new Label("同步规则");
-            label.getStyleClass().add("field-label");
-
-            rules = new ChoiceBox<>();
-            rules.getItems().setAll(
-                    "仅排除：排除已选项，从模板中排除所有选中的书目（而使用其他）。",
-                    "仅包含：包含已选项，从模板中使用所有选中的书目（而排除其他）。",
-                    "自定义：总是使用定制书单，不从模板同步。");
-            rules.getSelectionModel().select(profileMgr.getInt(
-                    profile.name().concat(".rule"), 2, v -> v >= 0 && v < 3));
-            rules.setDisable(true);
-            rules.setMaxWidth(Double.MAX_VALUE);
-            HBox.setHgrow(rules, Priority.ALWAYS);
-            //
-            final HBox hBox = new HBox(label, rules);
-            hBox.setAlignment(Pos.CENTER_LEFT);
-            this.form.getChildren().addAll(hBox);
-        }
-
 
         @Override
         protected Node createButton(ButtonType buttonType) {

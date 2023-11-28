@@ -40,9 +40,6 @@ public interface PiecesRepository extends PieceRepository {
                 "field_book_s", "field_author_txt_aio", "field_location_s", "field_anchor_s", "category_ss",
                 "text_txt_aio_sub");
 
-        if (null != profile)
-            query.addFilterQuery(new SimpleFilterQuery(Criteria.where("project_ss").is(profile)));
-
         //
         if (null != scopes && !scopes.isEmpty()) {
             final List<String> navScopes = scopes.stream().filter(s -> s.startsWith("nav/")).toList();

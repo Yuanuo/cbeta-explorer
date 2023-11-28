@@ -37,10 +37,12 @@ import java.util.Objects;
 import java.util.Optional;
 
 public class BooklistExplorer extends WorkbenchPartController.SideView {
+    private static BooklistExplorer instance_;
     private BooklistTreeView treeView;
 
     public BooklistExplorer(WorkbenchPane workbench) {
         super(workbench);
+        instance_ = this;
 
         this.id.set("BOOKS");
         this.title.set("典籍");
@@ -122,15 +124,13 @@ public class BooklistExplorer extends WorkbenchPartController.SideView {
                     alert.showAndWait().ifPresent(buttonType -> {
                         if ("稍后在选项中设置".equals(buttonType.getText())) return;
 
-                        HanLang hanLang = "简体".equals(buttonType.getText()) ? HanLang.hans : HanLang.hantTW;
-                        UserPrefs.prefs.setProperty("display.han", hanLang.lang);
-                        app.eventBus.fireEvent(new GenericEvent(GenericEvent.HAN_LANG_CHANGED, hanLang));
+                        HanLang.apply("简体".equals(buttonType.getText()) ? HanLang.hans : HanLang.hantTW);
                     });
                 });
             }
         });
         // 当显示汉字类型改变时需要同步更新treeView
-        app.eventBus.addEventHandler(GenericEvent.HAN_LANG_CHANGED,
+        app.eventBus.addEventHandler(HanLang.Event.CHANGED,
                 event -> Optional.ofNullable(this.treeView).ifPresent(TreeView::refresh));
         // 当书名显示风格改变时需要同步更新treeView
         app.eventBus.addEventHandler(GenericEvent.BOOK_LABEL_STYLED,
@@ -181,5 +181,10 @@ public class BooklistExplorer extends WorkbenchPartController.SideView {
             rootItem.setExpanded(true);
             FxHelper.runLater(() -> treeView.setRoot(rootItem));
         }
+    }
+
+    public static TreeItem<Book> getTreeItem(Book book) {
+        TreeItem<Book> result = TreeHelper.findFirstByValue(instance_.treeView.getRoot(), book);
+        return result != null ? result : new TreeItem<>(book);
     }
 }

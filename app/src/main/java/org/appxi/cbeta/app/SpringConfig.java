@@ -4,6 +4,7 @@ import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.embedded.EmbeddedSolrServer;
 import org.apache.solr.client.solrj.request.CoreAdminRequest;
 import org.apache.solr.core.NodeConfig;
+import org.appxi.cbeta.app.explorer.BooksProfile;
 import org.appxi.javafx.app.DesktopApp;
 import org.appxi.prefs.UserPrefs;
 import org.appxi.search.solr.Piece;
@@ -19,9 +20,12 @@ import java.util.Set;
 @Configuration
 @EnableSolrRepositories("org.appxi.cbeta.app.dao")
 class SpringConfig {
+    static BooksProfile.Profile profile;
+
     @Bean
     SolrClient solrClient() throws Exception {
-        final Path solrHome = UserPrefs.dataDir().resolve(".solr");
+        profile = BooksProfile.ONE.profile();
+        final Path solrHome = UserPrefs.dataDir().resolve("." + profile.indexesId());
         final Path confHome = DesktopApp.appDir().resolve("template");
 
         System.setProperty("solr.dns.prevent.reverse.lookup", "true");
@@ -45,7 +49,7 @@ class SpringConfig {
     }
 
     @Bean
-    SolrTemplate solrTemplate(SolrClient client) throws Exception {
+    SolrTemplate solrTemplate(SolrClient client) {
         return new SolrTemplate(client);
     }
 }

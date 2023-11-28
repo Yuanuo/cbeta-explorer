@@ -6,6 +6,7 @@ import org.appxi.prefs.Preferences;
 import org.appxi.prefs.PreferencesInProperties;
 import org.appxi.prefs.UserPrefs;
 import org.appxi.util.DigestHelper;
+import org.appxi.util.FileHelper;
 
 import java.util.Objects;
 
@@ -22,30 +23,28 @@ public final class IndexedManager {
         return DigestHelper.crc32c(BooksProfile.ONE.profile().version(), BOOKLIST_V);
     }
 
-    public static boolean isBookcaseIndexable() {
-        // 如果Bookcase数据有变化（或算法有变）均需要更新索引
-        final String indexed = config.getString("indexed", null);
-        return !Objects.equals(currentBookcaseVersion(), indexed);
-    }
-
     public static boolean isBooklistIndexable() {
-        // 非自定义管理的Profile由isDefaultUpdatable判断
-        if (!BooksProfile.ONE.profile().isManaged()) return false;
+        final BooksProfile.Profile profile = BooksProfile.ONE.profile();
+
+        if (FileHelper.notExists(UserPrefs.dataDir().resolve("." + profile.indexesId()))) {
+            return true;
+        }
 
         // 如果Profile文件内容有变化（或算法有变）均需要更新索引
-        String indexed = config.getString(BooksProfile.ONE.profile().name(), null);
-        if (!Objects.equals(currentBooklistVersion(), indexed)) return true;
+        String indexed = config.getString(profile.indexesId(), null);
+        if (!Objects.equals(currentBooklistVersion(), indexed)) {
+            return true;
+        }
 
         // 如果Bookcase数据有变化（或算法有变）均需要更新索引
-        indexed = config.getString(BooksProfile.ONE.profile().name().concat(".based"), null);
+        indexed = config.getString(profile.indexesId().concat(".based"), null);
         return !Objects.equals(currentBookcaseVersion(), indexed);
     }
 
     static void saveIndexedVersions() {
-        final String currentBookcaseVersion = currentBookcaseVersion();
-        config.setProperty("indexed", currentBookcaseVersion);
-        config.setProperty(BooksProfile.ONE.profile().name(), currentBooklistVersion());
-        config.setProperty(BooksProfile.ONE.profile().name().concat(".based"), currentBookcaseVersion);
+        final BooksProfile.Profile profile = BooksProfile.ONE.profile();
+        config.setProperty(profile.indexesId(), currentBooklistVersion());
+        config.setProperty(profile.indexesId().concat(".based"), currentBookcaseVersion());
         config.save();
     }
 

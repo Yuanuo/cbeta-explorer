@@ -64,7 +64,7 @@ public class SearchController extends WorkbenchPartController implements Workben
         app.eventBus.addEventHandler(GenericEvent.PROFILE_READY, event -> {
             profileReadyState.value = true;
             if (!UserPrefs.prefs.getBoolean(PK_START_TYPE, true)) return;
-            if (IndexedManager.isBookcaseIndexable() || IndexedManager.isBooklistIndexable()) {
+            if (IndexedManager.isBooklistIndexable()) {
                 alertIndexable(null);
             } else {
                 // 如果全文索引数据正常（不需重建索引），则此时尝试加载，否则仅在后续重建索引时初始化
@@ -138,7 +138,7 @@ public class SearchController extends WorkbenchPartController implements Workben
             }
             if (null != indexingEvent) {
                 searcher.handleEventOnIndexingToBlocking.handle(indexingEvent);
-            } else if (IndexedManager.isBookcaseIndexable() || IndexedManager.isBooklistIndexable()) {
+            } else if (IndexedManager.isBooklistIndexable()) {
                 alertIndexable(searcher);
             } else {
                 searcher.search(text);
@@ -151,31 +151,15 @@ public class SearchController extends WorkbenchPartController implements Workben
             return;
         }
         FxHelper.runThread(null == controller ? 5000 : 100, () -> {
-            String contentText = null, headerText = null;
-            if (IndexedManager.isBookcaseIndexable()) {
-                headerText = "全文检索功能需要“重建全局数据”";
-                contentText = """
-                        检测到“全局数据”有变化或基于新的功能特性，
-                        全文检索功能需要“重建”索引数据，否则无法正常使用全文检索功能！
+            String headerText = "全文检索功能需要“更新书单数据”";
+            String contentText = """
+                    检测到“书单数据”有变化或基于新的功能特性，
+                    全文检索功能需要“更新”索引数据，否则无法正常使用全文检索功能！
                                             
-                        “重建”索引需要耗时 大约20分钟 左右。有3种建议的操作：
-                        1、暂时取消；建立适合自已的书单，切换到自己的书单一并建立索引。
-                        2、立即建立索引。
-                        3、“不重建”索引仅使用阅读和快捷检索等功能。
+                    “更新”索引仅需要耗时 大约几分钟 左右，也可以“不更新”索引仅使用阅读和快捷检索等功能！
 
-                        是否继续“重建”索引？
-                        """;
-            } else if (IndexedManager.isBooklistIndexable()) {
-                headerText = "全文检索功能需要“更新书单数据”";
-                contentText = """
-                        检测到“书单数据”有变化或基于新的功能特性，
-                        全文检索功能需要“更新”索引数据，否则无法正常使用全文检索功能！
-                                                
-                        “更新”索引仅需要耗时 大约几分钟 左右，也可以“不更新”索引仅使用阅读和快捷检索等功能！
-
-                        是否继续“更新”索引？
-                        """;
-            }
+                    是否继续“更新”索引？
+                    """;
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION, contentText);
             alert.setTitle("数据更新！");
             alert.setHeaderText(headerText);

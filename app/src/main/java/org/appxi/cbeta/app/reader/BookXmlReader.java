@@ -9,7 +9,6 @@ import javafx.scene.control.DialogPane;
 import javafx.scene.control.Labeled;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Separator;
-import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TextArea;
@@ -18,7 +17,8 @@ import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.Tooltip;
 import javafx.scene.input.InputEvent;
 import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -32,17 +32,20 @@ import org.appxi.cbeta.app.dao.Bookdata;
 import org.appxi.cbeta.app.dao.BookdataType;
 import org.appxi.cbeta.app.event.BookEvent;
 import org.appxi.cbeta.app.event.BookdataEvent;
-import org.appxi.cbeta.app.event.GenericEvent;
+import org.appxi.cbeta.app.explorer.BooklistExplorer;
 import org.appxi.cbeta.app.search.LookupLayerEx;
+import org.appxi.dictionary.ui.DictionaryViewer;
 import org.appxi.event.EventHandler;
 import org.appxi.holder.IntHolder;
 import org.appxi.javafx.app.search.SearcherEvent;
 import org.appxi.javafx.app.web.WebViewer;
+import org.appxi.javafx.app.web.WebViewerPart;
 import org.appxi.javafx.control.TabPaneEx;
 import org.appxi.javafx.helper.FxHelper;
 import org.appxi.javafx.helper.TreeHelper;
 import org.appxi.javafx.visual.MaterialIcon;
-import org.appxi.javafx.web.WebSelection;
+import org.appxi.javafx.web.WebPane;
+import org.appxi.javafx.workbench.WorkbenchApp;
 import org.appxi.javafx.workbench.WorkbenchPane;
 import org.appxi.prefs.UserPrefs;
 import org.appxi.smartcn.convert.ChineseConvertors;
@@ -52,6 +55,7 @@ import org.appxi.util.ext.Attributes;
 import org.appxi.util.ext.HanLang;
 import org.appxi.util.ext.LookupExpression;
 import org.json.JSONObject;
+import org.jsoup.select.Elements;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -63,9 +67,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
-public class BookXmlReader extends HtmlBasedViewer {
-    private final EventHandler<GenericEvent> _onHanLangChanged = event -> {
+public class BookXmlReader extends WebViewerPart.MainView {
+    private final EventHandler<HanLang.Event> _onHanLangChanged = event -> {
         saveUserData();
         chapter = null;
         navigate(null);
@@ -80,6 +85,7 @@ public class BookXmlReader extends HtmlBasedViewer {
     FavoritesController favorites;
 
     Chapter chapter;
+    private Elements htmlMetadata;
 
     public BookXmlReader(Book book, WorkbenchPane workbench) {
         super(workbench);
@@ -101,7 +107,7 @@ public class BookXmlReader extends HtmlBasedViewer {
             mainTitle = book.id.concat(" ").concat(mainTitle);
         }
 
-        if (book.volumes.size() > 0) {
+        if (!book.volumes.isEmpty()) {
             short vol = BookHelper.getVolume(chapter);
             String volInfo = vol > 0
                     ? StringHelper.concat('（', vol, '/', book.volumes.size(), "卷）")
@@ -155,14 +161,14 @@ public class BookXmlReader extends HtmlBasedViewer {
 
     @Override
     public void deinitialize() {
-        app.eventBus.removeEventHandler(GenericEvent.HAN_LANG_CHANGED, _onHanLangChanged);
+        app.eventBus.removeEventHandler(HanLang.Event.CHANGED, _onHanLangChanged);
         super.deinitialize();
     }
 
     @Override
     public void initialize() {
         super.initialize();
-        app.eventBus.addEventHandler(GenericEvent.HAN_LANG_CHANGED, _onHanLangChanged);
+        app.eventBus.addEventHandler(HanLang.Event.CHANGED, _onHanLangChanged);
         //
         this.addTools();
         //
@@ -179,6 +185,16 @@ public class BookXmlReader extends HtmlBasedViewer {
         final Tab tab3 = new Tab("收藏", this.favorites.getViewport());
         //
         this.sideViews.getTabs().setAll(tab1, tab2, tab3);
+        //
+        WebViewer.addShortcutKeys(this);
+        DictionaryViewer.addShortcutKeys(this);
+        BookXmlReader.addShortcutKeys(this);
+
+        WebViewer.addShortcutMenu(this);
+        DictionaryViewer.addShortcutMenu(this);
+        BookXmlReader.addShortcutMenu(this);
+
+        DictionaryViewer.addSelectionEvent(this);
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -341,7 +357,7 @@ public class BookXmlReader extends HtmlBasedViewer {
                 inputText = inputText.substring(1).strip();
             } else {
                 // 页内查找以显示文字为准，此处转换以匹配目标文字
-                inputText = ChineseConvertors.convert(inputText.strip(), null, AppContext.hanLang());
+                inputText = ChineseConvertors.convert(inputText.strip(), null, HanLang.get());
             }
             return inputText;
         });
@@ -404,9 +420,12 @@ public class BookXmlReader extends HtmlBasedViewer {
 
     @Override
     protected Object createWebContent() {
-        final String htmlFile = bookDocument.getVolumeHtmlDocument(chapter.path, AppContext.hanLang(),
-                body -> AppContext.hanText(StringHelper.concat("<body><article>", body.html(), "</article></body>")),
-                HtmlBasedViewer.getWebIncludeURIsEx().toArray(new String[0])
+        final String htmlFile = bookDocument.getVolumeHtmlDocument(chapter.path, HanLang.get(),
+                body -> {
+                    htmlMetadata = body.ownerDocument().head().select("meta").remove();
+                    return AppContext.hanText(StringHelper.concat("<body><article>", body.html(), "</article></body>"));
+                },
+                AppContext.getWebIncludeURIsEx().toArray(new String[0])
         );
         return Path.of(htmlFile);
     }
@@ -433,116 +452,6 @@ public class BookXmlReader extends HtmlBasedViewer {
                 }
             });
         });
-    }
-
-    @Override
-    protected void onWebPaneShortcutsPressed(KeyEvent event) {
-        if (event.isConsumed()) {
-            return;
-        }
-        // Ctrl + LEFT
-        if (event.isShortcutDown() && event.getCode() == KeyCode.LEFT) {
-            gotoPrev.fire();
-            event.consume();
-            return;
-        }
-        // Ctrl + RIGHT
-        if (event.isShortcutDown() && event.getCode() == KeyCode.RIGHT) {
-            gotoNext.fire();
-            event.consume();
-            return;
-        }
-        // Ctrl + T
-        if (event.isShortcutDown() && event.getCode() == KeyCode.T) {
-            gotoMenu.fire();
-            event.consume();
-            return;
-        }
-        super.onWebPaneShortcutsPressed(event);
-    }
-
-    @Override
-    protected void onWebViewContextMenuRequest(List<MenuItem> model, WebSelection selection) {
-        super.onWebViewContextMenuRequest(model, selection);
-        //
-        MenuItem copyRef = new MenuItem("复制为引用");
-        copyRef.setDisable(!selection.hasTrims || !book.path.startsWith("toc/"));
-        copyRef.setOnAction(event -> {
-            try {
-                String refInfoStr = webPane.executeScript("getValidSelectionReferenceInfo2()");
-                String[] refInfo = refInfoStr.split("\\|", 3);
-                if (refInfo.length < 2) return;
-                if (refInfo[0].isBlank()) return;
-                if (refInfo[1].isBlank() || refInfo[1].length() < 6) refInfo[1] = refInfo[0];
-
-                // 《長阿含經》卷1：「玄旨非言不傳」(CBETA 2021.Q3, T01, no. 1, p. 1a5-6)
-                final StringBuilder buff = new StringBuilder();
-                buff.append("《").append(this.book.title).append("》卷");
-                String serial = "00";
-                final short vol = BookHelper.getVolume(chapter);
-                if (vol > 0) {
-                    buff.append(vol);
-                    serial = book.volumes.get(vol);
-                } else {
-                    buff.append("00");
-                }
-
-                buff.append("：「");
-                buff.append(selection.hasTrims ? selection.trims : "");
-                buff.append("」(CBETA ").append(AppContext.bookcase().getQuarterlyVersion()).append(", ");
-                buff.append(book.library).append(serial);
-                buff.append(", no. ").append(book.number.replaceAll("^0+", "")).append(", p. ");
-                // span#p0154b10|span#p0154b15
-                if (refInfo[0].matches("span#p\\d+[a-z]\\d+")) {
-                    String[] refStartInfo = refInfo[0].substring(6).replaceFirst("([a-z])", "@$1@").split("@", 3);
-                    String[] refEndInfo = refInfo[1].substring(6).replaceFirst("([a-z])", "@$1@").split("@", 3);
-                    buff.append(refStartInfo[0].replaceAll("^0+", ""))
-                            .append(refStartInfo[1])
-                            .append(refStartInfo[2].replaceAll("^0+", ""));
-                    if (!refStartInfo[1].equals(refEndInfo[1]) || !refStartInfo[2].equals(refEndInfo[2])) {
-                        buff.append("-");
-                        if (!refStartInfo[1].equals(refEndInfo[1])) buff.append(refEndInfo[1]);
-                        buff.append(refEndInfo[2].replaceAll("^0+", ""));
-                    }
-                } else {
-                    buff.append("000");
-                }
-                //
-                buff.append(")");
-                FxHelper.copyText(buff.toString());
-                app.toast("已复制到剪贴板");
-            } catch (Throwable t) {
-                t.printStackTrace(); // for debug
-            }
-        });
-        //
-        String textTip = selection.hasTrims ? "：" + StringHelper.trimChars(selection.trims, 8) : "";
-        String textForSearch = selection.hasTrims ? AppContext.hanLang() != HanLang.hantTW ? selection.trims : "!" + selection.trims : null;
-
-        MenuItem searchInBook = new MenuItem("全文检索（检索本书）".concat(textTip));
-        searchInBook.setOnAction(event -> app.eventBus.fireEvent(SearcherEvent.ofSearch(textForSearch, book)));
-        //
-        MenuItem bookmark = new MenuItem("添加书签");
-        bookmark.setOnAction(event -> this.handleEventToCreateBookData(BookdataType.bookmark));
-
-        MenuItem favorite = new MenuItem("添加收藏");
-        favorite.setOnAction(event -> this.handleEventToCreateBookData(BookdataType.favorite));
-
-        //
-        model.add(createMenu_copy(selection));
-        model.add(copyRef);
-        model.add(new SeparatorMenuItem());
-        model.add(createMenu_search(textTip, textForSearch));
-        model.add(createMenu_searchExact(textTip, textForSearch));
-        model.add(searchInBook);
-        model.add(createMenu_lookup(textTip, textForSearch));
-        model.add(createMenu_finder(textTip, selection));
-        model.add(new SeparatorMenuItem());
-        model.add(createMenu_dict(selection));
-        model.add(createMenu_pinyin(selection));
-        model.add(new SeparatorMenuItem());
-        model.add(bookmark);
-        model.add(favorite);
     }
 
     private void handleEventToCreateBookData(BookdataType dataType) {
@@ -644,17 +553,18 @@ public class BookXmlReader extends HtmlBasedViewer {
 
         @Override
         protected String getHeaderText() {
-            return "快捷跳转本书目录";
+            return "跳转本书目录";
         }
 
         @Override
-        protected String getUsagesText() {
-            return """
-                    >> 支持简繁任意汉字匹配（以感叹号起始则强制区分）；支持按拼音（全拼）匹配，使用双引号包含则实行精确匹配；
-                    >> 支持复杂条件(+/AND,默认为OR)：例1：1juan +"bu kong" AND 仪轨；例2：1juan +("bu kong" 仪轨 OR "yi gui")
-                    >> 逗号分隔任意字/词/短语匹配；卷编号/卷名/章节名匹配；斜杠'/'匹配经卷目录；#号起始开启本书卷/行定位；
-                    >> 快捷键：Ctrl+T 在阅读视图中开启；ESC 或 点击透明区 退出此界面；上下方向键选择列表项；回车键打开；
-                    """;
+        protected void helpButtonAction(ActionEvent actionEvent) {
+            FxHelper.showTextViewerWindow(app, "appGotoChapters.helpWindow", "跳转本书目录使用方法",
+                    """
+                            >> 支持简繁任意汉字匹配（以感叹号起始则强制区分）；支持按拼音（全拼）匹配，使用双引号包含则实行精确匹配；
+                            >> 支持复杂条件(+/AND,默认为OR)：例1：1juan +"bu kong" AND 仪轨；例2：1juan +("bu kong" 仪轨 OR "yi gui")
+                            >> 逗号分隔任意字/词/短语匹配；卷编号/卷名/章节名匹配；斜杠'/'匹配经卷目录；#号起始开启本书卷/行定位；
+                            >> 快捷键：Ctrl+T 在阅读视图中开启；ESC 或 点击透明区 退出此界面；上下方向键选择列表项；回车键打开；
+                                    """);
         }
 
         @Override
@@ -691,6 +601,30 @@ public class BookXmlReader extends HtmlBasedViewer {
                 return;
             }
             final LookupExpression lookupExpression = optional.orElse(null);
+
+            //
+            if (bookBasic.tocTree.getRoot().getChildren().size() == 1) {
+                String headings = webPane.executeScript("getHeadings()");
+                if (null != headings && !headings.isEmpty()) {
+                    headings.lines().forEach(str -> {
+                        String[] arr = str.split("#", 2);
+                        if (arr.length != 2 || arr[1].isBlank()) return;
+
+                        final String hTxt = arr[1].strip();
+
+                        double score = isInputEmpty ? 1 : lookupExpression.score(hTxt);
+                        if (score > 0) {
+                            result.add(new LookupResultItem(arr[0] + "#" + hTxt, score));
+                        }
+                    });
+                }
+                //
+                if (null != lookupExpression)
+                    lookupExpression.keywords().forEach(k -> usedKeywords.add(k.keyword()));
+
+                return;
+            }
+
             TreeHelper.filterLeafs(bookBasic.tocTree.getRoot(), (treeItem, itemValue) -> {
                 if (null == itemValue || null == itemValue.title) return false;
                 double score = isInputEmpty ? 1 : lookupExpression.score(itemValue.title);
@@ -787,7 +721,138 @@ public class BookXmlReader extends HtmlBasedViewer {
          * 用于将输入文字转换成与实际显示的相同，以方便页内查找
          */
         public String convertToDisplayHan(String input) {
-            return ChineseConvertors.convert(input, null, AppContext.hanLang());
+            return ChineseConvertors.convert(input, null, HanLang.get());
         }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public static void addShortcutKeys(BookXmlReader webViewer) {
+        final WebPane webPane = webViewer.webPane;
+        final WorkbenchApp app = webViewer.app;
+        // Ctrl + LEFT
+        webPane.shortcutKeys.put(new KeyCodeCombination(KeyCode.LEFT, KeyCombination.SHORTCUT_DOWN), event -> {
+            webViewer.gotoPrev.fire();
+            event.consume();
+        });
+        // Ctrl + RIGHT
+        webPane.shortcutKeys.put(new KeyCodeCombination(KeyCode.RIGHT, KeyCombination.SHORTCUT_DOWN), event -> {
+            webViewer.gotoNext.fire();
+            event.consume();
+        });
+        // Ctrl + T
+        webPane.shortcutKeys.put(new KeyCodeCombination(KeyCode.T, KeyCombination.SHORTCUT_DOWN), event -> {
+            webViewer.gotoMenu.fire();
+            event.consume();
+        });
+    }
+
+    public static void addShortcutMenu(BookXmlReader webViewer) {
+        final WebPane webPane = webViewer.webPane;
+        final WorkbenchApp app = webViewer.app;
+        //
+        webPane.shortcutMenu.add(selection -> {
+            final Book book = webViewer.book;
+            MenuItem copyRef = new MenuItem("复制文字（&引用出处）");
+            copyRef.getProperties().put(WebPane.GRP_MENU, "copy");
+            copyRef.setDisable(!selection.hasTrims);
+            copyRef.setOnAction(event -> {
+                final StringBuilder buff = new StringBuilder();
+                try {
+                    if (book.path.startsWith("toc/")) {
+                        String refInfoStr = webPane.executeScript("getValidSelectionReferenceInfo2()");
+                        String[] refInfo = refInfoStr.split("\\|", 3);
+                        if (refInfo.length < 2) return;
+                        if (refInfo[0].isBlank()) return;
+                        if (refInfo[1].isBlank() || refInfo[1].length() < 6) refInfo[1] = refInfo[0];
+
+                        // 《長阿含經》卷1：「玄旨非言不傳」(CBETA 2021.Q3, T01, no. 1, p. 1a5-6)
+                        buff.append("《").append(book.title).append("》卷");
+                        String serial = "00";
+                        final short vol = BookHelper.getVolume(webViewer.chapter);
+                        if (vol > 0) {
+                            buff.append(vol);
+                            serial = book.volumes.get(vol);
+                        } else {
+                            buff.append("00");
+                        }
+
+                        buff.append("：「");
+                        buff.append(selection.hasTrims ? selection.trims : "");
+                        buff.append("」(CBETA ").append(AppContext.bookcase().getQuarterlyVersion()).append(", ");
+                        buff.append(book.library).append(serial);
+                        buff.append(", no. ").append(book.number.replaceAll("^0+", "")).append(", p. ");
+                        // span#p0154b10|span#p0154b15
+                        if (refInfo[0].matches("span#p\\d+[a-z]\\d+")) {
+                            String[] refStartInfo = refInfo[0].substring(6).replaceFirst("([a-z])", "@$1@").split("@", 3);
+                            String[] refEndInfo = refInfo[1].substring(6).replaceFirst("([a-z])", "@$1@").split("@", 3);
+                            buff.append(refStartInfo[0].replaceAll("^0+", ""))
+                                    .append(refStartInfo[1])
+                                    .append(refStartInfo[2].replaceAll("^0+", ""));
+                            if (!refStartInfo[1].equals(refEndInfo[1]) || !refStartInfo[2].equals(refEndInfo[2])) {
+                                buff.append("-");
+                                if (!refStartInfo[1].equals(refEndInfo[1])) buff.append(refEndInfo[1]);
+                                buff.append(refEndInfo[2].replaceAll("^0+", ""));
+                            }
+                        } else {
+                            buff.append("000");
+                        }
+                        buff.append(")");
+                    } else {
+                        final String citeMeta = null == webViewer.htmlMetadata ? null :
+                                webViewer.htmlMetadata.select("meta[library], meta[cite]")
+                                        .stream().map(v -> v.attributes().asList().getFirst().getValue()).collect(Collectors.joining(" - "));
+
+                        String citeBook = citeMeta;
+                        if (StringHelper.isBlank(citeBook)) {
+                            citeBook = TreeHelper.path(BooklistExplorer.getTreeItem(book));
+                        }
+                        if (StringHelper.isBlank(citeBook)) {
+                            citeBook = book.title;
+                        }
+
+                        buff.append("《").append(citeBook).append("》");
+                        buff.append("：「");
+                        buff.append(selection.hasTrims ? selection.trims : "");
+                        buff.append("」");
+                        if (StringHelper.isNotBlank(citeMeta)) {
+                            buff.append("（@" + book.title + "）");
+                        }
+                    }
+                    //
+                    if (!buff.isEmpty()) {
+                        FxHelper.copyText(buff.toString());
+                        app.toast("已复制引用信息到剪贴板，请粘贴使用");
+                    }
+                } catch (Throwable t) {
+                    t.printStackTrace(); // for debug
+                }
+            });
+            return List.of(copyRef);
+        });
+        //
+        webPane.shortcutMenu.add(selection -> {
+            final Book book = webViewer.book;
+            String textTip = selection.hasTrims ? "：" + StringHelper.trimChars(selection.trims, 8) : "";
+            String textForSearch = selection.hasTrims ? HanLang.get() != HanLang.hantTW ? selection.trims : "!" + selection.trims : null;
+
+            MenuItem searchInBook = new MenuItem("全文检索（检索本书）".concat(textTip));
+            searchInBook.getProperties().put(WebPane.GRP_MENU, "search");
+            searchInBook.setOnAction(event -> app.eventBus.fireEvent(SearcherEvent.ofSearch(textForSearch, book)));
+
+            return List.of(searchInBook);
+        });
+        //
+        webPane.shortcutMenu.add(selection -> {
+            MenuItem bookmark = new MenuItem("添加书签");
+            bookmark.getProperties().put(WebPane.GRP_MENU, "user1");
+            bookmark.setOnAction(event -> webViewer.handleEventToCreateBookData(BookdataType.bookmark));
+
+            MenuItem favorite = new MenuItem("添加收藏");
+            favorite.getProperties().put(WebPane.GRP_MENU, "user1");
+            favorite.setOnAction(event -> webViewer.handleEventToCreateBookData(BookdataType.favorite));
+
+            return List.of(bookmark, favorite);
+        });
     }
 }

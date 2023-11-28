@@ -1,7 +1,5 @@
 package org.appxi.cbeta.app;
 
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.scene.control.Alert;
@@ -9,15 +7,20 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Tooltip;
 import javafx.scene.input.DataFormat;
 import javafx.stage.FileChooser;
-import org.appxi.cbeta.BooksMap;
+import org.apache.solr.client.solrj.SolrClient;
 import org.appxi.cbeta.Bookcase;
 import org.appxi.cbeta.BookcaseInZip;
+import org.appxi.cbeta.BooksMap;
 import org.appxi.cbeta.TripitakaMap;
 import org.appxi.cbeta.app.dao.DaoHelper;
 import org.appxi.cbeta.app.dao.DaoService;
 import org.appxi.cbeta.app.event.GenericEvent;
+import org.appxi.cbeta.app.explorer.BooksProfile;
+import org.appxi.dictionary.ui.DictionaryContext;
+import org.appxi.javafx.app.DesktopApp;
+import org.appxi.javafx.app.web.WebViewer;
+import org.appxi.javafx.helper.FxHelper;
 import org.appxi.javafx.settings.DefaultOption;
-import org.appxi.javafx.settings.DefaultOptions;
 import org.appxi.javafx.settings.OptionEditorBase;
 import org.appxi.javafx.settings.SettingsList;
 import org.appxi.prefs.Preferences;
@@ -28,16 +31,18 @@ import org.appxi.smartcn.convert.ChineseConvertors;
 import org.appxi.smartcn.pinyin.PinyinHelper;
 import org.appxi.util.StringHelper;
 import org.appxi.util.ext.HanLang;
-import org.springframework.beans.factory.BeanFactory;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
+import org.springframework.data.solr.core.SolrTemplate;
 
 import java.io.File;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 public abstract class AppContext {
     public static final DataFormat DND_ITEM = new DataFormat("application/x-item-serialized-object");
@@ -45,13 +50,15 @@ public abstract class AppContext {
     private static Bookcase bookcase;
     private static BooksMap booksMap;
 
-    static void setupBookcase(Bookcase bookcase) {
+    static void setupBookcase(Bookcase bookcase, boolean updateGlobalPrefs) {
         try {
             // 尝试优先使用绿色版数据
             final Path bookcaseDir = Path.of(bookcase.getPath()).getParent().resolve(AppLauncher.dataDirName);
             if (Files.exists(bookcaseDir) && Files.isDirectory(bookcaseDir) && Files.isWritable(bookcaseDir)) {
-                //
-                UserPrefs.prefs.save();
+                // 如果是App内置或便携版数据源，则不更新全局配置
+                if (updateGlobalPrefs) {
+                    UserPrefs.prefs.save();
+                }
                 // reset
                 UserPrefs.setupDataDirectory(bookcaseDir, null);
                 UserPrefs.prefs = new PreferencesInProperties(UserPrefs.confDir().resolve(".prefs"));
@@ -84,7 +91,7 @@ public abstract class AppContext {
     private static AnnotationConfigApplicationContext beans;
     private static final Object _initBeans = new Object();
 
-    public static BeanFactory beans() {
+    public static AnnotationConfigApplicationContext beans() {
         if (null != beans)
             return beans;
         synchronized (_initBeans) {
@@ -104,6 +111,19 @@ public abstract class AppContext {
                 App.app().eventBus.fireEvent(new GenericEvent(GenericEvent.BEANS_READY));
                 App.app().logger.info(StringHelper.concat("beans init after: ",
                         System.currentTimeMillis() - App.app().startTime));
+                //
+                App.app().eventBus.addEventHandler(GenericEvent.PROFILE_READY, event -> {
+                    if (!Objects.equals(SpringConfig.profile, BooksProfile.ONE.profile())) {
+                        try {
+                            final SpringConfig springConfig = new SpringConfig();
+                            final SolrClient solrClient = springConfig.solrClient();
+                            AppContext.beans().registerBean(SolrClient.class, () -> solrClient);
+                            AppContext.beans().registerBean(SolrTemplate.class, () -> springConfig.solrTemplate(solrClient));
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
             } catch (Throwable t) {
                 t.printStackTrace();
             }
@@ -123,20 +143,8 @@ public abstract class AppContext {
     }
 
     static void setupInitialize(App app) {
-        app.eventBus.addEventHandler(GenericEvent.HAN_LANG_CHANGED, event -> hanLang = event.data());
-        //
-        SettingsList.add(() -> {
-            final ObjectProperty<HanLang> valueProperty = new SimpleObjectProperty<>(AppContext.hanLang());
-            valueProperty.addListener((o, ov, nv) -> {
-                if (null == ov || Objects.equals(ov, nv)) return;
-                //
-                UserPrefs.prefs.setProperty("display.han", nv.lang);
-                app.eventBus.fireEvent(new GenericEvent(GenericEvent.HAN_LANG_CHANGED, nv));
-            });
-            return new DefaultOptions<HanLang>("简繁体", "以 简体/繁体 显示经名标题、阅读视图等经藏数据", "VIEWER", true)
-                    .setValues(HanLang.hans, HanLang.hant, HanLang.hantHK, HanLang.hantTW)
-                    .setValueProperty(valueProperty);
-        });
+        HanLang.setup(app.eventBus, (text, lang) -> ChineseConvertors.convert(text, HanLang.hantTW, lang));
+        SettingsList.add(() -> FxHelper.optionForHanLang("以 简体/繁体 显示经名标题、阅读视图等经藏数据"));
         //
         SettingsList.add(() -> {
             Preferences prefsG = new PreferencesInProperties(
@@ -156,7 +164,7 @@ public abstract class AppContext {
                                     chooser.getExtensionFilters().add(
                                             new FileChooser.ExtensionFilter("CBETA Bookcase Zip File", "cbeta.zip", "bookcase.zip", "bookcase_*.zip")
                                     );
-                                    final File selected = chooser.showOpenDialog(App.app().getPrimaryStage());
+                                    final File selected = chooser.showOpenDialog(app.getPrimaryStage());
                                     if (null == selected) {
                                         return;
                                     }
@@ -174,7 +182,7 @@ public abstract class AppContext {
                                         alert.initOwner(app.getPrimaryStage());
                                         alert.show();
                                     } catch (Throwable ignore) {
-                                        App.app().toastError("验证失败，请选择有效的数据源！");
+                                        app.toastError("验证失败，请选择有效的数据源！");
                                     }
                                 });
                             }
@@ -187,19 +195,24 @@ public abstract class AppContext {
                         }
                     }).setValue(prefsG.getString("bookcase", ""));
         });
-    }
-
-    private static HanLang hanLang;
-
-    public static HanLang hanLang() {
-        if (null == hanLang)
-            hanLang = HanLang.valueBy(UserPrefs.prefs.getString("display.han", HanLang.hantTW.lang));
-        return hanLang;
+        //
+        DictionaryContext.setupInitialize(app, AppContext::getWebIncludeURIsEx, HanLang::convert);
     }
 
     public static String hanText(String text) {
-        return null == text ? "" : ChineseConvertors.convert(text, HanLang.hantTW, hanLang());
+        return HanLang.convert(text);
     }
 
     public static Preferences recentBooks = new PreferencesInMemory();
+
+    public static List<String> getWebIncludeURIsEx() {
+        List<String> result = WebViewer.getWebIncludeURIs();
+        final Path dir = DesktopApp.appDir().resolve("template/web-incl");
+        result.addAll(Stream.of("html-viewer.css", "html-viewer.js")
+                .map(s -> dir.resolve(s).toUri().toString())
+                .toList()
+        );
+        result.add("<link id=\"CSS\" rel=\"stylesheet\" type=\"text/css\" href=\"" + App.app().visualProvider.getWebStyleSheetURI() + "\">");
+        return result;
+    }
 }

@@ -8,15 +8,14 @@ import org.appxi.cbeta.app.home.PreferencesController;
 import org.appxi.cbeta.app.reader.BookDataPlaceController;
 import org.appxi.cbeta.app.reader.BookmarksController;
 import org.appxi.cbeta.app.reader.FavoritesController;
-import org.appxi.cbeta.app.reader.HtmlBasedViewer;
 import org.appxi.cbeta.app.recent.RecentItemsController;
 import org.appxi.cbeta.app.recent.RecentViewsController;
 import org.appxi.cbeta.app.search.LookupController;
 import org.appxi.cbeta.app.search.SearchController;
 import org.appxi.cbeta.app.widget.WidgetsController;
+import org.appxi.dictionary.ui.DictionaryController;
 import org.appxi.file.FileWatcher;
 import org.appxi.javafx.app.DesktopApp;
-import org.appxi.javafx.app.dict.DictionaryController;
 import org.appxi.javafx.visual.VisualEvent;
 import org.appxi.javafx.web.WebPane;
 import org.appxi.javafx.workbench.WorkbenchApp;
@@ -34,7 +33,7 @@ import java.util.stream.Stream;
 public class App extends WorkbenchApp {
     public static final String ID = "cbetaExplorer";
     public static final String NAME = "智悲乐藏";
-    public static final String VERSION = "22.11.30";
+    public static final String VERSION = "23.11.30";
     private static App instance;
 
     public App() {
@@ -132,7 +131,7 @@ public class App extends WorkbenchApp {
 
         result.add(new LookupController(workbench));
         result.add(new SearchController(workbench));
-        result.add(new DictionaryController(workbench, HtmlBasedViewer::getWebIncludeURIsEx, AppContext::hanText));
+        result.add(new DictionaryController(workbench));
         result.add(new WidgetsController(workbench));
 
         result.add(new PreferencesController(workbench));

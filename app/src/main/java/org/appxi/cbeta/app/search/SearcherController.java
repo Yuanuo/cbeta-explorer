@@ -38,7 +38,6 @@ import org.appxi.cbeta.Book;
 import org.appxi.cbeta.Period;
 import org.appxi.cbeta.app.AppContext;
 import org.appxi.cbeta.app.dao.PiecesRepository;
-import org.appxi.cbeta.app.event.GenericEvent;
 import org.appxi.cbeta.app.event.ProgressEvent;
 import org.appxi.cbeta.app.explorer.BooksProfile;
 import org.appxi.event.EventHandler;
@@ -55,6 +54,7 @@ import org.appxi.smartcn.convert.ChineseConvertors;
 import org.appxi.smartcn.pinyin.PinyinHelper;
 import org.appxi.util.OSVersions;
 import org.appxi.util.StringHelper;
+import org.appxi.util.ext.HanLang;
 import org.appxi.util.ext.RawVal;
 import org.springframework.data.solr.core.query.SolrPageRequest;
 import org.springframework.data.solr.core.query.result.FacetAndHighlightPage;
@@ -153,7 +153,7 @@ class SearcherController extends WorkbenchPartController.MainView {
         //
         app.eventBus.addEventHandler(ProgressEvent.INDEXING, handleEventOnIndexingToBlocking);
         //
-        app.eventBus.addEventHandler(GenericEvent.HAN_LANG_CHANGED, event -> {
+        app.eventBus.addEventHandler(HanLang.Event.CHANGED, event -> {
             filterTabs.getTabs().forEach(t -> {
                 if (t instanceof FacetsTab ft) {
                     ft.listView.refresh();
@@ -251,7 +251,7 @@ class SearcherController extends WorkbenchPartController.MainView {
 
     private void searching(String inputText) {
         // 此时如果还有索引没有准备好，则不做操作，也不提示，避免引发beans的初始化
-        if (IndexedManager.isBookcaseIndexable() || IndexedManager.isBooklistIndexable())
+        if (IndexedManager.isBooklistIndexable())
             return;
         if (null != indexingProgressLayer) {
             // 正在索引时不执行搜索

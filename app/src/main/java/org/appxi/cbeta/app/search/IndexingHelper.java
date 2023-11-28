@@ -8,6 +8,7 @@ import org.appxi.cbeta.Tripitaka;
 import org.appxi.cbeta.VolumeDocument;
 import org.appxi.cbeta.app.AppContext;
 import org.appxi.cbeta.xml.LinkedXmlFilter;
+import org.appxi.holder.StringHolder;
 import org.appxi.search.solr.Piece;
 import org.appxi.util.StringHelper;
 import org.appxi.util.ext.Attributes;
@@ -21,6 +22,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -30,17 +32,32 @@ abstract class IndexingHelper {
         book.attr("project", dataProject);
         book.attr("version", dataVersion);
         if (!book.hasAttr("category")) {
+            final StringHolder library = new StringHolder();
+            if (book.path.startsWith("a/")) {
+                final BookDocument bookDoc = book.attrOr(BookDocument.class, () -> new BookDocument(AppContext.bookcase(), book));
+                final VolumeDocument volDoc = bookDoc.getVolumeDocument(book.path);
+                final Elements htmlMetadata = volDoc.getDocument().head().select("meta");
+                Optional.ofNullable(htmlMetadata.select("meta[library]").first()).ifPresent(e -> library.value = e.attr("library"));
+                Optional.ofNullable(htmlMetadata.select("meta[catalog]").first()).ifPresent(e -> book.catalog = e.attr("catalog"));
+                htmlMetadata.select("meta[period]").forEach(ele -> book.periods.add(ele.attr("period")));
+                htmlMetadata.select("meta[author]").forEach(ele -> book.authors.add(ele.attr("author")));
+            }
+
             final Map<String, String> category = new LinkedHashMap<>();
             book.attr("category", category);
-            buildCategoryPaths(category, "std/tripitaka", null == tripitaka ? "其他" : tripitaka.name);
-            buildCategoryPaths(category, "std/catalog", StringHelper.isBlank(book.catalog) ? "其他" : book.catalog);
+            buildCategoryPaths(category, "std/tripitaka", StringHelper.isNotBlank(library.value) ? library.value : (null == tripitaka ? "其他" : tripitaka.name));
+            buildCategoryPaths(category, "std/catalog", StringHelper.isNotBlank(book.catalog) ? book.catalog : "其他");
             book.authorInfo();// call for init periods/authors from authorInfo
-            if (book.periods.isEmpty())
+            if (book.periods.isEmpty()) {
                 buildCategoryPaths(category, "std/period", "其他");
-            else book.periods.forEach(v -> buildCategoryPaths(category, "std/period", v));
-            if (book.authors.isEmpty())
+            } else {
+                book.periods.forEach(v -> buildCategoryPaths(category, "std/period", v));
+            }
+            if (book.authors.isEmpty()) {
                 buildCategoryPaths(category, "ext/author", "其他");
-            else book.authors.forEach(v -> buildCategoryPaths(category, "ext/author", v));
+            } else {
+                book.authors.forEach(v -> buildCategoryPaths(category, "ext/author", v));
+            }
         }
     }
 
@@ -58,7 +75,7 @@ abstract class IndexingHelper {
     static void prepareBookContents(final Book book, final boolean contentInVols) {
         if (null == book || null == book.path) return;
         //
-        final BookDocument bookDoc = new BookDocument(AppContext.bookcase(), book);
+        final BookDocument bookDoc = book.path.startsWith("a/") ? book.removeAttr(BookDocument.class) : new BookDocument(AppContext.bookcase(), book);
         final Node<Chapter> tocChapters = book.attr("tocChapters");
         final Node<Chapter> volChapters = book.attr("volChapters");
         //
