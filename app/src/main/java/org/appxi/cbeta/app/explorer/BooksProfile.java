@@ -176,22 +176,34 @@ public class BooksProfile {
     }
 
     public enum Profile {
-        bulei("Default", "默认书单：CBETA 部類目錄"),
-        simple("Default", "默认书单：簡易原書目錄"),
-        advance("Default", "默认书单：進階原書目錄"),
-        profile1("Profile1", "我的书单1：未定义"),
-        profile2("Profile2", "我的书单2：未定义"),
-        profile3("Profile3", "我的书单3：未定义"),
-        profile4("Profile4", "我的书单4：未定义"),
-        profile5("Profile5", "我的书单5：未定义"),
-        profile6("Profile6", "我的书单6：未定义"),
+        bulei("默认书单：部类目录"),
+        simple("默认书单：简易原书目录"),
+        advance("默认书单：进阶原书目录"),
+        profile1("我的书单1：未定义"),
+        profile2("我的书单2：未定义"),
+        profile3("我的书单3：未定义"),
+        profile4("我的书单4：未定义"),
+        profile5("我的书单5：未定义"),
+        profile6("我的书单6：未定义"),
+        profile7("我的书单7：未定义"),
+        profile8("我的书单8：未定义"),
+        profile9("我的书单9：未定义"),
+        profile10("我的书单10：未定义"),
+        profile11("我的书单11：未定义"),
+        profile12("我的书单12：未定义"),
+        profile13("我的书单13：未定义"),
+        profile14("我的书单14：未定义"),
+        profile15("我的书单15：未定义"),
+        profile16("我的书单16：未定义"),
+        profile17("我的书单17：未定义"),
+        profile18("我的书单18：未定义"),
+        profile19("我的书单19：未定义"),
+        profile20("我的书单20：未定义"),
         //
         ;
-        public final String project;
         private final String privateTitle;
 
-        Profile(String project, String privateTitle) {
-            this.project = project;
+        Profile(String privateTitle) {
             this.privateTitle = privateTitle;
         }
 
