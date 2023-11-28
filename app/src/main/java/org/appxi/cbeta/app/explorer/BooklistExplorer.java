@@ -30,7 +30,6 @@ import org.appxi.javafx.workbench.WorkbenchPane;
 import org.appxi.javafx.workbench.WorkbenchPart;
 import org.appxi.javafx.workbench.WorkbenchPartController;
 import org.appxi.prefs.UserPrefs;
-import org.appxi.util.StringHelper;
 import org.appxi.util.ext.HanLang;
 
 import java.util.Objects;
@@ -112,22 +111,27 @@ public class BooklistExplorer extends WorkbenchPartController.SideView {
                 }).start());
         app.eventBus.addEventHandler(GenericEvent.PROFILE_READY, event -> {
             activeViewport(true);
-            // 仅在用户未手动设置过时才提示
-            if (StringHelper.isBlank(UserPrefs.prefs.getString("display.han", ""))) {
-                FxHelper.runThread(2000, () -> {
-                    Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
-                            "选择以 简体/繁体 显示经名标题、阅读视图等经藏数据。",
-                            new ButtonType("简体"), new ButtonType("繁体"), new ButtonType("稍后在选项中设置"));
-                    alert.setTitle("简繁体");
-                    alert.setHeaderText("选择简/繁体");
-                    alert.initOwner(app.getPrimaryStage());
-                    alert.showAndWait().ifPresent(buttonType -> {
-                        if ("稍后在选项中设置".equals(buttonType.getText())) return;
-
+            FxHelper.runThread(2000, () -> {
+                final String hanType = UserPrefs.prefs.getString("display.han", "");
+                if ("tip.no".equals(hanType) || !hanType.isBlank()) {
+                    return;
+                }
+                // 仅在用户未手动设置过时才提示
+                Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
+                        "选择以 简体/繁体 显示经名标题、阅读视图等经藏数据。",
+                        new ButtonType("简体"), new ButtonType("繁体"), new ButtonType("不再提示，稍后在选项中设置"));
+                alert.setTitle("简繁体");
+                alert.setHeaderText("选择简/繁体");
+                alert.initOwner(app.getPrimaryStage());
+                alert.showAndWait().ifPresent(buttonType -> {
+                    if ("不再提示，稍后在选项中设置".equals(buttonType.getText())) {
+                        UserPrefs.prefs.setProperty("display.han", "tip.no");
+                    } else {
                         HanLang.apply("简体".equals(buttonType.getText()) ? HanLang.hans : HanLang.hantTW);
-                    });
+                    }
+                    UserPrefs.prefs.save();
                 });
-            }
+            });
         });
         // 当显示汉字类型改变时需要同步更新treeView
         app.eventBus.addEventHandler(HanLang.Event.CHANGED,
