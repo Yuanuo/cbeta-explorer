@@ -28,6 +28,27 @@ $(document).ready(function () {
         if (rangy) rangy.init();
     } catch (err) {
     }
+
+    $('a[data-note]').each(function () {
+        const $this = $(this);
+        if ($this.attr('id').startsWith('inline-')) {
+            const noteText = decodeURIComponent($this.attr('data-note'));
+            $this.removeAttr("data-note");
+            $this.html('<blockquote>' + noteText.replace(/\n/g, '<br>') + '</blockquote>');
+            if ($this.attr('id').startsWith("inline-alert-"))
+                setTimeout(function () { alert(noteText); }, 500);
+        }
+    });
+
+    tippy('a[data-note]', {
+        allowHTML: true,
+        animation: false,
+        interactive: true,
+        interactiveBorder: 10,
+        interactiveDebounce: 1000,
+        placement: 'top',
+        content: (ele) => decodeURIComponent(ele.getAttribute('data-note'))
+    });
 });
 
 function getValidSelectionAnchorInfo(outMapOrElseStr = true) {
@@ -155,6 +176,9 @@ function handleOnEditMark(type) {
         tippyInstances = tippy('.' + markOn + ' span.note.mod', {
             allowHTML: true,
             animation: false,
+            interactive: true,
+            interactiveBorder: 10,
+            interactiveDebounce: 1000,
             placement: 'top',
             content: (mod) => mod.getAttribute('data-t')
         });
@@ -199,6 +223,9 @@ function handleOnEditMark(type) {
             tippyInstances = tippy('.' + markOn + ' span.app > .lem > .tmp', {
                 allowHTML: true,
                 animation: false,
+                interactive: true,
+                interactiveBorder: 10,
+                interactiveDebounce: 1000,
                 placement: 'top',
                 content: (tmp) => tmp.getAttribute('data-t')
             });
@@ -206,6 +233,9 @@ function handleOnEditMark(type) {
             tippyInstances = tippy('.' + markOn + ' span.app > .lem > .tmp', {
                 allowHTML: true,
                 animation: false,
+                interactive: true,
+                interactiveBorder: 10,
+                interactiveDebounce: 1000,
                 placement: 'top',
                 content: function (tmp) {
                     const lem = $(tmp).parent();

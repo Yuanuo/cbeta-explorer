@@ -185,6 +185,7 @@ article {
 .tippy-box {
     font-size: 95% !important;
     max-width: 70rem !important;
+    padding: .5rem 0 0 0;
 }
 
 .theme-dark .tippy-box {
@@ -205,4 +206,12 @@ hr {
     background-image: -moz-linear-gradient(left, #ccc, #333, #ccc);
     background-image: -ms-linear-gradient(left, #ccc, #333, #ccc);
     background-image: -o-linear-gradient(left, #ccc, #333, #ccc);
+}
+
+a[data-note]::before {
+    content:"⑴";
+    font-size: 85%;
+    font-weight: 600;
+    color: #20b771;
+    vertical-align: sub;
 }
