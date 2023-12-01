@@ -138,15 +138,15 @@ public class LookupController extends WorkbenchPartController implements Workben
                 if (null != book.id && null != dataApp.recentBooks.getProperty(book.id)) {
                     labeled.getStyleClass().add("visited");
                 }
-                labeled.setText(book.toString());
+                labeled.setText(toDisplayableLabel(book, null));
                 super.updateItemLabel(labeled, data);
             } else if (data instanceof Chapter chapter) {
                 String bookId = chapter.attrStr(AK_BOOK_ID);
                 Book book = dataApp.dataContext.getBook(bookId);
-                if (null != book.id && null != dataApp.recentBooks.getProperty(book.id)) {
+                if (null != book && null != book.id && null != dataApp.recentBooks.getProperty(book.id)) {
                     labeled.getStyleClass().add("visited");
                 }
-                labeled.setText(chapter.toString());
+                labeled.setText(toDisplayableLabel(book, chapter));
                 super.updateItemLabel(labeled, data);
             } else if (data instanceof LookupData item && !Objects.equals(item.extra, "#")) {
                 if (null != item.bookId && null != dataApp.recentBooks.getProperty(item.bookId)) {
@@ -164,13 +164,40 @@ public class LookupController extends WorkbenchPartController implements Workben
             }
         }
 
+        String toDisplayableLabel(Book book, Chapter chapter) {
+            final StringBuilder buff = new StringBuilder();
+            if (null != book) {
+                if (null != book.id) {
+                    buff.append(" / ").append(book.id);
+                }
+                if (null != book.title) {
+                    buff.append(" / ").append(book.title);
+                }
+                if (!book.volumes.isEmpty()) {
+                    buff.append("（").append(book.volumes.size()).append("卷）");
+                }
+            }
+            if (null != chapter) {
+                if (null != chapter.title) {
+                    buff.append(" / ").append(chapter.title);
+                }
+            }
+            if (null != book) {
+                if (StringHelper.isNotBlank(book.authorInfo)) {
+                    buff.append(" / ").append(book.authorInfo);
+                }
+            }
+            final String str = buff.toString().toLowerCase();
+            return str.length() > 3 ? str.substring(3) : str;
+        }
+
         @Override
         protected void lookupByKeywords(String lookupText, int resultLimit,
                                         List<LookupResultItem> result, Set<String> usedKeywords) {
 //                    LookupByPredicate.lookup(lookupText, resultLimit, result, usedKeywords);
 //            LookupByExpression.lookup(lookupDatabase, lookupText, resultLimit, result, usedKeywords);
             final boolean lookupTextIsBlank = lookupText.isBlank();
-            final String[] arr = lookupText.split("[ 　]+");
+            final String[] arr = lookupText.toLowerCase().split("[ 　]+");
             final LookupWord[] words = Arrays.stream(arr).map(LookupWord::new).toArray(LookupWord[]::new);
             if (!lookupTextIsBlank) {
                 usedKeywords.addAll(Arrays.asList(arr));
@@ -183,7 +210,7 @@ public class LookupController extends WorkbenchPartController implements Workben
                         if (null == book || book.id == null) {
                             return;
                         }
-                        test(book, book.title);
+                        test(book, StringHelper.concat(book.id, book.title, book.authorInfo));
                     }
 
                     @Override
@@ -192,7 +219,7 @@ public class LookupController extends WorkbenchPartController implements Workben
                             return;
                         }
                         // book
-                        test(book, book.title);
+                        test(book, StringHelper.concat(book.id, book.title, book.authorInfo));
 
                         // chapters
                         if (book.path != null && book.path.startsWith("toc/")) {
@@ -202,8 +229,13 @@ public class LookupController extends WorkbenchPartController implements Workben
                                     child.walk(new Node.Walker<>() {
                                         @Override
                                         public void head(int depth, Node<Chapter> node, Chapter nodeVal) {
-                                            test(nodeVal, nodeVal.title);
-                                            nodeVal.attr(AK_BOOK_ID, book.id);
+                                            try {
+                                                test(nodeVal, nodeVal.title);
+                                                nodeVal.attr(AK_BOOK_ID, book.id);
+                                            } catch (ResultLimitException rle) {
+                                                nodeVal.attr(AK_BOOK_ID, book.id);
+                                                throw rle;
+                                            }
                                         }
                                     });
                                 });
@@ -221,6 +253,7 @@ public class LookupController extends WorkbenchPartController implements Workben
                                 lookupWord.score = 0;
                             }
                             //
+                            content = content.toLowerCase();
                             int kIdx = 0;
                             int cLen = content.length();
                             for (int i = 0; i < cLen; i++) {
@@ -249,11 +282,13 @@ public class LookupController extends WorkbenchPartController implements Workben
                         }
                         //
                         if (result.size() >= resultLimit) {
-                            throw new RuntimeException("BREAK");
+                            throw new ResultLimitException();
                         }
                     }
                 });
+            } catch (ResultLimitException ignore) {
             } catch (Exception e) {
+                e.printStackTrace();
             }
         }
 
@@ -346,7 +381,6 @@ public class LookupController extends WorkbenchPartController implements Workben
                 hide();
                 app.eventBus.fireEvent(new BookEvent(BookEvent.OPEN, book, chapter));
             } else {
-
             }
         }
     }
@@ -386,6 +420,8 @@ public class LookupController extends WorkbenchPartController implements Workben
             this.extra = extra;
             this.bookVolsLabel = String.valueOf(bookVols).concat("卷");
         }
+    }
 
+    static final class ResultLimitException extends RuntimeException {
     }
 }
