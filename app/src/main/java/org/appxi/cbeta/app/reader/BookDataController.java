@@ -15,13 +15,11 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.appxi.book.Chapter;
 import org.appxi.cbeta.Book;
-import org.appxi.cbeta.app.AppContext;
+import org.appxi.cbeta.app.DataApp;
 import org.appxi.cbeta.app.dao.Bookdata;
 import org.appxi.cbeta.app.dao.BookdataType;
-import org.appxi.cbeta.app.dao.DaoService;
 import org.appxi.cbeta.app.event.BookEvent;
 import org.appxi.cbeta.app.event.BookdataEvent;
-import org.appxi.cbeta.app.explorer.BooksProfile;
 import org.appxi.holder.BoolHolder;
 import org.appxi.javafx.control.ListViewEx;
 import org.appxi.javafx.helper.FxHelper;
@@ -38,14 +36,15 @@ import java.util.function.Consumer;
 
 public abstract class BookDataController extends WorkbenchPartController.SideView {
     private final BoolHolder activated = new BoolHolder();
-
+    final DataApp dataApp;
     public final BookdataType dataType;
     public final Book filterByBook;
     protected ListView<Bookdata> listView;
 
     public BookDataController(String viewId, WorkbenchPane workbench,
-                              BookdataType dataType, Book filterByBook) {
+                              DataApp dataApp, BookdataType dataType, Book filterByBook) {
         super(workbench);
+        this.dataApp = dataApp;
 
         this.id.set(viewId);
 
@@ -131,8 +130,8 @@ public abstract class BookDataController extends WorkbenchPartController.SideVie
                 textLabel.setText(item.data);
                 timeLabel.setText(DateHelper.format(item.updateAt));
                 if (null == filterByBook && null != bookLabel) {
-                    Book book = BooksProfile.ONE.getBook(item.book);
-                    bookLabel.setText(null == book ? null : AppContext.hanText(book.title));
+                    Book book = dataApp.dataContext.getBook(item.book);
+                    bookLabel.setText(null == book ? null : dataApp.hanTextToShow(book.title));
                 }
                 setGraphic(cardBox);
             }
@@ -142,7 +141,7 @@ public abstract class BookDataController extends WorkbenchPartController.SideVie
         final Consumer<Boolean> removeAction = sel -> {
             Collection<Bookdata> list = sel ? listView.getSelectionModel().getSelectedItems() : listView.getItems();
             try {
-                DaoService.getBookdataDao().delete(list);
+                dataApp.daoService.getBookdataDao().delete(list);
                 listView.getItems().removeAll(list);
             } catch (SQLException t) {
                 app.toastError(t.getMessage());
@@ -161,7 +160,7 @@ public abstract class BookDataController extends WorkbenchPartController.SideVie
     protected void handleOnEnterOrDoubleClickAction(InputEvent inputEvent, Bookdata item) {
         if (null == item)
             return;
-        final Book book = BooksProfile.ONE.getBook(item.book);
+        final Book book = dataApp.dataContext.getBook(item.book);
         final Chapter chapter = book.ofChapter();
         chapter.path = item.volume;
         chapter.anchor = item.anchor;
@@ -190,7 +189,7 @@ public abstract class BookDataController extends WorkbenchPartController.SideVie
     }
 
     protected Where<Bookdata, Integer> startQueryWhere() throws Exception {
-        Where<Bookdata, Integer> where = DaoService.getBookdataDao().queryBuilder()
+        Where<Bookdata, Integer> where = dataApp.daoService.getBookdataDao().queryBuilder()
                 .where().eq("dataType", this.dataType);
         if (null != this.filterByBook)
             where = where.and().eq("book", filterByBook.id);
@@ -203,7 +202,7 @@ public abstract class BookDataController extends WorkbenchPartController.SideVie
 
     public void createData(Bookdata data) {
         try {
-            DaoService.getBookdataDao().create(data);
+            dataApp.daoService.getBookdataDao().create(data);
             this.listView.getItems().add(0, data);
         } catch (Throwable throwable) {
             throwable.printStackTrace();
@@ -212,7 +211,7 @@ public abstract class BookDataController extends WorkbenchPartController.SideVie
 
     public void removeData(Bookdata data) {
         try {
-            DaoService.getBookdataDao().delete(data);
+            dataApp.daoService.getBookdataDao().delete(data);
             this.listView.getItems().remove(data);
         } catch (Throwable throwable) {
             throwable.printStackTrace();

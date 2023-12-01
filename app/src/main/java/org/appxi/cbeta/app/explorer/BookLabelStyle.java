@@ -1,7 +1,6 @@
 package org.appxi.cbeta.app.explorer;
 
 import org.appxi.cbeta.Book;
-import org.appxi.prefs.UserPrefs;
 import org.appxi.util.StringHelper;
 
 import java.util.function.Function;
@@ -50,19 +49,7 @@ public enum BookLabelStyle {
         }
     }
 
-    private static BookLabelStyle style;
-
-    static BookLabelStyle value() {
-        if (null != style) return style;
-        return style = BookLabelStyle.valueBy(UserPrefs.prefs.getString("book.label.style", "name_vols"));
-    }
-
-    static void setValue(BookLabelStyle val) {
-        style = val;
-        UserPrefs.prefs.setProperty("book.label.style", val.name());
-    }
-
-    public static String format(Book book) {
-        return value().format.apply(book);
+    public String format(Book book) {
+        return this.format.apply(book);
     }
 }

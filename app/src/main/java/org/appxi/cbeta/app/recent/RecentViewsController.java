@@ -1,8 +1,8 @@
 package org.appxi.cbeta.app.recent;
 
 import org.appxi.cbeta.Book;
+import org.appxi.cbeta.app.DataApp;
 import org.appxi.cbeta.app.event.GenericEvent;
-import org.appxi.cbeta.app.explorer.BooksProfile;
 import org.appxi.cbeta.app.reader.BookXmlReader;
 import org.appxi.holder.RawHolder;
 import org.appxi.javafx.app.AppEvent;
@@ -12,15 +12,17 @@ import org.appxi.javafx.workbench.WorkbenchPart;
 import org.appxi.javafx.workbench.WorkbenchPartController;
 import org.appxi.prefs.Preferences;
 import org.appxi.prefs.PreferencesInProperties;
-import org.appxi.prefs.UserPrefs;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 public class RecentViewsController extends WorkbenchPartController {
-    public RecentViewsController(WorkbenchPane workbench) {
+    final DataApp dataApp;
+
+    public RecentViewsController(WorkbenchPane workbench, DataApp dataApp) {
         super(workbench);
+        this.dataApp = dataApp;
     }
 
     @Override
@@ -33,7 +35,7 @@ public class RecentViewsController extends WorkbenchPartController {
             final List<WorkbenchPart.MainView> swapRecentViews = new ArrayList<>();
             WorkbenchPart.MainView addedController = null;
             for (String key : recent.getPropertyKeys()) {
-                final Book book = BooksProfile.ONE.getBook(key);
+                final Book book = dataApp.dataContext.getBook(key);
                 // 如果此书不存在于当前书单，则需要移除（如果存在）
                 if (null == book) {
                     Optional.ofNullable(workbench.findMainView(key)).ifPresent(workbench.mainViews::closeTabs);
@@ -43,7 +45,7 @@ public class RecentViewsController extends WorkbenchPartController {
                 if (workbench.existsMainView(book.id))
                     continue;
                 //
-                addedController = new BookXmlReader(book, workbench);
+                addedController = new BookXmlReader(book, workbench, dataApp);
                 if (recent.getBoolean(key, false)) {
                     swapRecentViewSelected.value = addedController;
                 }
@@ -66,7 +68,7 @@ public class RecentViewsController extends WorkbenchPartController {
     }
 
     private Preferences createRecentViews(boolean load) {
-        return new PreferencesInProperties(UserPrefs.confDir().resolve(".recentviews"), load);
+        return new PreferencesInProperties(app.workspace.resolve(".recentviews"), load);
     }
 
     private void saveRecentViews() {

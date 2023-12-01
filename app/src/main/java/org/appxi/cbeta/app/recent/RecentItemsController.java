@@ -4,11 +4,9 @@ import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import org.appxi.cbeta.Book;
-import org.appxi.cbeta.app.AppContext;
+import org.appxi.cbeta.app.DataApp;
 import org.appxi.cbeta.app.event.BookEvent;
 import org.appxi.cbeta.app.event.GenericEvent;
-import org.appxi.cbeta.app.explorer.BookLabelStyle;
-import org.appxi.cbeta.app.explorer.BooksProfile;
 import org.appxi.javafx.app.AppEvent;
 import org.appxi.javafx.control.TreeViewEx;
 import org.appxi.javafx.visual.MaterialIcon;
@@ -16,7 +14,6 @@ import org.appxi.javafx.workbench.WorkbenchPane;
 import org.appxi.javafx.workbench.WorkbenchPartController;
 import org.appxi.prefs.Preferences;
 import org.appxi.prefs.PreferencesInProperties;
-import org.appxi.prefs.UserPrefs;
 import org.appxi.timeago.TimeAgo;
 import org.appxi.util.NumberHelper;
 import org.appxi.util.ext.HanLang;
@@ -31,10 +28,12 @@ import java.util.Optional;
 
 public class RecentItemsController extends WorkbenchPartController.SideView {
     private final Map<String, RecentBook> recentBooksMap = new LinkedHashMap<>(128);
+    final DataApp dataApp;
     private TreeViewEx<Object> treeView;
 
-    public RecentItemsController(WorkbenchPane workbench) {
+    public RecentItemsController(WorkbenchPane workbench, DataApp dataApp) {
         super(workbench);
+        this.dataApp = dataApp;
 
         this.id.set("RECENT");
         this.tooltip.set("已读");
@@ -47,9 +46,7 @@ public class RecentItemsController extends WorkbenchPartController.SideView {
         app.eventBus.addEventHandler(BookEvent.CLOSE, event -> handleToSaveOrUpdateRecentBook(event.book));
         app.eventBus.addEventHandler(BookEvent.VIEW, event -> handleToSaveOrUpdateRecentBook(event.book));
         app.eventBus.addEventHandler(AppEvent.STOPPING, event -> saveRecentBooks());
-        if (!(UserPrefs.recents instanceof PreferencesInProperties)) {
-            UserPrefs.recents = new PreferencesInProperties(UserPrefs.confDir().resolve(".recents"));
-        }
+
         loadRecentBooks();
         // 当书名显示风格改变时需要同步更新treeView
         app.eventBus.addEventHandler(GenericEvent.BOOK_LABEL_STYLED, event -> Optional.ofNullable(this.treeView).ifPresent(TreeView::refresh));
@@ -66,7 +63,7 @@ public class RecentItemsController extends WorkbenchPartController.SideView {
     }
 
     private void loadRecentBooks() {
-        final Preferences recent = AppContext.recentBooks = new PreferencesInProperties(UserPrefs.confDir().resolve(".recentbooks"), true);
+        final Preferences recent = dataApp.recentBooks = new PreferencesInProperties(app.workspace.resolve(".recentbooks"), true);
         recent.getPropertyKeys().forEach(key -> {
             try {
                 final RecentBook rBook = new RecentBook();
@@ -83,7 +80,7 @@ public class RecentItemsController extends WorkbenchPartController.SideView {
     }
 
     private void saveRecentBooks() {
-        final Preferences recent = new PreferencesInProperties(UserPrefs.confDir().resolve(".recentbooks"), false);
+        final Preferences recent = new PreferencesInProperties(app.workspace.resolve(".recentbooks"), false);
         this.recentBooksMap.values().forEach(rBook -> {
             final StringBuilder buf = new StringBuilder();
             buf.append(rBook.createAt.getTime()).append('|');
@@ -102,7 +99,7 @@ public class RecentItemsController extends WorkbenchPartController.SideView {
             this.treeView.setEnterOrDoubleClickAction((e, treeItem) -> {
                 if (!(treeItem.getValue() instanceof RecentBook rBook))
                     return;
-                final Book book = BooksProfile.ONE.getBook(rBook.id);
+                final Book book = dataApp.dataContext.getBook(rBook.id);
                 if (null != book)
                     app.eventBus.fireEvent(new BookEvent(BookEvent.OPEN, book));
             });
@@ -121,9 +118,9 @@ public class RecentItemsController extends WorkbenchPartController.SideView {
                         this.setGraphic(getTreeItem().isExpanded() ? MaterialIcon.FOLDER_OPEN.graphic() : MaterialIcon.FOLDER.graphic());
                     } else if (item instanceof RecentBook rBook) {
                         this.setGraphic(null);
-                        final Book book = BooksProfile.ONE.getBook(rBook.id);
+                        final Book book = dataApp.dataContext.getBook(rBook.id);
                         if (null != book) {
-                            text = AppContext.hanText(BookLabelStyle.format(book));
+                            text = dataApp.hanTextToShow(dataApp.formatBookLabel(book));
                         } else {
                             text = rBook.id;
                         }

@@ -1,10 +1,6 @@
 package org.appxi.cbeta.app.explorer;
 
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
-import javafx.scene.control.ButtonType;
 import javafx.scene.control.Tooltip;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
@@ -13,7 +9,7 @@ import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.layout.BorderPane;
 import org.appxi.book.Chapter;
 import org.appxi.cbeta.Book;
-import org.appxi.cbeta.app.AppContext;
+import org.appxi.cbeta.app.DataApp;
 import org.appxi.cbeta.app.event.BookEvent;
 import org.appxi.cbeta.app.event.GenericEvent;
 import org.appxi.cbeta.app.event.ProgressEvent;
@@ -23,25 +19,21 @@ import org.appxi.javafx.app.AppEvent;
 import org.appxi.javafx.app.search.SearcherEvent;
 import org.appxi.javafx.helper.FxHelper;
 import org.appxi.javafx.helper.TreeHelper;
-import org.appxi.javafx.settings.DefaultOption;
-import org.appxi.javafx.settings.SettingsList;
 import org.appxi.javafx.visual.MaterialIcon;
 import org.appxi.javafx.workbench.WorkbenchPane;
 import org.appxi.javafx.workbench.WorkbenchPart;
 import org.appxi.javafx.workbench.WorkbenchPartController;
-import org.appxi.prefs.UserPrefs;
 import org.appxi.util.ext.HanLang;
 
-import java.util.Objects;
 import java.util.Optional;
 
 public class BooklistExplorer extends WorkbenchPartController.SideView {
-    private static BooklistExplorer instance_;
+    public final DataApp dataApp;
     private BooklistTreeView treeView;
 
-    public BooklistExplorer(WorkbenchPane workbench) {
+    public BooklistExplorer(WorkbenchPane workbench, DataApp dataApp) {
         super(workbench);
-        instance_ = this;
+        this.dataApp = dataApp;
 
         this.id.set("BOOKS");
         this.title.set("典籍");
@@ -53,21 +45,23 @@ public class BooklistExplorer extends WorkbenchPartController.SideView {
     protected void createViewport(BorderPane viewport) {
         super.createViewport(viewport);
         //
-        final Button btnProfile = MaterialIcon.PLAYLIST_ADD_CHECK.flatButton();
-        btnProfile.setTooltip(new Tooltip("选择书单"));
-        btnProfile.setOnAction(event -> BooksProfile.ONE.selectProfile(null));
+        final Button btnProfile = new Button("书单");
+        btnProfile.getStyleClass().addAll("flat");
+        btnProfile.setTooltip(new Tooltip("打开书单"));
+        btnProfile.setOnAction(event -> dataApp.basedApp.selectProfile());
         //
-        final Button btnProfiles = MaterialIcon.EDIT_NOTE.flatButton();
-        btnProfiles.setTooltip(new Tooltip("管理我的书单"));
-        btnProfiles.setOnAction(event -> BooksProfile.ONE.manageProfiles());
+        final Button btnEditProfile = MaterialIcon.EDIT_NOTE.flatButton();
+        btnEditProfile.setTooltip(new Tooltip("编辑当前书单"));
+        btnEditProfile.setDisable(!dataApp.profile.isManaged());
+        btnEditProfile.setOnAction(event -> dataApp.editProfile());
         //
         app.eventBus.addEventHandler(ProgressEvent.INDEXING, event -> {
             if (event.isFinished()) {
                 btnProfile.setDisable(false);
-                btnProfiles.setDisable(false);
+                btnEditProfile.setDisable(!dataApp.profile.isManaged());
             } else {
                 if (!btnProfile.isDisabled()) btnProfile.setDisable(true);
-                if (!btnProfiles.isDisabled()) btnProfiles.setDisable(true);
+                if (!btnEditProfile.isDisabled()) btnEditProfile.setDisable(true);
             }
         });
         //
@@ -91,7 +85,7 @@ public class BooklistExplorer extends WorkbenchPartController.SideView {
         });
 
         //
-        this.topBar.addRight(btnProfile, btnProfiles, btnSearch, btnLocate);
+        this.topBar.addRight(btnProfile, btnEditProfile, btnSearch, btnLocate);
         //
         this.treeView = new BooklistTreeView(this);
         viewport.setCenter(this.treeView);
@@ -103,35 +97,34 @@ public class BooklistExplorer extends WorkbenchPartController.SideView {
         app.eventBus.addEventHandler(AppEvent.STARTING,
                 event -> new Thread(() -> {
                     // 在启动过程中尝试加载booklistProfile，正常情况下会成功加载（如果过早加载成功，有的监听器可能不被执行！）
-                    if (!BooksProfile.ONE.loadProfile()) {
-                        FxHelper.sleepSilently(100);
-                        // 如果未加载成功，此时则给予提示并让用户选择
-                        FxHelper.runLater(() -> BooksProfile.ONE.selectProfile(BooksProfile.ONE.profile()));
-                    }
+//                    if (!BooksProfile.ONE.loadProfile()) {
+//                        FxHelper.sleepSilently(100);
+//                        // 如果未加载成功，此时则给予提示并让用户选择
+//                        FxHelper.runLater(() -> BooksProfile.ONE.selectProfile(BooksProfile.ONE.profile()));
+//                    }
                 }).start());
         app.eventBus.addEventHandler(GenericEvent.PROFILE_READY, event -> {
             activeViewport(true);
-            FxHelper.runThread(2000, () -> {
-                final String hanType = UserPrefs.prefs.getString("display.han", "");
-                if ("tip.no".equals(hanType) || !hanType.isBlank()) {
-                    return;
-                }
-                // 仅在用户未手动设置过时才提示
-                Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
-                        "选择以 简体/繁体 显示经名标题、阅读视图等经藏数据。",
-                        new ButtonType("简体"), new ButtonType("繁体"), new ButtonType("不再提示，稍后在选项中设置"));
-                alert.setTitle("简繁体");
-                alert.setHeaderText("选择简/繁体");
-                alert.initOwner(app.getPrimaryStage());
-                alert.showAndWait().ifPresent(buttonType -> {
-                    if ("不再提示，稍后在选项中设置".equals(buttonType.getText())) {
-                        UserPrefs.prefs.setProperty("display.han", "tip.no");
-                    } else {
-                        HanLang.apply("简体".equals(buttonType.getText()) ? HanLang.hans : HanLang.hantTW);
-                    }
-                    UserPrefs.prefs.save();
-                });
-            });
+//            FxHelper.runThread(2000, () -> {
+//                final String tip = dataApp.config.getString("display.han.noTip", "");
+//                if (!tip.isEmpty()) {
+//                    return;
+//                }
+//                // 仅在用户未手动设置过时才提示
+//                Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
+//                        "选择以 简体/繁体 显示经名标题、阅读视图等经藏数据。",
+//                        new ButtonType("简体"), new ButtonType("繁体"), new ButtonType("不再提示，稍后在选项中设置"));
+//                alert.setTitle("简繁体");
+//                alert.setHeaderText("选择简/繁体");
+//                alert.initOwner(app.getPrimaryStage());
+//                alert.showAndWait().ifPresent(buttonType -> {
+//                    dataApp.config.setProperty("display.han.noTip", "1");
+//                    switch (buttonType.getText()) {
+//                        case "简体" -> dataApp.hanTextProvider.apply(HanLang.hans);
+//                        case "繁体" -> dataApp.hanTextProvider.apply(HanLang.hantTW);
+//                    }
+//                });
+//            });
         });
         // 当显示汉字类型改变时需要同步更新treeView
         app.eventBus.addEventHandler(HanLang.Event.CHANGED,
@@ -139,21 +132,21 @@ public class BooklistExplorer extends WorkbenchPartController.SideView {
         // 当书名显示风格改变时需要同步更新treeView
         app.eventBus.addEventHandler(GenericEvent.BOOK_LABEL_STYLED,
                 event -> Optional.ofNullable(this.treeView).ifPresent(TreeView::refresh));
-        //
-        SettingsList.add(() -> {
-            final ObjectProperty<BookLabelStyle> valueProperty = new SimpleObjectProperty<>(BookLabelStyle.value());
-            valueProperty.addListener((o, ov, nv) -> {
-                if (null == ov || Objects.equals(ov, nv)) return;
-                BookLabelStyle.setValue(nv);
-                app.eventBus.fireEvent(new GenericEvent(GenericEvent.BOOK_LABEL_STYLED, nv));
-            });
-            return new DefaultOption<BookLabelStyle>("书名显示风格", "仅典籍树、已读中有效", "显示", true)
-                    .setValueProperty(valueProperty);
-        });
     }
 
     private void handleEventToOpenBook(Event event, Book book, Chapter chapter) {
-        if (null == book || book.id == null || book.path == null) return;
+        if (null == book) {
+            return;
+        }
+        if (book.id == null || book.path == null) {
+            TreeItem<Book> treeItem = findTreeItem(book);
+            if (null != treeItem) {
+                treeView.getSelectionModel().select(treeItem);
+                treeView.scrollToIfNotVisible(treeItem);
+            }
+            event.consume();
+            return;
+        }
         event.consume();
         final BookXmlReader viewController = (BookXmlReader) workbench.findMainViewPart(book.id);
         if (null != viewController) {
@@ -162,13 +155,13 @@ public class BooklistExplorer extends WorkbenchPartController.SideView {
             return;
         }
         // 记录此book为已访问状态
-        if (!AppContext.recentBooks.containsProperty(book.id)) {
-            AppContext.recentBooks.setProperty(book.id, "");
+        if (!dataApp.recentBooks.containsProperty(book.id)) {
+            dataApp.recentBooks.setProperty(book.id, "");
         }
         FxHelper.runLater(() -> {
             // 刷新典籍视图，比如已访问过的典籍需求改变显示颜色等
             Optional.ofNullable(this.treeView).ifPresent(TreeView::refresh);
-            final BookXmlReader controller = new BookXmlReader(book, workbench);
+            final BookXmlReader controller = new BookXmlReader(book, workbench, dataApp);
             workbench.addWorkbenchPartAsMainView(controller, false);
             if (null != chapter) {
                 controller.setPosition(chapter);
@@ -179,16 +172,16 @@ public class BooklistExplorer extends WorkbenchPartController.SideView {
 
     @Override
     public void activeViewport(boolean firstTime) {
-        if (firstTime && null != treeView && null != BooksProfile.ONE.profile()) {
-            final TreeItem<Book> rootItem = BooksProfile.ONE.booklist().tree();
+        if (firstTime && null != treeView && null != dataApp.profile) {
+            final TreeItem<Book> rootItem = dataApp.dataContext.booklist().tree();
             if (treeView.getRoot() == rootItem) return;
             rootItem.setExpanded(true);
             FxHelper.runLater(() -> treeView.setRoot(rootItem));
         }
     }
 
-    public static TreeItem<Book> getTreeItem(Book book) {
-        TreeItem<Book> result = TreeHelper.findFirstByValue(instance_.treeView.getRoot(), book);
+    public TreeItem<Book> findTreeItem(Book book) {
+        TreeItem<Book> result = TreeHelper.findFirstByValue(treeView.getRoot(), book);
         return result != null ? result : new TreeItem<>(book);
     }
 }

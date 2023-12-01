@@ -36,10 +36,10 @@ import javafx.scene.text.TextFlow;
 import javafx.util.Callback;
 import org.appxi.cbeta.Book;
 import org.appxi.cbeta.Period;
-import org.appxi.cbeta.app.AppContext;
+import org.appxi.cbeta.app.DataApp;
+import org.appxi.cbeta.app.SpringConfig;
 import org.appxi.cbeta.app.dao.PiecesRepository;
 import org.appxi.cbeta.app.event.ProgressEvent;
-import org.appxi.cbeta.app.explorer.BooksProfile;
 import org.appxi.event.EventHandler;
 import org.appxi.holder.BoolHolder;
 import org.appxi.javafx.app.search.SearchedEvent;
@@ -50,7 +50,6 @@ import org.appxi.javafx.visual.MaterialIcon;
 import org.appxi.javafx.workbench.WorkbenchPane;
 import org.appxi.javafx.workbench.WorkbenchPartController;
 import org.appxi.search.solr.Piece;
-import org.appxi.smartcn.convert.ChineseConvertors;
 import org.appxi.smartcn.pinyin.PinyinHelper;
 import org.appxi.util.OSVersions;
 import org.appxi.util.StringHelper;
@@ -76,8 +75,11 @@ class SearcherController extends WorkbenchPartController.MainView {
     static final int PAGE_SIZE = 10;
     final EventHandler<ProgressEvent> handleEventOnIndexingToBlocking = this::handleEventOnIndexingToBlocking;
 
-    public SearcherController(String viewId, WorkbenchPane workbench) {
+    public final DataApp dataApp;
+
+    public SearcherController(String viewId, WorkbenchPane workbench, DataApp dataApp) {
         super(workbench);
+        this.dataApp = dataApp;
 
         this.id.set(viewId);
         this.setTitles(null);
@@ -236,7 +238,7 @@ class SearcherController extends WorkbenchPartController.MainView {
             inputText = inputText.substring(1).strip();
         } else {
             // 由于CBETA数据是繁体汉字，此处转换以匹配目标文字
-            inputText = ChineseConvertors.hans2HantTW(inputText.strip());
+            inputText = dataApp.hanTextToBase(inputText.strip());
         }
         // 搜索太长的字符串实际并无意义
         if (inputText.length() > 20)
@@ -251,7 +253,7 @@ class SearcherController extends WorkbenchPartController.MainView {
 
     private void searching(String inputText) {
         // 此时如果还有索引没有准备好，则不做操作，也不提示，避免引发beans的初始化
-        if (IndexedManager.isBooklistIndexable())
+        if (dataApp.indexedManager.isBookListIndexable())
             return;
         if (null != indexingProgressLayer) {
             // 正在索引时不执行搜索
@@ -264,7 +266,7 @@ class SearcherController extends WorkbenchPartController.MainView {
     }
 
     private void searchingImpl(String inputText) {
-        final PiecesRepository repository = AppContext.getBean(PiecesRepository.class);
+        final PiecesRepository repository = SpringConfig.getBean(PiecesRepository.class);
         if (null == repository) return;
         // 准备搜索条件
         final BoolHolder facet = new BoolHolder(true);
@@ -287,7 +289,7 @@ class SearcherController extends WorkbenchPartController.MainView {
 
         finalQuery = inputText;
         // 搜索
-        facetAndHighlightPage = repository.search(BooksProfile.ONE.profile().name(), filterScopes,
+        facetAndHighlightPage = repository.search(dataApp.profile.id(), filterScopes,
                 finalQuery, filterCategories, facet.value, new SolrPageRequest(0, PAGE_SIZE));
         // debug
         if (null == facetAndHighlightPage) {
@@ -364,7 +366,7 @@ class SearcherController extends WorkbenchPartController.MainView {
             highlightPage = facetAndHighlightPage;
         } else {
             // query for next page
-            highlightPage = repository.search(BooksProfile.ONE.profile().name(), filterScopes,
+            highlightPage = repository.search(dataApp.profile.id(), filterScopes,
                     finalQuery, filterCategories, false, new SolrPageRequest(pageIdx, PAGE_SIZE));
         }
         if (null == highlightPage)
@@ -427,7 +429,7 @@ class SearcherController extends WorkbenchPartController.MainView {
         return listView;
     }
 
-    private static class FacetItem {
+    private class FacetItem {
         final SimpleBooleanProperty stateProperty = new SimpleBooleanProperty();
         final String value;
         String label;
@@ -448,7 +450,7 @@ class SearcherController extends WorkbenchPartController.MainView {
 
         @Override
         public String toString() {
-            return "%s（%d）".formatted(AppContext.hanText(label), count);
+            return "%s（%d）".formatted(dataApp.hanTextToShow(label), count);
         }
     }
 
@@ -630,25 +632,25 @@ class SearcherController extends WorkbenchPartController.MainView {
         }
 
         void updateItem(Piece item, List<HighlightEntry.Highlight> highlights) {
-            nameLabel.setText(AppContext.hanText(item.title));
+            nameLabel.setText(dataApp.hanTextToShow(item.title));
             nameLabel.setOnAction(e -> app.eventBus.fireEvent(new SearchedEvent(item, inputQuery, null)));
 
             locationLabel.setText(null);
             if (item.categories != null && !item.categories.isEmpty()) {
-                final String navPrefix = "nav/".concat(BooksProfile.ONE.profile().template().name()).concat("/");
+                final String navPrefix = "nav/".concat(dataApp.profile.id()).concat("/");
                 item.categories.stream().filter(s -> s.startsWith(navPrefix)).findFirst()
-                        .ifPresent(s -> locationLabel.setText(AppContext.hanText(s.substring(navPrefix.length()))));
+                        .ifPresent(s -> locationLabel.setText(dataApp.hanTextToShow(s.substring(navPrefix.length()))));
             }
             if (locationLabel.getText() == null || locationLabel.getText().isBlank())
-                locationLabel.setText(AppContext.hanText(item.field("location_s").concat("（").concat(item.field("book_s")).concat("）")));
+                locationLabel.setText(dataApp.hanTextToShow(item.field("location_s").concat("（").concat(item.field("book_s")).concat("）")));
 
-            authorsLabel.setText(AppContext.hanText(item.field("author_txt_aio")));
+            authorsLabel.setText(dataApp.hanTextToShow(item.field("author_txt_aio")));
 
             //
             List<Node> texts = new ArrayList<>();
             if (!highlights.isEmpty()) {
                 highlights.forEach(highlight -> highlight.getSnipplets().forEach(str -> {
-                    String[] strings = ("…" + AppContext.hanText(str) + "…").split("§§hl#pre§§");
+                    String[] strings = ("…" + dataApp.hanTextToShow(str) + "…").split("§§hl#pre§§");
                     for (String string : strings) {
                         String[] tmpArr = string.split("§§hl#end§§", 2);
                         if (tmpArr.length == 1) {
@@ -674,7 +676,7 @@ class SearcherController extends WorkbenchPartController.MainView {
                 }));
             } else {
                 String str = item.text("text_txt_aio_sub");
-                final Text text = new Text(null == str ? "" : AppContext.hanText(StringHelper.trimChars(str, 200)));
+                final Text text = new Text(null == str ? "" : dataApp.hanTextToShow(StringHelper.trimChars(str, 200)));
                 text.getStyleClass().add("plaintext");
                 texts.add(text);
             }

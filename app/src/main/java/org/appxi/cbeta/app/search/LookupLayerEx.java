@@ -6,9 +6,8 @@ import javafx.scene.control.Labeled;
 import javafx.scene.layout.StackPane;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
-import org.appxi.cbeta.app.AppContext;
+import org.appxi.cbeta.app.DataApp;
 import org.appxi.javafx.control.LookupLayer;
-import org.appxi.smartcn.convert.ChineseConvertors;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -17,11 +16,13 @@ import java.util.List;
 import java.util.Set;
 
 public abstract class LookupLayerEx extends LookupLayer<Object> {
+    private final DataApp dataApp;
     private Set<String> usedKeywords;
     protected String inputQuery;
 
-    public LookupLayerEx(StackPane owner) {
+    public LookupLayerEx(DataApp dataApp, StackPane owner) {
         super(owner);
+        this.dataApp = dataApp;
     }
 
     @Override
@@ -64,7 +65,7 @@ public abstract class LookupLayerEx extends LookupLayer<Object> {
             labeled.setGraphic(textFlow);
             labeled.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
             //
-            textFlow.getChildren().forEach(t -> ((Text) t).setText(AppContext.hanText(((Text) t).getText())));
+            textFlow.getChildren().forEach(t -> ((Text) t).setText(dataApp.hanTextToShow(((Text) t).getText())));
         } else {
             labeled.setText(text);
             labeled.setContentDisplay(ContentDisplay.TEXT_ONLY);
@@ -81,7 +82,9 @@ public abstract class LookupLayerEx extends LookupLayer<Object> {
         if (lookupText.matches("[!！].*")) {
             lookupText = lookupText.substring(1);
             lookupText = !lookupText.isBlank() ? lookupText : null;// 此时无法搜索，保持现状
-        } else lookupText = ChineseConvertors.hans2HantTW(lookupText);
+        } else {
+            lookupText = dataApp.hanTextToBase(lookupText);
+        }
         // 如果此时的输入并无必要进行搜索，允许子类实现中返回null以中断并保持现状
         if (lookupText == null) return null;
 

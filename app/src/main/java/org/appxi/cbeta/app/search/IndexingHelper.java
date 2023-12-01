@@ -401,8 +401,11 @@ abstract class IndexingHelper {
         }
         if (null != category) {
             category.forEach((k, v) -> {
-                if (k.startsWith("profile/")) piece.projects.add(k.substring(8));
-                else piece.categories.add(k);
+                if (k.startsWith("project/")) {
+                    piece.projects.add(k.substring(8));
+                } else {
+                    piece.categories.add(k);
+                }
             });
         }
     }

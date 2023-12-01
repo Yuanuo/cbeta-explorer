@@ -2,6 +2,7 @@ package org.appxi.cbeta.app.search;
 
 import javafx.event.ActionEvent;
 import javafx.scene.control.Labeled;
+import javafx.scene.control.TreeItem;
 import javafx.scene.input.InputEvent;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
@@ -9,20 +10,23 @@ import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
 import org.appxi.book.Chapter;
 import org.appxi.cbeta.Book;
-import org.appxi.cbeta.app.AppContext;
+import org.appxi.cbeta.ChapterTree;
+import org.appxi.cbeta.app.DataApp;
 import org.appxi.cbeta.app.event.BookEvent;
 import org.appxi.cbeta.app.event.GenericEvent;
-import org.appxi.cbeta.app.explorer.BooksProfile;
 import org.appxi.javafx.app.search.SearcherEvent;
 import org.appxi.javafx.control.LookupLayer;
 import org.appxi.javafx.helper.FxHelper;
+import org.appxi.javafx.helper.TreeHelper;
 import org.appxi.javafx.visual.MaterialIcon;
 import org.appxi.javafx.workbench.WorkbenchPane;
 import org.appxi.javafx.workbench.WorkbenchPart;
 import org.appxi.javafx.workbench.WorkbenchPartController;
 import org.appxi.util.StringHelper;
 import org.appxi.util.ext.HanLang;
+import org.appxi.util.ext.Node;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -32,10 +36,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class LookupController extends WorkbenchPartController implements WorkbenchPart.SideTool {
-    private LookupDatabase lookupDatabase;
+    public final DataApp dataApp;
 
-    public LookupController(WorkbenchPane workbench) {
+    public LookupController(WorkbenchPane workbench, DataApp dataApp) {
         super(workbench);
+        this.dataApp = dataApp;
 
         this.id.set("LOOKUP");
         this.tooltip.set("快捷检索 (Ctrl+G)");
@@ -63,10 +68,21 @@ public class LookupController extends WorkbenchPartController implements Workben
         });
         app.eventBus.addEventHandler(SearcherEvent.LOOKUP,
                 event -> this.lookup(null != event.text ? event.text.strip() : null));
-        this.lookupDatabase = new LookupDatabase();
         app.eventBus.addEventHandler(GenericEvent.PROFILE_READY, event -> {
             if (null != lookupLayer) lookupLayer.reset();
-            lookupDatabase.reload();
+            TreeHelper.walkTree(dataApp.dataContext.booklist().tree(), new TreeHelper.TreeWalker<>() {
+                @Override
+                public void visit(TreeItem<Book> treeItem, Book book) {
+                    if (null == book || book.id == null || book.path == null || !book.path.startsWith("toc/")) {
+                        return;
+                    }
+//                        BookHelper.walkTocChaptersByXmlSAX(AppContext.bookcase(), book, (href, text) -> {
+//                            System.out.println(text);
+//                        });
+                    // load chapters
+                    new ChapterTree(dataApp.dataContext.bookcase, book).getTocChapters();
+                }
+            });
         });
         // 当显示汉字类型改变时需要同步更新lookupView
         app.eventBus.addEventHandler(HanLang.Event.CHANGED,
@@ -91,7 +107,7 @@ public class LookupController extends WorkbenchPartController implements Workben
 
     class LookupLayerImpl extends LookupLayerEx {
         public LookupLayerImpl() {
-            super(app.getPrimaryGlass());
+            super(dataApp, app.getPrimaryGlass());
         }
 
         @Override
@@ -118,22 +134,126 @@ public class LookupController extends WorkbenchPartController implements Workben
         @Override
         protected void updateItemLabel(Labeled labeled, Object data) {
             labeled.getStyleClass().remove("visited");
-            if (data instanceof LookupDatabase.LookupData item && !Objects.equals(item.extra, "#")) {
-                if (null != item.bookId && null != AppContext.recentBooks.getProperty(item.bookId)) {
+            if (data instanceof Book book) {
+                if (null != book.id && null != dataApp.recentBooks.getProperty(book.id)) {
+                    labeled.getStyleClass().add("visited");
+                }
+                labeled.setText(book.toString());
+                super.updateItemLabel(labeled, data);
+            } else if (data instanceof Chapter chapter) {
+                String bookId = chapter.attrStr(AK_BOOK_ID);
+                Book book = dataApp.dataContext.getBook(bookId);
+                if (null != book.id && null != dataApp.recentBooks.getProperty(book.id)) {
+                    labeled.getStyleClass().add("visited");
+                }
+                labeled.setText(chapter.toString());
+                super.updateItemLabel(labeled, data);
+            } else if (data instanceof LookupData item && !Objects.equals(item.extra, "#")) {
+                if (null != item.bookId && null != dataApp.recentBooks.getProperty(item.bookId)) {
                     labeled.getStyleClass().add("visited");
                 }
                 labeled.setText(item.toString());
                 super.updateItemLabel(labeled, data);
             } else if (data instanceof String str) {
                 labeled.setText(str);
-            } else labeled.setText(null == data ? "" : data.toString());
+                super.updateItemLabel(labeled, str);
+            } else {
+                String str = null == data ? "" : data.toString();
+                labeled.setText(str);
+                super.updateItemLabel(labeled, str);
+            }
         }
 
         @Override
         protected void lookupByKeywords(String lookupText, int resultLimit,
                                         List<LookupResultItem> result, Set<String> usedKeywords) {
 //                    LookupByPredicate.lookup(lookupText, resultLimit, result, usedKeywords);
-            LookupByExpression.lookup(lookupText, resultLimit, result, usedKeywords);
+//            LookupByExpression.lookup(lookupDatabase, lookupText, resultLimit, result, usedKeywords);
+            final boolean lookupTextIsBlank = lookupText.isBlank();
+            final String[] arr = lookupText.split("[ 　]+");
+            final LookupWord[] words = Arrays.stream(arr).map(LookupWord::new).toArray(LookupWord[]::new);
+            if (!lookupTextIsBlank) {
+                usedKeywords.addAll(Arrays.asList(arr));
+            }
+
+            try {
+                TreeHelper.walkTree(dataApp.dataContext.booklist().tree(), new TreeHelper.TreeWalker<Book>() {
+                    @Override
+                    public void start(TreeItem<Book> treeItem, Book book) {
+                        if (null == book || book.id == null) {
+                            return;
+                        }
+                        test(book, book.title);
+                    }
+
+                    @Override
+                    public void visit(TreeItem<Book> treeItem, Book book) {
+                        if (null == book || book.id == null) {
+                            return;
+                        }
+                        if (book.path != null && book.path.startsWith("toc/")) {
+                            Node<Chapter> chapters = book.chapters.findFirst(node -> "tocs".equals(node.value.id));
+                            if (null != chapters) {
+                                chapters.children.forEach(child -> {
+                                    child.walk(new Node.Walker<>() {
+                                        @Override
+                                        public void head(int depth, Node<Chapter> node, Chapter nodeVal) {
+                                            test(nodeVal, nodeVal.title);
+                                            nodeVal.attr(AK_BOOK_ID, book.id);
+                                        }
+                                    });
+                                });
+                            }
+                            return;
+                        }
+
+                        test(book, book.title);
+                    }
+
+                    void test(Object data, String content) {
+//                        System.out.println("test : " + content);
+                        if (lookupTextIsBlank) {
+                            result.add(new LookupResultItem(data, 1));
+                        } else {
+                            // reset
+                            for (LookupWord lookupWord : words) {
+                                lookupWord.score = 0;
+                            }
+                            //
+                            int kIdx = 0;
+                            int cLen = content.length();
+                            for (int i = 0; i < cLen; i++) {
+                                for (; kIdx < words.length; kIdx++) {
+                                    final LookupWord lookupWord = words[kIdx];
+                                    final int idx = content.indexOf(lookupWord.word, i);
+                                    if (idx >= i) {
+                                        lookupWord.score += 10;
+                                        i = idx;
+                                    } else {
+                                        lookupWord.score = -9999;
+                                        i = cLen;
+                                        break;
+                                    }
+                                }
+                            }
+                            //
+                            int totalScore = 0;
+                            for (LookupWord lookupWord : words) {
+                                totalScore += lookupWord.score;
+                            }
+                            //
+                            if (totalScore > 0) {
+                                result.add(new LookupResultItem(data, totalScore));
+                            }
+                        }
+                        //
+                        if (result.size() >= resultLimit) {
+                            throw new RuntimeException("BREAK");
+                        }
+                    }
+                });
+            } catch (Exception e) {
+            }
         }
 
         @Override
@@ -172,14 +292,14 @@ public class LookupController extends WorkbenchPartController implements Workben
                 lineOrVolume = false;
             }
             if (null != bookId) {
-                Book book = BooksProfile.ONE.getBook(bookId);
+                Book book = dataApp.dataContext.getBook(bookId);
                 String title = null == book ? "???" : "《".concat(book.title).concat("》");
                 if (!lineOrVolume) {
                     chapter = chapter.length() >= 3 ? chapter.substring(0, 3) : StringHelper.padLeft(chapter, 3, '0');
                 }
                 title = StringHelper.concat("转到 >>> 经号：", bookId, "，经名：", title,
                         (lineOrVolume ? "，行号：" : "，卷号：").concat(chapter));
-                result.add(new LookupDatabase.LookupData(lineOrVolume, bookId, -1, title, chapter, null, null, "#"));
+                result.add(new LookupData(lineOrVolume, bookId, -1, title, chapter, null, null, "#"));
             } else {
                 result.add("??? 使用说明：请使用以下几种格式");
                 result.add("格式1：#T01n0001_p0001a01  表示：转到经号T0001的行号p0001a01处");
@@ -194,28 +314,77 @@ public class LookupController extends WorkbenchPartController implements Workben
 
         @Override
         protected void handleEnterOrDoubleClickActionOnSearchResultList(InputEvent event, Object data) {
-            if (!(data instanceof LookupDatabase.LookupData item)) return;
-            if (null == item.bookId) return;
-            Book book = BooksProfile.ONE.getBook(item.bookId);
-            if (null == book) return;
+            if (data instanceof Book book) {
+                hide();
+                app.eventBus.fireEvent(new BookEvent(BookEvent.OPEN, book, null));
+            } else if (data instanceof Chapter chapter) {
+                String bookId = chapter.attrStr(AK_BOOK_ID);
+                Book book = dataApp.dataContext.getBook(bookId);
+                hide();
+                app.eventBus.fireEvent(new BookEvent(BookEvent.OPEN, book, chapter));
+            } else if (data instanceof LookupData item) {
+                if (null == item.bookId) return;
+                Book book = dataApp.dataContext.getBook(item.bookId);
+                if (null == book) return;
 
-            Chapter chapter = null;
-            if (Objects.equals(item.extra, "#")) {
-                chapter = book.ofChapter();
-                chapter.id = "#";
-                chapter.path = item.chapter;
-            } else if (null != item.chapter) {
-                // open as chapter
-                String[] tmpArr = item.chapter.split("#", 2);
-                chapter = book.ofChapter();
-                chapter.path = tmpArr[0];
-                if (tmpArr.length == 2) {
-                    chapter.anchor = "#".concat(tmpArr[1]);
-                    chapter.attr("position.selector", chapter.anchor);
+                Chapter chapter = null;
+                if (Objects.equals(item.extra, "#")) {
+                    chapter = book.ofChapter();
+                    chapter.id = "#";
+                    chapter.path = item.chapter;
+                } else if (null != item.chapter) {
+                    // open as chapter
+                    String[] tmpArr = item.chapter.split("#", 2);
+                    chapter = book.ofChapter();
+                    chapter.path = tmpArr[0];
+                    if (tmpArr.length == 2) {
+                        chapter.anchor = "#".concat(tmpArr[1]);
+                        chapter.attr("position.selector", chapter.anchor);
+                    }
                 }
+                hide();
+                app.eventBus.fireEvent(new BookEvent(BookEvent.OPEN, book, chapter));
+            } else {
+
             }
-            hide();
-            app.eventBus.fireEvent(new BookEvent(BookEvent.OPEN, book, chapter));
         }
+    }
+
+    static final Object AK_BOOK_ID = new Object();
+
+    static class LookupWord {
+        final String word;
+        int score = 0;
+
+        LookupWord(String word) {
+            this.word = word;
+        }
+    }
+
+    static final class LookupData {
+        public final boolean stdBook;
+        public final String bookId;
+        public final int bookVols;
+        public final String bookTitle;
+        public final String chapter;
+        public final String chapterTitle;
+        public final String authorInfo;
+        public final String extra;
+        public final String bookVolsLabel;
+
+        LookupData(boolean stdBook, String bookId, int bookVols, String bookTitle,
+                   String chapter, String chapterTitle,
+                   String authorInfo, String extra) {
+            this.stdBook = stdBook;
+            this.bookId = bookId;
+            this.bookVols = bookVols;
+            this.bookTitle = bookTitle;
+            this.chapter = chapter;
+            this.chapterTitle = chapterTitle;
+            this.authorInfo = authorInfo;
+            this.extra = extra;
+            this.bookVolsLabel = String.valueOf(bookVols).concat("卷");
+        }
+
     }
 }

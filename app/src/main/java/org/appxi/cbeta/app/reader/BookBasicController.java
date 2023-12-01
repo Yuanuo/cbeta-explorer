@@ -12,14 +12,12 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.appxi.book.Chapter;
 import org.appxi.cbeta.Book;
-import org.appxi.cbeta.app.AppContext;
 import org.appxi.cbeta.app.explorer.ChapterTree;
 import org.appxi.holder.RawHolder;
 import org.appxi.javafx.control.TreeViewEx;
 import org.appxi.javafx.helper.TreeHelper;
 import org.appxi.javafx.workbench.WorkbenchPane;
 import org.appxi.javafx.workbench.WorkbenchPartController;
-import org.appxi.prefs.UserPrefs;
 import org.appxi.util.DigestHelper;
 import org.appxi.util.StringHelper;
 import org.appxi.util.ext.HanLang;
@@ -29,7 +27,7 @@ import java.util.Objects;
 import java.util.function.Predicate;
 
 public class BookBasicController extends WorkbenchPartController.SideView {
-    final BookXmlReader bookXmlReader;
+    final BookXmlReader reader;
 
     Accordion accordion;
     TitledPane tocPane, volPane, infoPane;
@@ -37,12 +35,12 @@ public class BookBasicController extends WorkbenchPartController.SideView {
 
     TreeItem<Chapter> selectedTreeItem;
 
-    public BookBasicController(WorkbenchPane workbench, BookXmlReader bookXmlReader) {
+    public BookBasicController(WorkbenchPane workbench, BookXmlReader reader) {
         super(workbench);
 
         this.id.set("BOOK-BASIC");
 
-        this.bookXmlReader = bookXmlReader;
+        this.reader = reader;
     }
 
     @Override
@@ -76,7 +74,7 @@ public class BookBasicController extends WorkbenchPartController.SideView {
                     this.setText(null);
                     return;
                 }
-                this.setText(AppContext.hanText(item.title));
+                this.setText(reader.dataApp.hanTextToShow(item.title));
             }
         });
         // 当显示汉字类型改变时需要同步更新treeView
@@ -92,14 +90,14 @@ public class BookBasicController extends WorkbenchPartController.SideView {
         if (toc && null != treeItemValue.anchor) {
             treeItemValue.attr("anchor", treeItemValue.anchor);
         }
-        bookXmlReader.navigate(treeItemValue);
+        reader.navigate(treeItemValue);
     }
 
     @Override
     public void activeViewport(boolean firstTime) {
         if (firstTime) {
             // init nav-view
-            ChapterTree.parseBookChaptersToTree(bookXmlReader.book, this.tocTree, this.volTree);
+            ChapterTree.parseBookChaptersToTree(reader.book, this.tocTree, this.volTree);
         }
     }
 
@@ -153,7 +151,7 @@ public class BookBasicController extends WorkbenchPartController.SideView {
             detectAvailTarget(targetPane, targetTree, targetTreeItem, findByPath);
         }
         if (null == targetTreeItem.value) {
-            final String lastChapterId = UserPrefs.recents.getString(book.id + ".chapter", null);
+            final String lastChapterId = app.recents.getString(book.id + ".chapter", null);
             if (StringHelper.isNotBlank(lastChapterId)) {
                 final Predicate<TreeItem<Chapter>> findById;
                 if (lastChapterId.contains("-"))

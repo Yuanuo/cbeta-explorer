@@ -17,8 +17,6 @@ import org.appxi.javafx.workbench.WorkbenchPane;
 import org.appxi.javafx.workbench.WorkbenchPart;
 import org.appxi.javafx.workbench.WorkbenchPartController;
 
-import java.util.List;
-
 public class AppLauncherDev extends AppLauncher {
     public static void main(String[] args) {
         try {
@@ -30,13 +28,11 @@ public class AppLauncherDev extends AppLauncher {
     }
 
     public static class AppDev extends App {
-        @Override
-        protected List<WorkbenchPart> createWorkbenchParts(WorkbenchPane workbench) {
-            final List<WorkbenchPart> result = super.createWorkbenchParts(workbench);
-            result.add(new MaterialIcons(workbench));
-            result.add(new ScenicView(workbench));
-            return result;
-        }
+//        @Override
+//        protected List<WorkbenchPart> createWorkbenchParts(WorkbenchPane workbench) {
+//            final List<WorkbenchPart> result = super.createWorkbenchParts(workbench);
+//            return result;
+//        }
     }
 
     static class ScenicView extends WorkbenchPartController implements WorkbenchPart.SideTool {

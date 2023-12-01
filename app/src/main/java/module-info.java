@@ -1,4 +1,4 @@
-module appxi.cbetaExplorer {
+module appxi.smartBooks {
     requires java.desktop;
 
     requires appxi.cbeta;
@@ -19,6 +19,7 @@ module appxi.cbetaExplorer {
     exports org.appxi.cbeta.app; // for application launch
     exports org.appxi.cbeta.app.dao; // for ormlite, spring
     exports org.appxi.cbeta.app.reader; // for js-engine
+    exports org.appxi.cbeta.app.explorer;
 
     opens org.appxi.cbeta.app;
 }

@@ -28,16 +28,18 @@ import org.appxi.cbeta.BookDocument;
 import org.appxi.cbeta.BookDocumentEx;
 import org.appxi.cbeta.BookHelper;
 import org.appxi.cbeta.app.AppContext;
+import org.appxi.cbeta.app.DataApp;
 import org.appxi.cbeta.app.dao.Bookdata;
 import org.appxi.cbeta.app.dao.BookdataType;
 import org.appxi.cbeta.app.event.BookEvent;
 import org.appxi.cbeta.app.event.BookdataEvent;
-import org.appxi.cbeta.app.explorer.BooklistExplorer;
 import org.appxi.cbeta.app.search.LookupLayerEx;
 import org.appxi.dictionary.ui.DictionaryViewer;
 import org.appxi.event.EventHandler;
 import org.appxi.holder.IntHolder;
+import org.appxi.javafx.app.BaseApp;
 import org.appxi.javafx.app.search.SearcherEvent;
+import org.appxi.javafx.app.web.WebApp;
 import org.appxi.javafx.app.web.WebViewer;
 import org.appxi.javafx.app.web.WebViewerPart;
 import org.appxi.javafx.control.TabPaneEx;
@@ -45,10 +47,7 @@ import org.appxi.javafx.helper.FxHelper;
 import org.appxi.javafx.helper.TreeHelper;
 import org.appxi.javafx.visual.MaterialIcon;
 import org.appxi.javafx.web.WebPane;
-import org.appxi.javafx.workbench.WorkbenchApp;
 import org.appxi.javafx.workbench.WorkbenchPane;
-import org.appxi.prefs.UserPrefs;
-import org.appxi.smartcn.convert.ChineseConvertors;
 import org.appxi.smartcn.pinyin.PinyinHelper;
 import org.appxi.util.StringHelper;
 import org.appxi.util.ext.Attributes;
@@ -65,6 +64,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -78,6 +78,8 @@ public class BookXmlReader extends WebViewerPart.MainView {
 
     private final BookDocument bookDocument;
     public final Book book;
+    final DataApp dataApp;
+    final WorkbenchPane workbench;
 
     TabPane sideViews;
     BookBasicController bookBasic;
@@ -86,11 +88,14 @@ public class BookXmlReader extends WebViewerPart.MainView {
 
     Chapter chapter;
     private Elements htmlMetadata;
+    Supplier<List<String>> webIncludesSupplier;
 
-    public BookXmlReader(Book book, WorkbenchPane workbench) {
-        super(workbench);
-
+    public BookXmlReader(Book book, WorkbenchPane workbench, DataApp dataApp) {
+        super(workbench.application);
         this.book = book;
+        this.workbench = workbench;
+        this.dataApp = dataApp;
+
         this.bookDocument = new BookDocumentEx(AppContext.bookcase(), book);
 
         this.id.set(book.id);
@@ -99,7 +104,7 @@ public class BookXmlReader extends WebViewerPart.MainView {
     }
 
     void setTitles(Chapter chapter) {
-        String viewTitle = AppContext.hanText(book.title);
+        String viewTitle = dataApp.hanTextToShow(book.title);
         String viewTooltip = viewTitle;
         String mainTitle = viewTitle;
         if (StringHelper.isNotBlank(book.id)) {
@@ -117,7 +122,7 @@ public class BookXmlReader extends WebViewerPart.MainView {
         }
 
         if (StringHelper.isNotBlank(book.authorInfo)) {
-            String authorInfo = AppContext.hanText(book.authorInfo);
+            String authorInfo = dataApp.hanTextToShow(book.authorInfo);
             viewTooltip = viewTooltip.concat("\n").concat(authorInfo);
             mainTitle = mainTitle.concat(" by ").concat(authorInfo);
         }
@@ -177,8 +182,8 @@ public class BookXmlReader extends WebViewerPart.MainView {
         VBox.setVgrow(this.sideViews, Priority.ALWAYS);
         //
         this.bookBasic = new BookBasicController(workbench, this);
-        this.bookmarks = new BookmarksController(workbench, this.book);
-        this.favorites = new FavoritesController(workbench, this.book);
+        this.bookmarks = new BookmarksController(workbench, dataApp, this.book);
+        this.favorites = new FavoritesController(workbench, dataApp, this.book);
         //
         final Tab tab1 = new Tab("目录", this.bookBasic.getViewport());
         final Tab tab2 = new Tab("书签", this.bookmarks.getViewport());
@@ -195,6 +200,9 @@ public class BookXmlReader extends WebViewerPart.MainView {
         BookXmlReader.addShortcutMenu(this);
 
         DictionaryViewer.addSelectionEvent(this);
+
+        //
+        webIncludesSupplier = ((WebApp)app).webIncludesSupplier();
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -219,7 +227,7 @@ public class BookXmlReader extends WebViewerPart.MainView {
     private void addTool_SideControl() {
         final Button button = MaterialIcon.IMPORT_CONTACTS.flatButton();
         button.setTooltip(new Tooltip("显示本书相关数据（目录、书签等）"));
-        button.setOnAction(event -> workbench.selectSideTool(BookDataPlaceController.getInstance().id.get()));
+        button.setOnAction(event -> workbench.selectSideTool(dataApp.bookDataPlaceController.id.get()));
         webPane.getTopBar().addLeft(button);
     }
 
@@ -294,7 +302,7 @@ public class BookXmlReader extends WebViewerPart.MainView {
 
     private void addTool_EditingMarks() {
         final ToggleGroup marksGroup = new ToggleGroup();
-        final int usedMarks = UserPrefs.prefs.getInt("viewer.edit.marks", -1);
+        final int usedMarks = dataApp.config.getInt("viewer.edit.marks", -1);
 
         final ToggleButton markOrigInline = new ToggleButton("原编注");
         markOrigInline.getStyleClass().add("flat");
@@ -328,7 +336,7 @@ public class BookXmlReader extends WebViewerPart.MainView {
 
         marksGroup.getToggles().setAll(markOrigInline, markModInline, markModSharp, markModColor, markModPopover);
         marksGroup.selectedToggleProperty().addListener((o, ov, nv) -> {
-            UserPrefs.prefs.setProperty("viewer.edit.marks", null == nv ? -1 : nv.getUserData());
+            dataApp.config.setProperty("viewer.edit.marks", null == nv ? -1 : nv.getUserData());
             webPane.executeScript("handleOnEditMark(" + (null == nv ? -1 : nv.getUserData()) + ")");
         });
 
@@ -357,7 +365,7 @@ public class BookXmlReader extends WebViewerPart.MainView {
                 inputText = inputText.substring(1).strip();
             } else {
                 // 页内查找以显示文字为准，此处转换以匹配目标文字
-                inputText = ChineseConvertors.convert(inputText.strip(), null, HanLang.get());
+                inputText = dataApp.hanTextToShow(inputText.strip());
             }
             return inputText;
         });
@@ -397,14 +405,14 @@ public class BookXmlReader extends WebViewerPart.MainView {
             }
             position(pos);
             //
-            UserPrefs.recents.setProperty(book.id + ".chapter", this.chapter.id);
+            dataApp.recents.setProperty(book.id + ".chapter", this.chapter.id);
             //
             return;
         }
         this.chapter = item;
         this.setPosition(pos);
         //
-        UserPrefs.recents.setProperty(book.id + ".chapter", this.chapter.id);
+        dataApp.recents.setProperty(book.id + ".chapter", this.chapter.id);
         //
         //
         super.navigating(location, firstTime);
@@ -420,12 +428,12 @@ public class BookXmlReader extends WebViewerPart.MainView {
 
     @Override
     protected Object createWebContent() {
-        final String htmlFile = bookDocument.getVolumeHtmlDocument(chapter.path, HanLang.get(),
+        final String htmlFile = bookDocument.getVolumeHtmlDocument(chapter.path, dataApp.hanTextProvider.get(),
                 body -> {
                     htmlMetadata = body.ownerDocument().head().select("meta").remove();
-                    return AppContext.hanText(StringHelper.concat("<body><article>", body.html(), "</article></body>"));
+                    return dataApp.hanTextToShow(StringHelper.concat("<body><article>", body.html(), "</article></body>"));
                 },
-                AppContext.getWebIncludeURIsEx().toArray(new String[0])
+                webIncludesSupplier.get().toArray(new String[0])
         );
         return Path.of(htmlFile);
     }
@@ -527,19 +535,19 @@ public class BookXmlReader extends WebViewerPart.MainView {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     private void upgradeOldSelectorKey(Chapter item) {
-        if (UserPrefs.recents.containsProperty(book.id + ".selector")) {
+        if (dataApp.recents.containsProperty(book.id + ".selector")) {
             final String newSelectorKey = book.id + "." + BookHelper.getVolume(item);
             //
-            final String selector = UserPrefs.recents.getString(book.id + ".selector", null);
+            final String selector = dataApp.recents.getString(book.id + ".selector", null);
             if (null != selector) {
-                UserPrefs.recents.removeProperty(book.id + ".selector");
-                UserPrefs.recents.setProperty(newSelectorKey + ".selector", selector);
+                dataApp.recents.removeProperty(book.id + ".selector");
+                dataApp.recents.setProperty(newSelectorKey + ".selector", selector);
             }
 
-            final double percent = UserPrefs.recents.getDouble(book.id + ".percent", -1);
+            final double percent = dataApp.recents.getDouble(book.id + ".percent", -1);
             if (percent != -1) {
-                UserPrefs.recents.removeProperty(book.id + ".percent");
-                UserPrefs.recents.setProperty(newSelectorKey + ".percent", percent);
+                dataApp.recents.removeProperty(book.id + ".percent");
+                dataApp.recents.setProperty(newSelectorKey + ".percent", percent);
             }
         }
     }
@@ -548,7 +556,7 @@ public class BookXmlReader extends WebViewerPart.MainView {
         private final Object AK_INDEX = new Object();
 
         public LookupLayerImpl(StackPane owner) {
-            super(owner);
+            super(dataApp, owner);
         }
 
         @Override
@@ -573,8 +581,8 @@ public class BookXmlReader extends WebViewerPart.MainView {
                 labeled.setText(str.split("#", 2)[1]);
             } else if (data instanceof Chapter item) {
                 labeled.setText(item.hasAttr(AK_INDEX)
-                        ? StringHelper.concat(item.attrStr(AK_INDEX), " / ", AppContext.hanText(item.title))
-                        : AppContext.hanText(item.title));
+                        ? StringHelper.concat(item.attrStr(AK_INDEX), " / ", dataApp.hanTextToShow(item.title))
+                        : dataApp.hanTextToShow(item.title));
 
                 super.updateItemLabel(labeled, data);
             } else super.updateItemLabel(labeled, data);
@@ -679,7 +687,7 @@ public class BookXmlReader extends WebViewerPart.MainView {
                 }
                 title = StringHelper.concat("转到 >>> 本经：", book.id, " ", title,
                         (lineOrVolume ? "，行号：" : "，卷号：").concat(chapter));
-                result.add(chapter.concat("#").concat(AppContext.hanText(title)));
+                result.add(chapter.concat("#").concat(dataApp.hanTextToShow(title)));
             } else {
                 result.add("#??? 使用说明：请使用以下几种格式");
                 result.add("#格式1：#p0001a01  表示：转到本经行号p0001a01处");
@@ -721,7 +729,7 @@ public class BookXmlReader extends WebViewerPart.MainView {
          * 用于将输入文字转换成与实际显示的相同，以方便页内查找
          */
         public String convertToDisplayHan(String input) {
-            return ChineseConvertors.convert(input, null, HanLang.get());
+            return dataApp.hanTextToShow(input);
         }
     }
 
@@ -729,7 +737,7 @@ public class BookXmlReader extends WebViewerPart.MainView {
 
     public static void addShortcutKeys(BookXmlReader webViewer) {
         final WebPane webPane = webViewer.webPane;
-        final WorkbenchApp app = webViewer.app;
+        final BaseApp app = webViewer.app;
         // Ctrl + LEFT
         webPane.shortcutKeys.put(new KeyCodeCombination(KeyCode.LEFT, KeyCombination.SHORTCUT_DOWN), event -> {
             webViewer.gotoPrev.fire();
@@ -749,7 +757,7 @@ public class BookXmlReader extends WebViewerPart.MainView {
 
     public static void addShortcutMenu(BookXmlReader webViewer) {
         final WebPane webPane = webViewer.webPane;
-        final WorkbenchApp app = webViewer.app;
+        final BaseApp app = webViewer.app;
         //
         webPane.shortcutMenu.add(selection -> {
             final Book book = webViewer.book;
@@ -805,7 +813,7 @@ public class BookXmlReader extends WebViewerPart.MainView {
 
                         String citeBook = citeMeta;
                         if (StringHelper.isBlank(citeBook)) {
-                            citeBook = TreeHelper.path(BooklistExplorer.getTreeItem(book));
+                            citeBook = TreeHelper.path(webViewer.dataApp.explorer.findTreeItem(book));
                         }
                         if (StringHelper.isBlank(citeBook)) {
                             citeBook = book.title;
@@ -834,7 +842,7 @@ public class BookXmlReader extends WebViewerPart.MainView {
         webPane.shortcutMenu.add(selection -> {
             final Book book = webViewer.book;
             String textTip = selection.hasTrims ? "：" + StringHelper.trimChars(selection.trims, 8) : "";
-            String textForSearch = selection.hasTrims ? HanLang.get() != HanLang.hantTW ? selection.trims : "!" + selection.trims : null;
+            String textForSearch = selection.hasTrims ? webViewer.dataApp.hanTextProvider.get() != HanLang.hantTW ? selection.trims : "!" + selection.trims : null;
 
             MenuItem searchInBook = new MenuItem("全文检索（检索本书）".concat(textTip));
             searchInBook.getProperties().put(WebPane.GRP_MENU, "search");

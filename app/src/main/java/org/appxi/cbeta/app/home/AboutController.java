@@ -18,7 +18,6 @@ import org.appxi.javafx.visual.MaterialIcon;
 import org.appxi.javafx.workbench.WorkbenchPane;
 import org.appxi.javafx.workbench.WorkbenchPart;
 import org.appxi.javafx.workbench.WorkbenchPartController;
-import org.appxi.prefs.UserPrefs;
 
 import java.util.Optional;
 
@@ -54,7 +53,7 @@ public class AboutController extends WorkbenchPartController implements Workbenc
         final HBox headBox = new HBox(head);
         HBox.setHgrow(head, Priority.ALWAYS);
 
-        final Label desc = new Label("CBETA经藏阅读器");
+        final Label desc = new Label("经藏典籍阅读器");
         desc.setStyle("-fx-font-size: 1.5em; -fx-padding: .5em 0 2em 0;");
         desc.setMaxWidth(Double.MAX_VALUE);
         desc.setAlignment(Pos.CENTER);
@@ -89,7 +88,7 @@ public class AboutController extends WorkbenchPartController implements Workbenc
         buf.append(System.getProperty("os.version")).append("\n\n");
 
         WebView web = new WebView();
-        web.getEngine().setUserDataDirectory(UserPrefs.cacheDir().toFile());
+        web.getEngine().setUserDataDirectory(app.workspace.resolve(".cached").toFile());
 
         buf.append("Webview Info").append("\n");
         buf.append(web.getEngine().getUserAgent());

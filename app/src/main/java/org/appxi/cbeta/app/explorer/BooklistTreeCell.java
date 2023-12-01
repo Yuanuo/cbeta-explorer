@@ -10,7 +10,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TransferMode;
 import javafx.util.Callback;
 import org.appxi.cbeta.Book;
-import org.appxi.cbeta.app.AppContext;
+import org.appxi.cbeta.app.DataApp;
 import org.appxi.javafx.helper.TreeHelper;
 import org.appxi.javafx.visual.MaterialIcon;
 import org.appxi.util.StringHelper;
@@ -18,6 +18,14 @@ import org.appxi.util.StringHelper;
 import static org.appxi.cbeta.app.AppContext.DND_ITEM;
 
 class BooklistTreeCell implements Callback<TreeView<Book>, TreeCell<Book>> {
+    private final BooklistExplorer explorer;
+    private final DataApp dataApp;
+
+    public BooklistTreeCell(BooklistExplorer explorer) {
+        this.explorer = explorer;
+        this.dataApp = explorer.dataApp;
+    }
+
     @Override
     public TreeCell<Book> call(TreeView<Book> param) {
         final TreeCell<Book> cell = new TreeCell<>() {
@@ -30,17 +38,17 @@ class BooklistTreeCell implements Callback<TreeView<Book>, TreeCell<Book>> {
                     this.setGraphic(null);
                     return;
                 }
-                this.setText(AppContext.hanText(BookLabelStyle.format(item)));
+                this.setText(dataApp.hanTextToShow(dataApp.formatBookLabel(item)));
                 //
                 this.setTooltip(new Tooltip(this.getText().concat(StringHelper.isBlank(item.authorInfo) ? ""
-                        : "\n".concat(item.id).concat(" by ").concat(AppContext.hanText(item.authorInfo))
+                        : "\n".concat(item.id).concat(" by ").concat(dataApp.hanTextToShow(item.authorInfo))
                 )));
                 //
                 this.setGraphic((this.getTreeItem().isLeaf() ? MaterialIcon.ARTICLE
                         : (this.getTreeItem().isExpanded() ? MaterialIcon.FOLDER_OPEN : MaterialIcon.FOLDER)).graphic());
                 //
                 this.getStyleClass().remove("visited");
-                if (null != item.path && null != AppContext.recentBooks.getProperty(item.id)) {
+                if (null != item.path && null != dataApp.recentBooks.getProperty(item.id)) {
                     this.getStyleClass().add("visited");
                 }
             }
@@ -59,8 +67,8 @@ class BooklistTreeCell implements Callback<TreeView<Book>, TreeCell<Book>> {
         Book data = draggedItem.getValue().clone();
 
         ClipboardContent content = new ClipboardContent();
-        content.putString((null == data.id ? "【目录】" : "【典籍】") + AppContext.hanText(BookLabelStyle.format(data)));
-        data.path = "nav/" + BooksProfile.ONE.profile().template().name() + "/" + TreeHelper.path(draggedItem);
+        content.putString((null == data.id ? "【目录】" : "【典籍】") + dataApp.hanTextToShow(dataApp.formatBookLabel(data)));
+        data.path = "nav/" + explorer.dataApp.profile.template() + "/" + TreeHelper.path(draggedItem);
         content.put(DND_ITEM, data);
 
         Dragboard db = treeCell.startDragAndDrop(TransferMode.ANY);

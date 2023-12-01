@@ -68,7 +68,7 @@ public class WidgetsController extends WorkbenchPartController.SideView {
     }
 
     private void createWidgetsOnce() {
-        this.widgets.add(new ImplEpubRenamer(this));
+//        this.widgets.add(new ImplEpubRenamer(this));
         this.widgets.add(new ImplHanLangConvertor(this));
     }
 }

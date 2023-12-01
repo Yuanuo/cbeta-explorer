@@ -1,6 +1,6 @@
 package org.appxi.cbeta.app.dao;
 
-import org.appxi.cbeta.app.AppContext;
+import org.appxi.cbeta.app.SpringConfig;
 import org.appxi.search.solr.Piece;
 import org.appxi.search.solr.PieceRepository;
 import org.appxi.util.StringHelper;
@@ -29,7 +29,7 @@ public interface PiecesRepository extends PieceRepository {
         return str;
     }
 
-    default FacetAndHighlightPage<Piece> search(String profile, Collection<String> scopes,
+    default FacetAndHighlightPage<Piece> search(String project, Collection<String> scopes,
                                                 final String input,
                                                 Collection<String> categories, boolean facet, Pageable pageable) {
         final SimpleFacetAndHighlightQuery query = new SimpleFacetAndHighlightQuery();
@@ -39,6 +39,10 @@ public interface PiecesRepository extends PieceRepository {
         query.addProjectionOnFields("id", "score", "field_file_s", "type_s", "title_s",
                 "field_book_s", "field_author_txt_aio", "field_location_s", "field_anchor_s", "category_ss",
                 "text_txt_aio_sub");
+
+        if (null != project) {
+            query.addFilterQuery(new SimpleFilterQuery(Criteria.where("project_ss").is(project)));
+        }
 
         //
         if (null != scopes && !scopes.isEmpty()) {
@@ -105,7 +109,7 @@ public interface PiecesRepository extends PieceRepository {
         }
 
         try {
-            SolrTemplate solrTemplate = AppContext.getBean(SolrTemplate.class);
+            SolrTemplate solrTemplate = SpringConfig.getBean(SolrTemplate.class);
             return null == solrTemplate ? null : solrTemplate.queryForFacetAndHighlightPage(Piece.REPO, query, Piece.class);
         } catch (Throwable e) {
             return null;

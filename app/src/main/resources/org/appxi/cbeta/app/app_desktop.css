@@ -89,7 +89,7 @@
     -fx-border-color: ladder(-fx-background, -divider-dark 49%, -divider-light 50%);
 }
 .card-chooser .card-view.focused {
-    -fx-background-color: -primary-swatch-500;
+    -fx-background-color: -primary-swatch-300;
 }
 .card-chooser .card-view .icon-text {
     -fx-font-size: 2.5em;

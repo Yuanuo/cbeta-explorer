@@ -11,18 +11,19 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import org.appxi.cbeta.BookcaseInDir;
 import org.appxi.cbeta.BookcaseInZip;
-import org.appxi.javafx.app.DesktopApp;
+import org.appxi.javafx.app.BaseApp;
 import org.appxi.javafx.control.CardChooser;
 import org.appxi.javafx.helper.FontFaceHelper;
 import org.appxi.javafx.visual.MaterialIcon;
 import org.appxi.javafx.visual.Swatch;
 import org.appxi.javafx.visual.Theme;
 import org.appxi.javafx.visual.Visual;
-import org.appxi.prefs.UserPrefs;
 import org.appxi.util.OSVersions;
 
 import java.io.File;
 import java.util.Optional;
+
+import static org.appxi.cbeta.app.AppLauncher.appConfig;
 
 public class AppPreloader extends Preloader {
     private static Stage primaryStage;
@@ -65,24 +66,23 @@ public class AppPreloader extends Preloader {
             // 1，优先使用App集成数据包
             // 2，优先使用当前目录下的数据包
             for (String path : new String[]{
-                    DesktopApp.appDir().resolve("bookcase.zip").toString(),
+                    BaseApp.appDir().resolve("bookcase.zip").toString(),
                     "../cbeta.zip",
                     "../bookcase.zip",
                     "cbeta.zip",
                     "bookcase.zip",
             }) {
                 try {
-                    AppContext.setupBookcase(new BookcaseInZip(path), false);
+                    AppContext.setupBookcase(new BookcaseInZip(path), null);
                     return;
                 } catch (Throwable ignore) {
                 }
             }
             // 3，优先使用已经选择的数据包
             try {
-                AppContext.setupBookcase(new BookcaseInZip(UserPrefs.prefs.getString(key, "")), true);
+                AppContext.setupBookcase(new BookcaseInZip(appConfig.getString(key, "")), appConfig);
                 return;
             } catch (Throwable ignore) {
-                ignore.printStackTrace();
             }
             if (!themed) {
                 primaryStage.getScene().getRoot().setStyle("-fx-font-size: 16px;");
@@ -128,8 +128,8 @@ public class AppPreloader extends Preloader {
                     try {
                         String path = selected.getAbsolutePath();
                         BookcaseInZip bookcase = new BookcaseInZip(path);
-                        UserPrefs.prefs.setProperty(key, path);
-                        AppContext.setupBookcase(bookcase, true);
+                        appConfig.setProperty(key, path);
+                        AppContext.setupBookcase(bookcase, appConfig);
                         return;
                     } catch (Throwable ignore) {
                     }
@@ -138,14 +138,14 @@ public class AppPreloader extends Preloader {
             // 5，提示并让用户选择数据目录
             if (optional.get().userData() == Boolean.FALSE) {
                 for (String path : new String[]{
-                        UserPrefs.prefs.getString(key, ""),
-                        String.valueOf(UserPrefs.prefs.removeProperty("cbeta.dir"))
+                        appConfig.getString(key, ""),
+                        String.valueOf(appConfig.removeProperty("cbeta.dir"))
                 }) {
                     if (!path.endsWith(".zip")) {
                         try {
                             BookcaseInDir bookcase = new BookcaseInDir(path);
-                            UserPrefs.prefs.setProperty(key, path);
-                            AppContext.setupBookcase(bookcase, true);
+                            appConfig.setProperty(key, path);
+                            AppContext.setupBookcase(bookcase, appConfig);
                             return;
                         } catch (Throwable ignore) {
                         }
@@ -159,8 +159,8 @@ public class AppPreloader extends Preloader {
                     try {
                         String path = selected.getAbsolutePath();
                         BookcaseInDir bookcase = new BookcaseInDir(path);
-                        UserPrefs.prefs.setProperty(key, path);
-                        AppContext.setupBookcase(bookcase, true);
+                        appConfig.setProperty(key, path);
+                        AppContext.setupBookcase(bookcase, appConfig);
                         return;
                     } catch (Throwable ignore) {
                     }

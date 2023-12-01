@@ -9,23 +9,21 @@ import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import org.appxi.book.Chapter;
 import org.appxi.cbeta.Book;
-import org.appxi.cbeta.app.AppContext;
+import org.appxi.cbeta.app.DataApp;
+import org.appxi.cbeta.app.SpringConfig;
 import org.appxi.cbeta.app.event.BookEvent;
 import org.appxi.cbeta.app.event.GenericEvent;
 import org.appxi.cbeta.app.event.ProgressEvent;
-import org.appxi.cbeta.app.explorer.BooksProfile;
 import org.appxi.holder.BoolHolder;
 import org.appxi.javafx.app.search.SearchedEvent;
 import org.appxi.javafx.app.search.SearcherEvent;
 import org.appxi.javafx.control.OpaqueLayer;
 import org.appxi.javafx.helper.FxHelper;
 import org.appxi.javafx.settings.DefaultOption;
-import org.appxi.javafx.settings.SettingsList;
 import org.appxi.javafx.visual.MaterialIcon;
 import org.appxi.javafx.workbench.WorkbenchPane;
 import org.appxi.javafx.workbench.WorkbenchPart;
 import org.appxi.javafx.workbench.WorkbenchPartController;
-import org.appxi.prefs.UserPrefs;
 import org.appxi.search.solr.Piece;
 import org.appxi.util.DigestHelper;
 import org.appxi.util.OSVersions;
@@ -37,10 +35,12 @@ public class SearchController extends WorkbenchPartController implements Workben
     private static final String PK_START_TYPE = "search.engine.start";
     private final BoolHolder profileReadyState = new BoolHolder();
 
+    public final DataApp dataApp;
     private ProgressEvent indexingEvent;
 
-    public SearchController(WorkbenchPane workbench) {
+    public SearchController(WorkbenchPane workbench, DataApp dataApp) {
         super(workbench);
+        this.dataApp = dataApp;
 
         this.id.set("SEARCH");
         this.tooltip.set("全文检索 (Ctrl+" + (OSVersions.isMac ? "J" : "H") + ")");
@@ -63,12 +63,12 @@ public class SearchController extends WorkbenchPartController implements Workben
         app.eventBus.addEventHandler(ProgressEvent.INDEXING, event -> indexingEvent = event.isFinished() ? null : event);
         app.eventBus.addEventHandler(GenericEvent.PROFILE_READY, event -> {
             profileReadyState.value = true;
-            if (!UserPrefs.prefs.getBoolean(PK_START_TYPE, true)) return;
-            if (IndexedManager.isBooklistIndexable()) {
+            if (!dataApp.config.getBoolean(PK_START_TYPE, true)) return;
+            if (dataApp.indexedManager.isBookListIndexable()) {
                 alertIndexable(null);
             } else {
                 // 如果全文索引数据正常（不需重建索引），则此时尝试加载，否则仅在后续重建索引时初始化
-                new Thread(AppContext::beans).start();
+                new Thread(SpringConfig::beans).start();
             }
         });
         // 响应搜索结果打开事件
@@ -76,7 +76,7 @@ public class SearchController extends WorkbenchPartController implements Workben
             Piece piece = event.data();
             if (null == piece)
                 return;
-            Book book = BooksProfile.ONE.getBook(piece.field("book_s"));
+            Book book = dataApp.dataContext.getBook(piece.field("book_s"));
             Chapter chapter = null;
             String file = piece.field("file_s");
             if (null != file) {
@@ -98,12 +98,12 @@ public class SearchController extends WorkbenchPartController implements Workben
             app.eventBus.fireEvent(new BookEvent(BookEvent.OPEN, book, chapter));
         });
         //
-        SettingsList.add(() -> {
+        dataApp.settings.add(() -> {
             final BooleanProperty valueProperty = new SimpleBooleanProperty();
-            valueProperty.set(UserPrefs.prefs.getBoolean(PK_START_TYPE, true));
+            valueProperty.set(dataApp.config.getBoolean(PK_START_TYPE, true));
             valueProperty.addListener((o, ov, nv) -> {
                 if (null != ov && !Objects.equals(ov, nv)) {
-                    UserPrefs.prefs.setProperty(PK_START_TYPE, nv);
+                    dataApp.config.setProperty(PK_START_TYPE, nv);
                 }
             });
             return new DefaultOption<Boolean>("自动初始化全文搜索引擎", "开：程序启动时；关：首次使用时", "性能", true)
@@ -125,7 +125,7 @@ public class SearchController extends WorkbenchPartController implements Workben
                 .map(tab -> (tab.getUserData() instanceof SearcherController view && view.isNeverSearched()) ? view : null)
                 .filter(Objects::nonNull)
                 .findFirst()
-                .orElseGet(() -> new SearcherController("SEARCHER-".concat(DigestHelper.uid()), workbench));
+                .orElseGet(() -> new SearcherController("SEARCHER-".concat(DigestHelper.uid()), workbench, dataApp));
         FxHelper.runLater(() -> {
             if (!workbench.existsMainView(searcher.id.get())) {
                 workbench.addWorkbenchPartAsMainView(searcher, false);
@@ -138,7 +138,7 @@ public class SearchController extends WorkbenchPartController implements Workben
             }
             if (null != indexingEvent) {
                 searcher.handleEventOnIndexingToBlocking.handle(indexingEvent);
-            } else if (IndexedManager.isBooklistIndexable()) {
+            } else if (dataApp.indexedManager.isBookListIndexable()) {
                 alertIndexable(searcher);
             } else {
                 searcher.search(text);
@@ -150,15 +150,15 @@ public class SearchController extends WorkbenchPartController implements Workben
         if (!profileReadyState.value) {
             return;
         }
-        FxHelper.runThread(null == controller ? 5000 : 100, () -> {
-            String headerText = "全文检索功能需要“更新书单数据”";
+        FxHelper.runThread(null == controller ? 1500 : 100, () -> {
+            String headerText = "全文检索功能需要索引书单数据";
             String contentText = """
-                    检测到“书单数据”有变化或基于新的功能特性，
-                    全文检索功能需要“更新”索引数据，否则无法正常使用全文检索功能！
-                                            
-                    “更新”索引仅需要耗时 大约几分钟 左右，也可以“不更新”索引仅使用阅读和快捷检索等功能！
+                    检测到【书单数据】有变化或基于新的功能特性，
+                    全文检索功能需要建立索引数据，否则无法使用全文检索功能！
+                    
+                    你可以选择不更新索引，仅使用阅读和书名检索等功能！
 
-                    是否继续“更新”索引？
+                    是否现在建立索引？（索引期间可正常使用阅读等功能）
                     """;
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION, contentText);
             alert.setTitle("数据更新！");
@@ -170,7 +170,7 @@ public class SearchController extends WorkbenchPartController implements Workben
                         if (null != controller) {
                             controller.handleEventOnIndexingToBlocking.handle(indexingEvent);
                         }
-                        new Thread(new IndexingTask(app)).start();
+                        new Thread(new IndexingTask(dataApp)).start();
                     }, () -> {
                         if (null != controller) {
                             workbench.mainViews.removeTabs(workbench.mainViews.findById(controller.id.get()));
