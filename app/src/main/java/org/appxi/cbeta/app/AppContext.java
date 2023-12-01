@@ -5,6 +5,7 @@ import org.appxi.cbeta.BookMap;
 import org.appxi.cbeta.Bookcase;
 import org.appxi.cbeta.TripitakaMap;
 import org.appxi.prefs.Preferences;
+import org.appxi.prefs.UserPrefs;
 import org.appxi.smartcn.convert.ChineseConvertors;
 import org.appxi.smartcn.pinyin.PinyinHelper;
 
@@ -28,6 +29,8 @@ public abstract class AppContext {
                     config.save();
                 }
                 workspace = bookcaseDir;
+            } else {
+                workspace = UserPrefs.dataDir();
             }
         } catch (Throwable ignore) {
         }
