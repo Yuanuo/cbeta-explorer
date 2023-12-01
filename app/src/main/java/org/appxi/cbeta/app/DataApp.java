@@ -4,6 +4,7 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.Scene;
 import javafx.scene.control.TreeItem;
+import javafx.stage.Stage;
 import org.appxi.cbeta.Book;
 import org.appxi.cbeta.Profile;
 import org.appxi.cbeta.app.dao.DaoService;
@@ -23,6 +24,7 @@ import org.appxi.cbeta.app.search.SearchController;
 import org.appxi.cbeta.app.widget.WidgetsController;
 import org.appxi.dictionary.ui.DictionaryContext;
 import org.appxi.dictionary.ui.DictionaryController;
+import org.appxi.file.FileWatcher;
 import org.appxi.javafx.app.BaseApp;
 import org.appxi.javafx.app.WorkbenchAppWindowed;
 import org.appxi.javafx.app.web.WebApp;
@@ -30,17 +32,20 @@ import org.appxi.javafx.app.web.WebViewer;
 import org.appxi.javafx.control.ProgressLayer;
 import org.appxi.javafx.helper.FxHelper;
 import org.appxi.javafx.settings.DefaultOption;
+import org.appxi.javafx.visual.VisualEvent;
 import org.appxi.javafx.workbench.WorkbenchPane;
 import org.appxi.javafx.workbench.WorkbenchPart;
 import org.appxi.prefs.Preferences;
 import org.appxi.prefs.PreferencesInMemory;
 import org.appxi.smartcn.convert.ChineseConvertors;
+import org.appxi.util.OSVersions;
 import org.appxi.util.ext.HanLang;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -107,6 +112,62 @@ public class DataApp extends WorkbenchAppWindowed implements WebApp {
         attachSettings();
         //
         loadProfile();
+    }
+
+    @Override
+    protected void showing(Stage primaryStage) {
+        super.showing(primaryStage);
+        //
+        String cssByOS = "desktop@" + OSVersions.osName.toLowerCase().replace(" ", "") + ".css";
+        if (BaseApp.productionMode) {
+            Optional.ofNullable(App.class.getResource("app_desktop.css"))
+                    .ifPresent(v -> primaryStage.getScene().getStylesheets().add(v.toExternalForm()));
+            Optional.ofNullable(App.class.getResource("app_" + cssByOS))
+                    .ifPresent(v -> primaryStage.getScene().getStylesheets().add(v.toExternalForm()));
+        } else {
+            Scene scene = primaryStage.getScene();
+            visualProvider().visual().unAssign(scene);
+            watchCss(scene, Path.of("../../appxi-javafx/src/main/resources/org/appxi/javafx/visual/visual_desktop.css"));
+            watchCss(scene, Path.of("src/main/resources/org/appxi/cbeta/app/app_desktop.css"));
+            watchCss(scene, Path.of("src/main/resources/org/appxi/cbeta/app/app_" + cssByOS));
+            scene.getStylesheets().forEach(System.out::println);
+        }
+    }
+
+    private void watchCss(Scene scene, Path file) {
+        try {
+            final String filePath = file.toRealPath().toUri().toString().replace("///", "/");
+            System.out.println("watch css: " + filePath);
+            scene.getStylesheets().add(filePath);
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        }
+
+        FileWatcher watcher = new FileWatcher(file.getParent());
+        watcher.watching();
+        watcher.addListener(event -> {
+            if (event.type != FileWatcher.WatchType.MODIFY) return;
+            if (event.getSource().getFileName().toString().endsWith("~")) return;
+            String css = null;
+            try {
+                css = event.getSource().toRealPath().toUri().toString().replace("///", "/");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            if (null == css) return;
+            System.out.println("CSS < " + css);
+            if (css.endsWith("web.css")) {
+                visualProvider().eventBus.fireEvent(new VisualEvent(VisualEvent.SET_STYLE, null));
+            } else if (scene.getStylesheets().contains(css)) {
+                final int idx = scene.getStylesheets().indexOf(css);
+                String finalCss = css;
+                javafx.application.Platform.runLater(() -> {
+                    scene.getStylesheets().remove(finalCss);
+                    if (idx != -1) scene.getStylesheets().add(idx, finalCss);
+                    else scene.getStylesheets().add(finalCss);
+                });
+            }
+        });
     }
 
     private void attachSettings() {
