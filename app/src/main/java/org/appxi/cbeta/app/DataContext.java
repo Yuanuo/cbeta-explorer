@@ -118,9 +118,12 @@ public class DataContext {
     public void release() {
         if (null != fileLock) {
             try {
-                fileLock.release();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+                fileLock.close();
+            } catch (IOException ignore) {
+            }
+            try {
+                fileLock.channel().close();
+            } catch (IOException ignore) {
             }
         }
         FileHelper.delete(profile.workspace().resolve(".lock"));
