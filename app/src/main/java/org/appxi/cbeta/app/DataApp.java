@@ -134,6 +134,12 @@ public class DataApp extends WorkbenchAppWindowed implements WebApp {
         }
     }
 
+    @Override
+    protected void stopped() {
+        super.stopped();
+        dataContext.release();
+    }
+
     private void watchCss(Scene scene, Path file) {
         try {
             final String filePath = file.toRealPath().toUri().toString().replace("///", "/");
