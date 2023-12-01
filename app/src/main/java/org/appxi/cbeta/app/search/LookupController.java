@@ -191,6 +191,10 @@ public class LookupController extends WorkbenchPartController implements Workben
                         if (null == book || book.id == null) {
                             return;
                         }
+                        // book
+                        test(book, book.title);
+
+                        // chapters
                         if (book.path != null && book.path.startsWith("toc/")) {
                             Node<Chapter> chapters = book.chapters.findFirst(node -> "tocs".equals(node.value.id));
                             if (null != chapters) {
@@ -204,10 +208,7 @@ public class LookupController extends WorkbenchPartController implements Workben
                                     });
                                 });
                             }
-                            return;
                         }
-
-                        test(book, book.title);
                     }
 
                     void test(Object data, String content) {
