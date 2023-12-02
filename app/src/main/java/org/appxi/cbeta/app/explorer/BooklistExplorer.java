@@ -88,7 +88,11 @@ public class BooklistExplorer extends WorkbenchPartController.SideView {
         });
 
         //
-        this.topBar.addRight(btnProfile, btnEditProfile, btnSearch, btnLocate);
+        if (dataApp.profile.isManaged()) {
+            this.topBar.addRight(btnProfile, btnEditProfile, btnSearch, btnLocate);
+        } else {
+            this.topBar.addRight(btnProfile, btnSearch, btnLocate);
+        }
         //
         this.treeView = new BooklistTreeView(this);
         viewport.setCenter(this.treeView);
