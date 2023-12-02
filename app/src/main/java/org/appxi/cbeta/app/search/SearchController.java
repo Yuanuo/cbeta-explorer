@@ -65,7 +65,7 @@ public class SearchController extends WorkbenchPartController implements Workben
             profileReadyState.value = true;
             if (!dataApp.config.getBoolean(PK_START_TYPE, true)) return;
             if (dataApp.indexedManager.isBookListIndexable()) {
-                alertIndexable(null);
+//                alertIndexable(null);
             } else {
                 // 如果全文索引数据正常（不需重建索引），则此时尝试加载，否则仅在后续重建索引时初始化
                 new Thread(SpringConfig::beans).start();
