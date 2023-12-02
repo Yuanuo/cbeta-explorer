@@ -76,6 +76,10 @@ public class AboutController extends WorkbenchPartController implements Workbenc
                 .append(" / ").append(AppContext.bookcase().getPath())
                 .append("\n\n");
 
+        buf.append("Workspace").append("\n");
+        buf.append(app.workspace)
+                .append("\n\n");
+
         buf.append("Java Version").append("\n");
         buf.append(System.getProperty("java.runtime.version")).append("\n\n");
 
@@ -102,7 +106,7 @@ public class AboutController extends WorkbenchPartController implements Workbenc
                 return null;
             }
         };
-        dialogPane.setContent(new VBox(headBox, descBox, info));
+        dialogPane.setContent(new VBox(headBox, info));
         dialogPane.getButtonTypes().add(ButtonType.OK);
         //
         final Dialog<?> dialog = new Dialog<>();
