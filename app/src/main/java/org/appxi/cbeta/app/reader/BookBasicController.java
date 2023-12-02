@@ -23,6 +23,7 @@ import org.appxi.util.StringHelper;
 import org.appxi.util.ext.HanLang;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.function.Predicate;
 
@@ -161,7 +162,7 @@ public class BookBasicController extends WorkbenchPartController.SideView {
                         final String oldStyleId = DigestHelper.crc32c(
                                 itm.getValue().path.concat(null == itm.getValue().anchor ? "" : itm.getValue().anchor.toString()),
                                 itm.getValue().title,
-                                Charset.forName("GBK"));
+                                StandardCharsets.UTF_8);
                         return lastChapterId.equals(book.id.concat("-").concat(oldStyleId));
                     };
                 else findById = itm -> Objects.equals(lastChapterId, itm.getValue().id);
