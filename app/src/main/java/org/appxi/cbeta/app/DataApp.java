@@ -73,6 +73,8 @@ public class DataApp extends WorkbenchAppWindowed implements WebApp {
         this.profile = dataContext.profile;
         this.hanTextProvider = new HanLang.Provider(config, eventBus);
         this.indexedManager = new IndexedManager(this);
+        //
+        title2.set(profile.title());
     }
 
     protected List<WorkbenchPart> createWorkbenchParts(WorkbenchPane workbench) {
@@ -227,7 +229,6 @@ public class DataApp extends WorkbenchAppWindowed implements WebApp {
         this.profileVersion = profile.version();
         //
         ProgressLayer.showAndWait(getPrimaryGlass(), progressLayer -> {
-            title2.set(profile.title());
             TreeItem<Book> tree = dataContext.booklist().tree();
             if (tree.getChildren().isEmpty()) {
                 FxHelper.runThread(1000, this::editProfile);

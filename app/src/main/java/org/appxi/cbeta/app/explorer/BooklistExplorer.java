@@ -39,6 +39,9 @@ public class BooklistExplorer extends WorkbenchPartController.SideView {
         this.title.set("典籍");
         this.tooltip.set("典籍");
         this.graphic.set(MaterialIcon.LOCAL_LIBRARY.graphic());
+        //
+        this.title.bind(dataApp.title2);
+        this.tooltip.bind(dataApp.title2);
     }
 
     @Override

@@ -259,6 +259,7 @@ class ProfileEditor extends DialogPane {
         profile.config.setProperty("version", newMd5Ver);
         profile.config.setProperty("mod", FileHelper.fileTime(profilePath));
         profile.config.save();
+        dataApp.title2.set(title);
 
         // 重新保存的文件的MD5与上一次相同认为未发生改变
         if (Objects.equals(oldMd5Ver, newMd5Ver)) {
