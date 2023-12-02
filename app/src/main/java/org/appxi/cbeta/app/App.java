@@ -23,6 +23,7 @@ import org.appxi.util.FileHelper;
 import org.appxi.util.OSVersions;
 
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -252,7 +253,7 @@ public class App extends BootstrapApp {
             return true;
         }
         try {
-            FileHelper.delete(lockFile);
+            Files.delete(lockFile);
             return FileHelper.notExists(lockFile);
         } catch (Throwable t) {
             return false;
