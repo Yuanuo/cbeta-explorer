@@ -11,13 +11,11 @@ import org.appxi.javafx.control.LookupLayer;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 
 public abstract class LookupLayerEx extends LookupLayer<Object> {
     private final DataApp dataApp;
-    private Set<String> usedKeywords;
+    private List<String> usedKeywords;
     protected String inputQuery;
 
     public LookupLayerEx(DataApp dataApp, StackPane owner) {
@@ -31,26 +29,40 @@ public abstract class LookupLayerEx extends LookupLayer<Object> {
         if (null == text) text = null == item ? "<TEXT>" : item.toString();
         //
         if (null != usedKeywords && !usedKeywords.isEmpty()) {
-            List<String> lines = new ArrayList<>(List.of(text));
-            for (String keyword : usedKeywords) {
-                for (int i = 0; i < lines.size(); i++) {
-                    final String line = lines.get(i);
-                    if (line.startsWith("§§#§§")) continue;
-
-                    List<String> list = List.of(line
-                            .replace(keyword, "\n§§#§§".concat(keyword).concat("\n"))
-                            .split("\n"));
-                    if (list.size() > 1) {
-                        lines.remove(i);
-                        lines.addAll(i, list);
-                        i++;
+            final String[] keywords = usedKeywords.toArray(new String[0]);
+            int tIdx, kIdx = 0;
+            int textLength = text.length();
+            final List<String> lines = new ArrayList<>();
+            for (tIdx = 0; tIdx < textLength; ) {
+                if (kIdx >= keywords.length) {
+                    break;
+                }
+                for (; kIdx < keywords.length; kIdx++) {
+                    final int mIdx = text.indexOf(keywords[kIdx], tIdx);
+                    if(mIdx > tIdx) {
+                        lines.add(text.substring(tIdx, mIdx));
+                    }
+                    if (mIdx >= tIdx) {
+                        lines.add("\n" + keywords[kIdx]);
+                        tIdx = mIdx + (keywords[kIdx].length());
+                    } else {
+                        lines.add(text.substring(tIdx));
+                        tIdx = textLength;
+                        break;
                     }
                 }
             }
+            if (tIdx < textLength) {
+                lines.add(text.substring(tIdx));
+            }
+
             List<Text> texts = new ArrayList<>(lines.size());
             for (String line : lines) {
-                if (line.startsWith("§§#§§")) {
-                    Text text1 = new Text(line.substring(5));
+                if (line.isEmpty()) {
+                    continue;
+                }
+                if (line.charAt(0) == '\n') {
+                    Text text1 = new Text(line.substring(1));
                     text1.getStyleClass().add("highlight");
                     texts.add(text1);
                 } else {
@@ -90,7 +102,7 @@ public abstract class LookupLayerEx extends LookupLayer<Object> {
 
         List<LookupResultItem> result = new ArrayList<>(resultLimit);
 
-        lookupByKeywords(lookupText, resultLimit, result, usedKeywords = new LinkedHashSet<>());
+        lookupByKeywords(lookupText, resultLimit, result, usedKeywords = new ArrayList<>());
         if (!lookupText.isEmpty()) {
             // 默认时无输入，不需对结果进行排序
             result.sort(Comparator.comparingDouble(LookupResultItem::score).reversed());
@@ -103,7 +115,7 @@ public abstract class LookupLayerEx extends LookupLayer<Object> {
 
     protected abstract void lookupByKeywords(String lookupText, int resultLimit,
                                              List<LookupResultItem> result,
-                                             Set<String> usedKeywords);
+                                             List<String> usedKeywords);
 
     public record LookupResultItem(Object data, double score) {
     }

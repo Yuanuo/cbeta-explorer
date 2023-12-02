@@ -63,7 +63,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -590,7 +589,7 @@ public class BookXmlReader extends WebViewerPart.MainView {
 
         @Override
         protected void lookupByKeywords(String lookupText, int resultLimit,
-                                        List<LookupResultItem> result, Set<String> usedKeywords) {
+                                        List<LookupResultItem> result, List<String> usedKeywords) {
             final boolean isInputEmpty = lookupText.isBlank();
             Optional<LookupExpression> optional = isInputEmpty ? Optional.empty() : LookupExpression.of(lookupText,
                     (parent, text) -> new LookupExpression.Keyword(parent, text) {

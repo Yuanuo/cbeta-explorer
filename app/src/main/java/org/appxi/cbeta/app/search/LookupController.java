@@ -31,7 +31,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -193,12 +192,10 @@ public class LookupController extends WorkbenchPartController implements Workben
 
         @Override
         protected void lookupByKeywords(String lookupText, int resultLimit,
-                                        List<LookupResultItem> result, Set<String> usedKeywords) {
-//                    LookupByPredicate.lookup(lookupText, resultLimit, result, usedKeywords);
-//            LookupByExpression.lookup(lookupDatabase, lookupText, resultLimit, result, usedKeywords);
-            final boolean lookupTextIsBlank = lookupText.isBlank();
+                                        List<LookupResultItem> result, List<String> usedKeywords) {
             final String[] arr = lookupText.toLowerCase().split("[ 　]+");
-            final LookupWord[] words = Arrays.stream(arr).map(LookupWord::new).toArray(LookupWord[]::new);
+            final LookupWord[] words = Arrays.stream(arr).filter(s -> !s.isBlank()).map(LookupWord::new).toArray(LookupWord[]::new);
+            final boolean lookupTextIsBlank = words.length == 0;
             if (!lookupTextIsBlank) {
                 usedKeywords.addAll(Arrays.asList(arr));
             }
@@ -262,7 +259,7 @@ public class LookupController extends WorkbenchPartController implements Workben
                                     final int idx = content.indexOf(lookupWord.word, i);
                                     if (idx >= i) {
                                         lookupWord.score += 10;
-                                        i = idx;
+                                        i = idx + lookupWord.word.length();
                                     } else {
                                         lookupWord.score = -9999;
                                         i = cLen;
