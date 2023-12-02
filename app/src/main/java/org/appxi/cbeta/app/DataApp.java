@@ -1,7 +1,10 @@
 package org.appxi.cbeta.app;
 
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.scene.Scene;
 import javafx.scene.control.TreeItem;
 import javafx.stage.Stage;
@@ -54,6 +57,7 @@ public class DataApp extends WorkbenchAppWindowed implements WebApp {
     public final App basedApp;
     public final DataContext dataContext;
     public final Profile profile;
+    public final StringProperty profileTitle;
     public final HanLang.Provider hanTextProvider;
 
     private BookLabelStyle bookLabelStyle;
@@ -74,7 +78,8 @@ public class DataApp extends WorkbenchAppWindowed implements WebApp {
         this.hanTextProvider = new HanLang.Provider(config, eventBus);
         this.indexedManager = new IndexedManager(this);
         //
-        title2.set(profile.title());
+        this.profileTitle = new SimpleStringProperty(profile.title());
+        this.title2.bind(Bindings.createStringBinding(() -> "『" + profileTitle.get() + "』", profileTitle));
     }
 
     protected List<WorkbenchPart> createWorkbenchParts(WorkbenchPane workbench) {
