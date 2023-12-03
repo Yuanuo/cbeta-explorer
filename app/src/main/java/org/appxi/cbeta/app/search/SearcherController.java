@@ -413,6 +413,7 @@ class SearcherController extends WorkbenchPartController.MainView {
                         String snipText = snipplets.get(i);
                         snipText = snipText.replace("§§hl#pre§§", "<em>");
                         snipText = snipText.replace("§§hl#end§§", "</em>");
+                        snipText = StringHelper.trimChars(snipText, 250, "");
                         snipText = "… " + snipText + " …";
 
                         highlightDiv.appendElement("div").addClass("snipplet").id(piece.id + "_" + i)
