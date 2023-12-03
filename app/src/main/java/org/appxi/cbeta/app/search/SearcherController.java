@@ -1,15 +1,12 @@
 package org.appxi.cbeta.app.search;
 
 import javafx.beans.InvalidationListener;
-import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.ListChangeListener;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
-import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.ContextMenu;
-import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
@@ -22,7 +19,6 @@ import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
 import javafx.scene.control.cell.CheckBoxListCell;
-import javafx.scene.input.MouseButton;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -30,9 +26,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
-import javafx.scene.text.TextFlow;
 import javafx.util.Callback;
 import org.appxi.cbeta.Book;
 import org.appxi.cbeta.Period;
@@ -42,23 +36,31 @@ import org.appxi.cbeta.app.dao.PiecesRepository;
 import org.appxi.cbeta.app.event.ProgressEvent;
 import org.appxi.event.EventHandler;
 import org.appxi.holder.BoolHolder;
+import org.appxi.holder.StringHolder;
+import org.appxi.javafx.app.BaseApp;
 import org.appxi.javafx.app.search.SearchedEvent;
+import org.appxi.javafx.app.web.WebRenderer;
 import org.appxi.javafx.control.ListViewEx;
 import org.appxi.javafx.control.ProgressLayer;
 import org.appxi.javafx.helper.FxHelper;
-import org.appxi.javafx.visual.MaterialIcon;
 import org.appxi.javafx.workbench.WorkbenchPane;
 import org.appxi.javafx.workbench.WorkbenchPartController;
+import org.appxi.prefs.UserPrefs;
 import org.appxi.search.solr.Piece;
 import org.appxi.smartcn.pinyin.PinyinHelper;
+import org.appxi.util.DigestHelper;
+import org.appxi.util.FileHelper;
 import org.appxi.util.OSVersions;
 import org.appxi.util.StringHelper;
 import org.appxi.util.ext.HanLang;
 import org.appxi.util.ext.RawVal;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Element;
 import org.springframework.data.solr.core.query.SolrPageRequest;
 import org.springframework.data.solr.core.query.result.FacetAndHighlightPage;
 import org.springframework.data.solr.core.query.result.HighlightEntry;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -67,7 +69,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static org.appxi.cbeta.app.AppContext.DND_ITEM;
 
@@ -102,6 +105,7 @@ class SearcherController extends WorkbenchPartController.MainView {
     private TextField input;
     private TabPane filterTabs;
     private BorderPane resultPane;
+    private ResultView resultView;
     private Label resultInfo;
 
     private String inputQuery, finalQuery;
@@ -166,6 +170,8 @@ class SearcherController extends WorkbenchPartController.MainView {
 
             resultPane.requestLayout();
         });
+        //
+        resultView = new ResultView(dataApp);
     }
 
     private ProgressLayer indexingProgressLayer;
@@ -203,6 +209,7 @@ class SearcherController extends WorkbenchPartController.MainView {
     public void inactiveViewport(boolean closing) {
         if (closing) {
             app.eventBus.removeEventHandler(ProgressEvent.INDEXING, handleEventOnIndexingToBlocking);
+            resultView.deinitialize();
         }
     }
 
@@ -346,7 +353,7 @@ class SearcherController extends WorkbenchPartController.MainView {
             // 更新结果列表
             if (facetAndHighlightPage.getTotalElements() > 0) {
                 Pagination pagination = new Pagination(facetAndHighlightPage.getTotalPages(), 0);
-                pagination.setPageFactory(pageIdx -> createPage(pageIdx, repository, filterCategories, filterScopes));
+                pagination.setPageFactory(pageIdx -> renderPage(pageIdx, repository, filterCategories, filterScopes));
                 resultPane.setCenter(pagination);
             } else {
                 resultPane.setCenter(new Label("未找到匹配项，请调整关键词或搜索条件并重试！"));
@@ -356,7 +363,7 @@ class SearcherController extends WorkbenchPartController.MainView {
         });
     }
 
-    private Node createPage(int pageIdx,
+    private Node renderPage(int pageIdx,
                             PiecesRepository repository,
                             List<String> filterCategories,
                             List<String> filterScopes) {
@@ -372,47 +379,59 @@ class SearcherController extends WorkbenchPartController.MainView {
         if (null == highlightPage)
             return new Label();// avoid NPE
 
-        final ListViewEx<Piece> listView = new ListViewEx<>((event, item) -> app.eventBus.fireEvent(new SearchedEvent(item)));
-        listView.setCellFactory(v -> new ListCell<>() {
-            final PieceCard pieceCard = new PieceCard();
+        Element docBody = Jsoup.parse("").body().appendElement("article").addClass("result-cards");
 
-            {
-                pieceCard.maxWidthProperty().bind(Bindings.createDoubleBinding(
-                        () -> getWidth() - getPadding().getLeft() - getPadding().getRight() - 1,
-                        widthProperty(), paddingProperty()));
-                //
-                this.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
-                this.getStyleClass().add("result-item");
-                this.setStyle(this.getStyle().concat("-fx-font-size: 110%;-fx-opacity:.9;"));
-                //
-                this.setTooltip(new Tooltip("""
-                        鼠标左键双击或单击亮色字样可打开当前条目；
-                        鼠标右键单击可复制当前条目文字到剪贴板；
-                        """));
-                this.setOnMouseClicked(event -> {
-                    if (event.getButton() == MouseButton.SECONDARY) {
-                        pieceCard.copyText();
+        for (Piece piece : highlightPage.getContent()) {
+            Element pieceCard = docBody.appendElement("div").addClass("result-item").id(piece.id);
+            //
+            pieceCard.appendElement("div").addClass("name")
+                    .appendElement("a").attr("href", "javascript:__openSearched('" + piece.id + "', false)")
+                    .text(piece.title);
+            //
+            StringHolder locationLabel = new StringHolder();
+            if (piece.categories != null && !piece.categories.isEmpty()) {
+                final String navPrefix = "nav/".concat(dataApp.profile.id()).concat("/");
+                piece.categories.stream().filter(s -> s.startsWith(navPrefix)).findFirst()
+                        .ifPresent(s -> locationLabel.value = s.substring(navPrefix.length()));
+            }
+            if (locationLabel.value == null || locationLabel.value.isBlank()) {
+                locationLabel.value = piece.field("location_s") + "（" + piece.field("book_s") + "）";
+            }
+            pieceCard.appendElement("div").addClass("location")
+                    .text(locationLabel.value);
+            //
+            pieceCard.appendElement("div").addClass("authors")
+                    .text(piece.field("author_txt_aio"));
+            //
+            Element highlightsDiv = pieceCard.appendElement("div").addClass("hl-items");
+            List<HighlightEntry.Highlight> highlights = highlightPage.getHighlights(piece);
+            if (!highlights.isEmpty()) {
+                for (HighlightEntry.Highlight highlight : highlights) {
+                    Element highlightDiv = highlightsDiv.appendElement("div").addClass("hl-item");
+                    List<String> snipplets = highlight.getSnipplets();
+                    for (int i = 0; i < snipplets.size(); i++) {
+                        String snipText = snipplets.get(i);
+                        snipText = snipText.replace("§§hl#pre§§", "<em>");
+                        snipText = snipText.replace("§§hl#end§§", "</em>");
+                        snipText = "… " + snipText + " …";
+
+                        highlightDiv.appendElement("div").addClass("snipplet").id(piece.id + "_" + i)
+                                .append(snipText)
+                                .appendElement("a").attr("href", "javascript:__openSearched('" + piece.id + "_" + i + "', true)").text(" 转到")
+                        ;
                     }
-                });
-            }
-
-            Piece updatedItem;
-
-            @Override
-            protected void updateItem(Piece item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty) {
-                    updatedItem = null;
-                    setGraphic(null);
-                    return;
                 }
-                if (item == updatedItem)
-                    return; //
-                updatedItem = item;
-                pieceCard.updateItem(item, highlightPage.getHighlights(item));
-                setGraphic(pieceCard);
+            } else {
+                String str = piece.text("text_txt_aio_sub");
+                String text = null == str ? "" : StringHelper.trimChars(str, 200);
+                highlightsDiv.appendElement("div").addClass("snipplet")
+                        .text(text);
             }
-        });
+        }
+
+        resultView.docBody = docBody;
+
+        FxHelper.runThread(100, () -> resultView.navigate(null));
 
         if (highlightPage.getTotalElements() > 0) {
             resultInfo.setText("共 %d 条结果   显示条数：%d - %d   页数：%d / %d".formatted(
@@ -425,8 +444,7 @@ class SearcherController extends WorkbenchPartController.MainView {
             resultInfo.setText("");
         }
 
-        listView.getItems().setAll(highlightPage.getContent());
-        return listView;
+        return resultView.viewport;
     }
 
     private class FacetItem {
@@ -585,102 +603,12 @@ class SearcherController extends WorkbenchPartController.MainView {
                     6、基于关键词搜索，输入字符限定长度为20；
                     7、快捷键（Ctrl + $SK$）开启此视图！可同时开启多个搜索视图；
                     8、在搜索结果列表中右键单击，将复制所单击条目的文字内容到剪贴板；
-                    """.replace("$SK$", (OSVersions.isMac ? "J" : "H")));
+                    """.replace("$SK$", OSVersions.isMac ? "J" : "H"));
             usageTip.setWrapText(true);
             usageTip.setStyle("-fx-padding:.5em;");
             usageTip.setLineSpacing(5);
 
             setContent(usageTip);
-        }
-    }
-
-    private class PieceCard extends VBox {
-        final Hyperlink nameLabel;
-        final Label locationLabel, authorsLabel;
-        final TextFlow textFlow = new TextFlow();
-
-        PieceCard() {
-            nameLabel = new Hyperlink();
-            nameLabel.getStyleClass().add("name");
-            nameLabel.setStyle(nameLabel.getStyle().concat("-fx-font-size: 120%;"));
-            nameLabel.setWrapText(true);
-
-            locationLabel = new Label(null, MaterialIcon.LOCATION_ON.graphic());
-            locationLabel.getStyleClass().add("location");
-            locationLabel.setStyle(locationLabel.getStyle().concat("-fx-opacity:.75;"));
-            locationLabel.setWrapText(true);
-
-            authorsLabel = new Label(null, MaterialIcon.PEOPLE.graphic());
-            authorsLabel.getStyleClass().add("authors");
-            authorsLabel.setStyle(authorsLabel.getStyle().concat("-fx-opacity:.75;"));
-            authorsLabel.setWrapText(true);
-
-            textFlow.getStyleClass().add("text-flow");
-            //
-            this.getChildren().setAll(nameLabel, locationLabel, authorsLabel, textFlow);
-            this.setStyle(this.getStyle().concat("-fx-spacing:.4em;-fx-padding:.2em .1em;"));
-        }
-
-        void copyText() {
-            FxHelper.copyText("名称：" + nameLabel.getText() +
-                              "\n位置：" + locationLabel.getText() +
-                              "\n作译者：" + authorsLabel.getText() +
-                              "\n文本：\n" + textFlow.getChildren().stream().filter(n -> n instanceof Text)
-                                      .map(n -> ((Text) n).getText())
-                                      .collect(Collectors.joining()));
-            app.toast("已复制到剪贴板！");
-        }
-
-        void updateItem(Piece item, List<HighlightEntry.Highlight> highlights) {
-            nameLabel.setText(dataApp.hanTextToShow(item.title));
-            nameLabel.setOnAction(e -> app.eventBus.fireEvent(new SearchedEvent(item, inputQuery, null)));
-
-            locationLabel.setText(null);
-            if (item.categories != null && !item.categories.isEmpty()) {
-                final String navPrefix = "nav/".concat(dataApp.profile.id()).concat("/");
-                item.categories.stream().filter(s -> s.startsWith(navPrefix)).findFirst()
-                        .ifPresent(s -> locationLabel.setText(dataApp.hanTextToShow(s.substring(navPrefix.length()))));
-            }
-            if (locationLabel.getText() == null || locationLabel.getText().isBlank())
-                locationLabel.setText(dataApp.hanTextToShow(item.field("location_s").concat("（").concat(item.field("book_s")).concat("）")));
-
-            authorsLabel.setText(dataApp.hanTextToShow(item.field("author_txt_aio")));
-
-            //
-            List<Node> texts = new ArrayList<>();
-            if (!highlights.isEmpty()) {
-                highlights.forEach(highlight -> highlight.getSnipplets().forEach(str -> {
-                    String[] strings = ("…" + dataApp.hanTextToShow(str) + "…").split("§§hl#pre§§");
-                    for (String string : strings) {
-                        String[] tmpArr = string.split("§§hl#end§§", 2);
-                        if (tmpArr.length == 1) {
-                            final Text text1 = new Text(tmpArr[0]);
-                            text1.getStyleClass().add("plaintext");
-                            texts.add(text1);
-                        } else {
-                            final Text hlText = new Text(tmpArr[0]);
-                            hlText.getStyleClass().add("highlight");
-                            hlText.setStyle(hlText.getStyle().concat("-fx-cursor:hand;"));
-                            hlText.setOnMouseReleased(event -> {
-                                if (event.getButton() == MouseButton.PRIMARY) {
-                                    app.eventBus.fireEvent(new SearchedEvent(item, tmpArr[0], string));
-                                }
-                            });
-                            texts.add(hlText);
-                            final Text text1 = new Text(tmpArr[1]);
-                            text1.getStyleClass().add("plaintext");
-                            texts.add(text1);
-                        }
-                    }
-                    texts.add(new Text("\n"));
-                }));
-            } else {
-                String str = item.text("text_txt_aio_sub");
-                final Text text = new Text(null == str ? "" : dataApp.hanTextToShow(StringHelper.trimChars(str, 200)));
-                text.getStyleClass().add("plaintext");
-                texts.add(text);
-            }
-            textFlow.getChildren().setAll(texts.toArray(new Node[0]));
         }
     }
 
@@ -735,7 +663,7 @@ class SearcherController extends WorkbenchPartController.MainView {
                     在搜索结果列表中双击打开，单击高亮关键词将“尝试”打开并定位到该处
                     基于关键词搜索，输入字符限定长度为20，太长亦无意义
                     快捷键（Ctrl + $SK$）开启此视图！可同时开启多个搜索视图！
-                    """.replace("$SK$", (OSVersions.isMac ? "J" : "H")));
+                    """.replace("$SK$", OSVersions.isMac ? "J" : "H"));
             usageTip.setTextAlignment(TextAlignment.CENTER);
             usageTip.setWrapText(true);
             usageTip.setStyle("-fx-padding:3em 1em;");
@@ -752,6 +680,64 @@ class SearcherController extends WorkbenchPartController.MainView {
         @Override
         public void requestFocus() {
             FxHelper.runThread(50, _input::requestFocus);
+        }
+    }
+
+    public class ResultView extends WebRenderer {
+        final String sessionId = DigestHelper.uid();
+        Element docBody;
+        final Supplier<List<String>> webIncludesSupplier;
+        final Function<String, String> htmlDocumentWrapper;
+
+        public ResultView(BaseApp app) {
+            super(app);
+            this.webIncludesSupplier = dataApp.webIncludesSupplier();
+            this.htmlDocumentWrapper = dataApp.htmlDocumentWrapper();
+        }
+
+        @Override
+        protected Object createWebContent() {
+            final StringBuilder buf = new StringBuilder();
+            buf.append("<!DOCTYPE html><html lang=\"").append(dataApp.hanTextProvider.get().lang).append("\"><head><meta charset=\"UTF-8\">");
+            //
+            StringHelper.buildWebIncludes(buf, webIncludesSupplier.get());
+            //
+            buf.append("</head>");
+            final String bodyHtml = htmlDocumentWrapper.apply(docBody.html());
+            buf.append("<body><article style=\"padding: 0 1rem;\">").append(bodyHtml).append("</article></body>");
+            buf.append("</html>");
+            //
+            final StringBuilder cacheInfo = new StringBuilder(sessionId);
+            cacheInfo.append(dataApp.hanTextProvider.get().lang);
+//            cacheInfo.append(StringHelper.join("|", includes));
+            //
+            final Path cacheFile = UserPrefs.cacheDir().resolve(FileHelper.makeEncodedPath(cacheInfo.toString(), ".html"));
+            FileHelper.writeString(buf, cacheFile);
+            return cacheFile;
+        }
+
+        protected WebJavaBridgeImpl createWebJavaBridge() {
+            return new WebJavaBridgeImpl(SearcherController.this);
+        }
+
+        public class WebJavaBridgeImpl extends WebRenderer.WebJavaBridge {
+            final SearcherController searcher;
+
+            public WebJavaBridgeImpl(SearcherController searcher) {
+                this.searcher = searcher;
+            }
+
+            public void openSearched(String pieceId, String refText) {
+                Piece piece = searcher.highlightPage.getContent().stream().filter(p -> p.id.equals(pieceId)).findFirst().orElse(null);
+                if (null != piece) {
+                    if (null == refText || refText.isBlank()) {
+                        app.eventBus.fireEvent(new SearchedEvent(piece, inputQuery, null));
+                    } else {
+                        refText = refText.strip().replaceAll("^…|… 转到$", "").strip();
+                        app.eventBus.fireEvent(new SearchedEvent(piece, inputQuery, refText));
+                    }
+                }
+            }
         }
     }
 }

@@ -19,6 +19,7 @@ module appxi.smartBooks {
     exports org.appxi.cbeta.app; // for application launch
     exports org.appxi.cbeta.app.dao; // for ormlite, spring
     exports org.appxi.cbeta.app.reader; // for js-engine
+    exports org.appxi.cbeta.app.search; // for js-engine
     exports org.appxi.cbeta.app.explorer;
 
     opens org.appxi.cbeta.app;

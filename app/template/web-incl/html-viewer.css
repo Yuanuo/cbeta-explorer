@@ -215,3 +215,49 @@ a[data-note]::before {
     color: #20b771;
     vertical-align: sub;
 }
+
+.result-item > * {
+    font-size: 75%;
+}
+.result-item {
+    padding: 1rem 0;
+    border-bottom: solid 1px grey;
+}
+.result-item:last-child {
+    border-bottom: unset;
+}
+.result-item a {
+    text-decoration: none;
+}
+.result-item .name {
+    font-size: 86%;
+    font-weight: 600;
+}
+.result-item .name:before {
+    content: "➤";
+}
+
+.result-item .location {
+    opacity: .75;
+    line-height: 150%;
+}
+.result-item .location:before {
+    content: "●";
+}
+
+.result-item .authors {
+    opacity: .75;
+    line-height: 150%;
+}
+.result-item .authors:before {
+    content: "●"
+}
+
+.result-item .hl-items .snipplet {
+    line-height: 150%;
+    padding-top: .5rem;
+}
+
+.result-item .hl-items .snipplet em {
+    color: red;
+}
