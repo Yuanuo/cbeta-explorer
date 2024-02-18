@@ -95,7 +95,7 @@ public class PreferencesController extends WorkbenchPartController implements Wo
     public void activeViewport(boolean firstTime) {
         SettingsPane settingsPane = new SettingsPane();
 
-        dataApp.basedApp.settings.forEach(s -> settingsPane.getOptions().add(s.get()));
+        dataApp.baseApp.settings.forEach(s -> settingsPane.getOptions().add(s.get()));
         app.settings.forEach(s -> settingsPane.getOptions().add(s.get()));
 
         final DialogPane dialogPane = new DialogPane() {

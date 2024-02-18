@@ -1,4 +1,4 @@
-module appxi.smartBooks {
+module appxi.cbetaExplorer {
     requires java.desktop;
 
     requires appxi.cbeta;
@@ -23,4 +23,5 @@ module appxi.smartBooks {
     exports org.appxi.cbeta.app.explorer;
 
     opens org.appxi.cbeta.app;
+    exports org.appxi.cbeta.app.event;
 }

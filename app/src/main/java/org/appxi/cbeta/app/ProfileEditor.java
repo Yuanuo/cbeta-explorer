@@ -92,10 +92,10 @@ class ProfileEditor extends DialogPane {
         final Label label = new Label("书单");
         label.getStyleClass().add("field-label");
         //
-        template = dataApp.basedApp.profileMgr.getProfile(this.profile.template());
+        template = dataApp.baseApp.profileMgr.getProfile(this.profile.template());
         selTemplate = new Button("从模板创建");
         selTemplate.setOnAction(event -> CardChooser.of("选择模板")
-                .cards(dataApp.basedApp.profileMgr.getProfiles().stream().filter(p -> !p.isManaged())
+                .cards(dataApp.baseApp.profileMgr.getProfiles().stream().filter(p -> !p.isManaged())
                         .map(p -> CardChooser.ofCard(p.toString())
                                 .graphic(MaterialIcon.PLAYLIST_ADD.graphic())
                                 .userData(p).get())
@@ -163,7 +163,7 @@ class ProfileEditor extends DialogPane {
             }
         }
         //
-        dialog.initOwner(dataApp.basedApp.getPrimaryStage());
+        dialog.initOwner(dataApp.baseApp.getPrimaryStage());
         dialog.setOnShown(evt -> {
             FxHelper.runThread(1000, () -> {
                 if (treeView.getRoot().getChildren().isEmpty()) {

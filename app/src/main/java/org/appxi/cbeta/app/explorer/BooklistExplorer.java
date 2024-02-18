@@ -12,8 +12,8 @@ import org.appxi.cbeta.Book;
 import org.appxi.cbeta.app.DataApp;
 import org.appxi.cbeta.app.event.BookEvent;
 import org.appxi.cbeta.app.event.GenericEvent;
-import org.appxi.cbeta.app.event.ProgressEvent;
 import org.appxi.cbeta.app.reader.BookXmlReader;
+import org.appxi.cbeta.app.search.IndexingEvent;
 import org.appxi.event.Event;
 import org.appxi.javafx.app.AppEvent;
 import org.appxi.javafx.app.search.SearcherEvent;
@@ -51,21 +51,20 @@ public class BooklistExplorer extends WorkbenchPartController.SideView {
         final Button btnProfile = new Button("书单");
         btnProfile.getStyleClass().addAll("flat");
         btnProfile.setTooltip(new Tooltip("打开书单"));
-        btnProfile.setOnAction(event -> dataApp.basedApp.selectProfile());
+        btnProfile.setOnAction(event -> dataApp.baseApp.selectProfile());
         //
         final Button btnEditProfile = MaterialIcon.EDIT_NOTE.flatButton();
         btnEditProfile.setTooltip(new Tooltip("编辑当前书单"));
         btnEditProfile.setDisable(!dataApp.profile.isManaged());
         btnEditProfile.setOnAction(event -> dataApp.editProfile());
         //
-        app.eventBus.addEventHandler(ProgressEvent.INDEXING, event -> {
-            if (event.isFinished()) {
-                btnProfile.setDisable(false);
-                btnEditProfile.setDisable(!dataApp.profile.isManaged());
-            } else {
-                if (!btnProfile.isDisabled()) btnProfile.setDisable(true);
-                if (!btnEditProfile.isDisabled()) btnEditProfile.setDisable(true);
-            }
+        dataApp.eventBus.addEventHandler(IndexingEvent.START, event -> {
+            btnProfile.setDisable(true);
+            btnEditProfile.setDisable(true);
+        });
+        dataApp.eventBus.addEventHandler(IndexingEvent.STOP, event -> {
+            btnProfile.setDisable(false);
+            btnEditProfile.setDisable(!dataApp.profile.isManaged());
         });
         //
         final Button btnSearch = MaterialIcon.SEARCH.flatButton();

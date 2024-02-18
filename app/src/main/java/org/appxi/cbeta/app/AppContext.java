@@ -4,7 +4,6 @@ import javafx.scene.input.DataFormat;
 import org.appxi.cbeta.BookMap;
 import org.appxi.cbeta.Bookcase;
 import org.appxi.cbeta.TripitakaMap;
-import org.appxi.prefs.Preferences;
 import org.appxi.prefs.UserPrefs;
 import org.appxi.smartcn.convert.ChineseConvertors;
 import org.appxi.smartcn.pinyin.PinyinHelper;
@@ -19,20 +18,17 @@ public abstract class AppContext {
     static BookMap bookMap;
     static TripitakaMap tripitakaMap;
 
-    static void setupBookcase(Bookcase bookcase, Preferences config) {
+    static void setupBookcase(Bookcase bookcase) {
         try {
-            // 尝试优先使用绿色版数据
+            // 尝试优先使用绿色版数据，如果在bookcase.zip目录存在$dataDirName时
             final Path bookcaseDir = Path.of(bookcase.getPath()).getParent().resolve(AppLauncher.dataDirName);
             if (Files.exists(bookcaseDir) && Files.isDirectory(bookcaseDir) && Files.isWritable(bookcaseDir)) {
-                // 如果是App内置或便携版数据源，则不更新全局配置
-                if (null != config) {
-                    config.save();
-                }
                 workspace = bookcaseDir;
             } else {
                 workspace = UserPrefs.dataDir();
             }
-        } catch (Throwable ignore) {
+        } catch (Throwable e) {
+            e.printStackTrace();
         }
         //
         AppContext.bookcase = AppContext.bookcase == null ? bookcase : AppContext.bookcase;

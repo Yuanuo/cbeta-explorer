@@ -9,6 +9,7 @@ import javafx.stage.Stage;
 import org.appxi.cbeta.Bookcase;
 import org.appxi.cbeta.Profile;
 import org.appxi.cbeta.ProfileManager;
+import org.appxi.cbeta.app.search.IndexingEvent;
 import org.appxi.dictionary.ui.DictionaryContext;
 import org.appxi.file.FileWatcher;
 import org.appxi.javafx.app.AppEvent;
@@ -34,7 +35,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 public class App extends BootstrapApp {
-    public static final String ID = "smartBooks";
+    public static final String ID = "cbetaExplorer";
     public static final String NAME = "典 · 集";
     public static final String VERSION = "23.12.03";
 
@@ -68,6 +69,8 @@ public class App extends BootstrapApp {
         DictionaryContext.setupDirectories(this);
         //
         SpringConfig.setup(this);
+        //
+        eventBus.addEventHandler(IndexingEvent.STOP, event -> openedProfiles.values().forEach(dataApp -> dataApp.indexedManager.reload()));
     }
 
     @Override

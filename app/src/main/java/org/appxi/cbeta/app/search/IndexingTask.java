@@ -13,7 +13,6 @@ import org.appxi.cbeta.app.DataApp;
 import org.appxi.cbeta.app.DataContext;
 import org.appxi.cbeta.app.SpringConfig;
 import org.appxi.cbeta.app.dao.PiecesRepository;
-import org.appxi.cbeta.app.event.ProgressEvent;
 import org.appxi.event.EventHandler;
 import org.appxi.holder.BoolHolder;
 import org.appxi.holder.IntHolder;
@@ -29,21 +28,26 @@ import java.util.Map;
 import java.util.Optional;
 
 record IndexingTask(DataApp dataApp) implements Runnable {
+    static final String[] cbetaProfiles = new String[]{"bulei", "simple", "advance"};
+
     @Override
     public void run() {
-        final PiecesRepository repository = SpringConfig.getBean(PiecesRepository.class);
-        if (null == repository) return;
-
         final BoolHolder breaking = new BoolHolder(false);
         final EventHandler<AppEvent> handleEventToBreaking = event -> breaking.value = true;
-        dataApp.eventBus.addEventHandler(AppEvent.STOPPING, handleEventToBreaking);
-        dataApp.eventBus.fireEvent(new ProgressEvent(ProgressEvent.INDEXING, -1, 1, ""));
         try {
+            dataApp.eventBus.addEventHandler(AppEvent.STOPPING, handleEventToBreaking);
+            dataApp.eventBus.addEventHandler(AppEvent.STOPPING, handleEventToBreaking);
+            dataApp.eventBus.fireEvent(new IndexingEvent(IndexingEvent.START));
+            //
+            final PiecesRepository repository = SpringConfig.getBean(PiecesRepository.class);
+            if (null == repository) return;
+            //
             running(repository, breaking);
         } finally {
             // unbind
             dataApp.eventBus.removeEventHandler(AppEvent.STOPPING, handleEventToBreaking);
-            dataApp.eventBus.fireEvent(new ProgressEvent(ProgressEvent.INDEXING, 1, 1, ""));
+            dataApp.eventBus.removeEventHandler(AppEvent.STOPPING, handleEventToBreaking);
+            dataApp.eventBus.fireEvent(new IndexingEvent(IndexingEvent.STOP));
         }
     }
 
@@ -54,13 +58,13 @@ record IndexingTask(DataApp dataApp) implements Runnable {
         boolean updated = false;
 
         // 更新默认书单
-        if (!profile.isManaged() && StringHelper.indexOf(profile.id(), "bulei", "simple", "advance")) {
+        if (!profile.isManaged() && StringHelper.indexOf(profile.id(), cbetaProfiles)) {
             repository.deleteAllByProjects(profile.id());
 
             final BookList<TreeItem<Book>> mainBooks, simpleBooks, advanceBooks;
-            mainBooks = new DataContext.BookListTree(bookMap, dataApp.basedApp.profileMgr.getProfile("bulei"));
-            simpleBooks = new DataContext.BookListTree(bookMap, dataApp.basedApp.profileMgr.getProfile("simple"));
-            advanceBooks = new DataContext.BookListTree(bookMap, dataApp.basedApp.profileMgr.getProfile("advance"));
+            mainBooks = new DataContext.BookListTree(bookMap, dataApp.baseApp.profileMgr.getProfile("bulei"));
+            simpleBooks = new DataContext.BookListTree(bookMap, dataApp.baseApp.profileMgr.getProfile("simple"));
+            advanceBooks = new DataContext.BookListTree(bookMap, dataApp.baseApp.profileMgr.getProfile("advance"));
 
             final IntHolder step = new IntHolder(0);
             final IntHolder steps = new IntHolder(1);
@@ -107,12 +111,24 @@ record IndexingTask(DataApp dataApp) implements Runnable {
                         if (!BaseApp.productionMode)
                             e.printStackTrace();
                     }
-                    dataApp.eventBus.fireEvent(new ProgressEvent(ProgressEvent.INDEXING, step.value, steps.value, book.title));
+                    dataApp.eventBus.fireEvent(new IndexingEvent(IndexingEvent.STATUS, step.value, steps.value, book.title));
                 });
                 updated = true;
             } catch (RuntimeException e) {
                 if (breaking.value)
                     e.printStackTrace();
+            }
+            if (updated) {
+                for (String p : cbetaProfiles) {
+                    if (p.equals(profile.id())) {
+                        continue;
+                    }
+                    Profile pp = dataApp.baseApp.profileMgr.getProfile(p);
+                    if (null != pp) {
+                        IndexedManager idxMgr = new IndexedManager(dataApp.baseApp.bookcase, pp);
+                        idxMgr.saveIndexedVersions();
+                    }
+                }
             }
         } else if (!profile.isManaged()) {
             repository.deleteAllByProjects(profile.id());
@@ -152,7 +168,7 @@ record IndexingTask(DataApp dataApp) implements Runnable {
                         if (!BaseApp.productionMode)
                             e.printStackTrace();
                     }
-                    dataApp.eventBus.fireEvent(new ProgressEvent(ProgressEvent.INDEXING, step.value, steps.value, book.title));
+                    dataApp.eventBus.fireEvent(new IndexingEvent(IndexingEvent.STATUS, step.value, steps.value, book.title));
                 });
                 updated = true;
             } catch (RuntimeException e) {
@@ -162,7 +178,7 @@ record IndexingTask(DataApp dataApp) implements Runnable {
         } else if (profile.isManaged()) {
             repository.deleteAllByProjects(profile.id());
 
-            final Profile basedProfile = dataApp.basedApp.profileMgr.getProfile(profile.template());
+            final Profile basedProfile = dataApp.baseApp.profileMgr.getProfile(profile.template());
             final String basedProfileId = basedProfile.id();
             final BookList<TreeItem<Book>> basedBooks = new DataContext.BookListTree(bookMap, basedProfile);
 
@@ -200,7 +216,7 @@ record IndexingTask(DataApp dataApp) implements Runnable {
                         if (!BaseApp.productionMode)
                             e.printStackTrace();
                     }
-                    dataApp.eventBus.fireEvent(new ProgressEvent(ProgressEvent.INDEXING, step.value, steps.value, book.title));
+                    dataApp.eventBus.fireEvent(new IndexingEvent(IndexingEvent.STATUS, step.value, steps.value, book.title));
                 });
                 updated = true;
             } catch (RuntimeException e) {

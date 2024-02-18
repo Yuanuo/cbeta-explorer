@@ -33,7 +33,6 @@ import org.appxi.cbeta.Period;
 import org.appxi.cbeta.app.DataApp;
 import org.appxi.cbeta.app.SpringConfig;
 import org.appxi.cbeta.app.dao.PiecesRepository;
-import org.appxi.cbeta.app.event.ProgressEvent;
 import org.appxi.event.EventHandler;
 import org.appxi.holder.BoolHolder;
 import org.appxi.holder.StringHolder;
@@ -76,7 +75,8 @@ import static org.appxi.cbeta.app.AppContext.DND_ITEM;
 
 class SearcherController extends WorkbenchPartController.MainView {
     static final int PAGE_SIZE = 10;
-    final EventHandler<ProgressEvent> handleEventOnIndexingToBlocking = this::handleEventOnIndexingToBlocking;
+    final EventHandler<IndexingEvent> handleEventOnIndexingRunning = this::handleEventOnIndexingRunning;
+    final EventHandler<IndexingEvent> handleEventOnIndexingStop = this::handleEventOnIndexingStop;
 
     public final DataApp dataApp;
 
@@ -157,7 +157,8 @@ class SearcherController extends WorkbenchPartController.MainView {
         viewport.getChildren().addAll(splitPane, enterView);
 
         //
-        app.eventBus.addEventHandler(ProgressEvent.INDEXING, handleEventOnIndexingToBlocking);
+        dataApp.eventBus.addEventHandler(IndexingEvent.STATUS, handleEventOnIndexingRunning);
+        dataApp.eventBus.addEventHandler(IndexingEvent.STOP, handleEventOnIndexingStop);
         //
         app.eventBus.addEventHandler(HanLang.Event.CHANGED, event -> {
             filterTabs.getTabs().forEach(t -> {
@@ -176,7 +177,7 @@ class SearcherController extends WorkbenchPartController.MainView {
 
     private ProgressLayer indexingProgressLayer;
 
-    private void handleEventOnIndexingToBlocking(ProgressEvent event) {
+    private void handleEventOnIndexingRunning(IndexingEvent event) {
         FxHelper.runLater(() -> {
             if (null == indexingProgressLayer) {
                 indexingProgressLayer = new ProgressLayer();
@@ -191,7 +192,11 @@ class SearcherController extends WorkbenchPartController.MainView {
             }
             indexingProgressLayer.indicator.setProgress((double) event.step / event.steps);
             indexingProgressLayer.message.setText(event.message);
-            if (event.isFinished()) {
+        });
+    }
+    private void handleEventOnIndexingStop(IndexingEvent event) {
+        FxHelper.runLater(() -> {
+            if (null != indexingProgressLayer) {
                 indexingProgressLayer.hide();
                 indexingProgressLayer = null;
             }
@@ -208,7 +213,8 @@ class SearcherController extends WorkbenchPartController.MainView {
     @Override
     public void inactiveViewport(boolean closing) {
         if (closing) {
-            app.eventBus.removeEventHandler(ProgressEvent.INDEXING, handleEventOnIndexingToBlocking);
+            dataApp.eventBus.removeEventHandler(IndexingEvent.STATUS, handleEventOnIndexingRunning);
+            dataApp.eventBus.removeEventHandler(IndexingEvent.STOP, handleEventOnIndexingStop);
             resultView.deinitialize();
         }
     }
@@ -226,7 +232,7 @@ class SearcherController extends WorkbenchPartController.MainView {
     }
 
     void search(String text) {
-        if (null == text)
+        if (null == text || null != indexingProgressLayer)
             return;
         if (null != enterView) {
             FxHelper.runLater(() -> {

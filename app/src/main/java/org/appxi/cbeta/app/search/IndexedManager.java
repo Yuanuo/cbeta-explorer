@@ -1,7 +1,7 @@
-package org.appxi.cbeta.app.dao;
+package org.appxi.cbeta.app.search;
 
-import org.appxi.cbeta.app.DataApp;
-import org.appxi.cbeta.app.DataContext;
+import org.appxi.cbeta.Bookcase;
+import org.appxi.cbeta.Profile;
 import org.appxi.prefs.Preferences;
 import org.appxi.prefs.PreferencesInProperties;
 import org.appxi.util.DigestHelper;
@@ -14,24 +14,29 @@ public class IndexedManager {
     private static final String BOOKCASE_V = "22.03.17.1";
     private static final String BOOKLIST_V = "21.10.24.1";
 
-    private final DataApp dataApp;
-    private final DataContext dataContext;
-    final Preferences config;
+    final Bookcase bookcase;
+    final Profile profile;
+    Preferences config;
     final Path configFile;
 
-    public IndexedManager(DataApp dataApp) {
-        this.dataApp = dataApp;
-        this.dataContext = dataApp.dataContext;
-        this.configFile = dataApp.workspace.resolve(".idx");
+    public IndexedManager(Bookcase bookcase, Profile profile) {
+        this.bookcase = bookcase;
+        this.profile = profile;
+        //
+        this.configFile = profile.workspace().resolve(".idx");
+        reload();
+    }
+
+    public void reload() {
         this.config = new PreferencesInProperties(configFile);
     }
 
     private String currentBookcaseVersion() {
-        return DigestHelper.crc32c(dataContext.bookcase.getVersion(), BOOKCASE_V);
+        return DigestHelper.crc32c(bookcase.getVersion(), BOOKCASE_V);
     }
 
     private String currentBookListVersion() {
-        return DigestHelper.crc32c(dataContext.profile.version(), BOOKLIST_V);
+        return DigestHelper.crc32c(profile.version(), BOOKLIST_V);
     }
 
     public boolean isBookListIndexable() {

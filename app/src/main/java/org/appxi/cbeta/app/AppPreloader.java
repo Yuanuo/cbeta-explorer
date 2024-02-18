@@ -73,14 +73,14 @@ public class AppPreloader extends Preloader {
                     "bookcase.zip",
             }) {
                 try {
-                    AppContext.setupBookcase(new BookcaseInZip(path), null);
+                    AppContext.setupBookcase(new BookcaseInZip(path));
                     return;
                 } catch (Throwable ignore) {
                 }
             }
             // 3，优先使用已经选择的数据包
             try {
-                AppContext.setupBookcase(new BookcaseInZip(appConfig.getString(key, "")), appConfig);
+                AppContext.setupBookcase(new BookcaseInZip(appConfig.getString(key, "")));
                 return;
             } catch (Throwable ignore) {
             }
@@ -128,8 +128,9 @@ public class AppPreloader extends Preloader {
                     try {
                         String path = selected.getAbsolutePath();
                         BookcaseInZip bookcase = new BookcaseInZip(path);
+                        AppContext.setupBookcase(bookcase);
                         appConfig.setProperty(key, path);
-                        AppContext.setupBookcase(bookcase, appConfig);
+                        appConfig.save();
                         return;
                     } catch (Throwable ignore) {
                     }
@@ -144,8 +145,9 @@ public class AppPreloader extends Preloader {
                     if (!path.endsWith(".zip")) {
                         try {
                             BookcaseInDir bookcase = new BookcaseInDir(path);
+                            AppContext.setupBookcase(bookcase);
                             appConfig.setProperty(key, path);
-                            AppContext.setupBookcase(bookcase, appConfig);
+                            appConfig.save();
                             return;
                         } catch (Throwable ignore) {
                         }
@@ -159,8 +161,9 @@ public class AppPreloader extends Preloader {
                     try {
                         String path = selected.getAbsolutePath();
                         BookcaseInDir bookcase = new BookcaseInDir(path);
+                        AppContext.setupBookcase(bookcase);
                         appConfig.setProperty(key, path);
-                        AppContext.setupBookcase(bookcase, appConfig);
+                        appConfig.save();
                         return;
                     } catch (Throwable ignore) {
                     }

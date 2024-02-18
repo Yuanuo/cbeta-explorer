@@ -11,7 +11,7 @@ import javafx.stage.Stage;
 import org.appxi.cbeta.Book;
 import org.appxi.cbeta.Profile;
 import org.appxi.cbeta.app.dao.DaoService;
-import org.appxi.cbeta.app.dao.IndexedManager;
+import org.appxi.cbeta.app.search.IndexedManager;
 import org.appxi.cbeta.app.event.GenericEvent;
 import org.appxi.cbeta.app.explorer.BookLabelStyle;
 import org.appxi.cbeta.app.explorer.BooklistExplorer;
@@ -54,7 +54,7 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 public class DataApp extends WorkbenchAppWindowed implements WebApp {
-    public final App basedApp;
+    public final App baseApp;
     public final DataContext dataContext;
     public final Profile profile;
     public final StringProperty profileTitle;
@@ -70,13 +70,13 @@ public class DataApp extends WorkbenchAppWindowed implements WebApp {
 
     public final IndexedManager indexedManager;
 
-    public DataApp(App app, DataContext dataContext) {
-        super(dataContext.profile.workspace(), app);
-        this.basedApp = app;
+    public DataApp(App baseApp, DataContext dataContext) {
+        super(dataContext.profile.workspace(), baseApp);
+        this.baseApp = baseApp;
         this.dataContext = dataContext;
         this.profile = dataContext.profile;
         this.hanTextProvider = new HanLang.Provider(config, eventBus);
-        this.indexedManager = new IndexedManager(this);
+        this.indexedManager = new IndexedManager(baseApp.bookcase, profile);
         //
         this.profileTitle = new SimpleStringProperty(profile.title());
         this.title2.bind(Bindings.createStringBinding(() -> "『" + profileTitle.get() + "』", profileTitle));

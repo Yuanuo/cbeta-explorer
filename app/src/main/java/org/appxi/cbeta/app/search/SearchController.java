@@ -13,7 +13,6 @@ import org.appxi.cbeta.app.DataApp;
 import org.appxi.cbeta.app.SpringConfig;
 import org.appxi.cbeta.app.event.BookEvent;
 import org.appxi.cbeta.app.event.GenericEvent;
-import org.appxi.cbeta.app.event.ProgressEvent;
 import org.appxi.holder.BoolHolder;
 import org.appxi.javafx.app.search.SearchedEvent;
 import org.appxi.javafx.app.search.SearcherEvent;
@@ -36,7 +35,7 @@ public class SearchController extends WorkbenchPartController implements Workben
     private final BoolHolder profileReadyState = new BoolHolder();
 
     public final DataApp dataApp;
-    private ProgressEvent indexingEvent;
+    private IndexingEvent indexingEvent;
 
     public SearchController(WorkbenchPane workbench, DataApp dataApp) {
         super(workbench);
@@ -60,7 +59,8 @@ public class SearchController extends WorkbenchPartController implements Workben
                 () -> openSearcherWithText(null, null));
         // 响应SEARCH Event事件，以打开搜索视图
         app.eventBus.addEventHandler(SearcherEvent.SEARCH, event -> openSearcherWithText(event.text, event.data()));
-        app.eventBus.addEventHandler(ProgressEvent.INDEXING, event -> indexingEvent = event.isFinished() ? null : event);
+        dataApp.eventBus.addEventHandler(IndexingEvent.START, event -> indexingEvent = event);
+        dataApp.eventBus.addEventHandler(IndexingEvent.STOP, event -> indexingEvent = null);
         app.eventBus.addEventHandler(GenericEvent.PROFILE_READY, event -> {
             profileReadyState.value = true;
             if (!dataApp.config.getBoolean(PK_START_TYPE, true)) return;
@@ -137,7 +137,7 @@ public class SearchController extends WorkbenchPartController implements Workben
                 searcher.setSearchScopes(RawVal.kv(scope.title, scope.path + "/" + (null == scope.id ? "" : scope.id)));
             }
             if (null != indexingEvent) {
-                searcher.handleEventOnIndexingToBlocking.handle(indexingEvent);
+                searcher.handleEventOnIndexingRunning.handle(indexingEvent);
             } else if (dataApp.indexedManager.isBookListIndexable()) {
                 alertIndexable(searcher);
             } else {
@@ -166,9 +166,9 @@ public class SearchController extends WorkbenchPartController implements Workben
             alert.initOwner(app.getPrimaryStage());
             alert.showAndWait().filter(v -> v == ButtonType.OK)
                     .ifPresentOrElse(v -> {
-                        indexingEvent = new ProgressEvent(ProgressEvent.INDEXING, -1, 1, "处理中。。。");
+                        indexingEvent = new IndexingEvent(IndexingEvent.STATUS, -1, 1, "处理中。。。");
                         if (null != controller) {
-                            controller.handleEventOnIndexingToBlocking.handle(indexingEvent);
+                            controller.handleEventOnIndexingRunning.handle(indexingEvent);
                         }
                         new Thread(new IndexingTask(dataApp)).start();
                     }, () -> {
