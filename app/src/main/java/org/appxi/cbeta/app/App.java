@@ -37,7 +37,7 @@ import java.util.stream.Stream;
 public class App extends BootstrapApp {
     public static final String ID = "cbetaExplorer";
     public static final String NAME = "典 · 集";
-    public static final String VERSION = "23.12.03";
+    public static final String VERSION = "24.02.18";
 
     public final Bookcase bookcase;
 

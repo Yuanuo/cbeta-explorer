@@ -6,7 +6,7 @@
 
     <groupId>org.appxi</groupId>
     <artifactId>cbeta-explorer-packager</artifactId>
-    <version>23.11.30</version>
+    <version>24.02.18</version>
     <packaging>pom</packaging>
 
     <properties>
@@ -58,7 +58,7 @@
                             <!--   /////////////////////////////////////////////////////////////////  -->
                             <vendor>AppXI</vendor>
                             <name>cbetaExplorer</name>
-                            <description>智悲乐藏 ! the CBETA Books Explorer</description>
+                            <description>典 · 集 ! the Smart Books Explorer</description>
                             <identifier>appxi.cbetaExplorer</identifier>
                             <icon>${project.basedir}/win/app.ico</icon>
                             <installDir>cbetaExplorer</installDir>
@@ -131,8 +131,8 @@
                             <compress>2</compress>
                             <!--   /////////////////////////////////////////////////////////////////  -->
                             <vendor>AppXI</vendor>
-                            <name>智悲乐藏</name>
-                            <description>智悲乐藏 ! the CBETA Books Explorer</description>
+                            <name>典 · 集</name>
+                            <description>典 · 集 ! the Smart Books Explorer</description>
                             <identifier>appxi.cbetaExplorer</identifier>
                             <icon>${project.basedir}/linux/app.png</icon>
                             <installDir>/usr</installDir>
@@ -202,8 +202,8 @@
                             <compress>2</compress>
                             <!--   /////////////////////////////////////////////////////////////////  -->
                             <vendor>AppXI</vendor>
-                            <name>智悲乐藏</name>
-                            <description>智悲乐藏 ! the CBETA Books Explorer</description>
+                            <name>典 · 集</name>
+                            <description>典 · 集 ! the Smart Books Explorer</description>
                             <identifier>appxi.cbetaExplorer</identifier>
                             <icon>${project.basedir}/mac/app.icns</icon>
                             <installDir>/Applications</installDir>
@@ -240,7 +240,7 @@
                             <packageType>dmg</packageType>
                             <macOptions>
                                 <macType>dmg</macType>
-                                <bundleName>智悲乐藏</bundleName>
+                                <bundleName>典 · 集</bundleName>
                                 <bundleIdentifier>appxi.cbetaExplorer</bundleIdentifier>
                             </macOptions>
                             <resourceDir>${project.basedir}/mac</resourceDir>
