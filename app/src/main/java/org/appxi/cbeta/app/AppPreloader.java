@@ -74,6 +74,7 @@ public class AppPreloader extends Preloader {
             }) {
                 try {
                     AppContext.setupBookcase(new BookcaseInZip(path));
+                    appConfig.setProperty(key, AppContext.bookcase.getPath());
                     return;
                 } catch (Throwable ignore) {
                 }
