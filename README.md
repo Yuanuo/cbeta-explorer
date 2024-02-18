@@ -1,4 +1,4 @@
-# 智悲乐藏（CBETA Explorer）
+# CBETA Explorer
 
 这是一款基于CBETA经藏数据进行本地阅读、记录、搜索的应用程序！
 
