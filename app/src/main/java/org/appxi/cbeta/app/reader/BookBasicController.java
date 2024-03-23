@@ -2,7 +2,6 @@ package org.appxi.cbeta.app.reader;
 
 import javafx.collections.ObservableList;
 import javafx.scene.control.Accordion;
-import javafx.scene.control.Label;
 import javafx.scene.control.TitledPane;
 import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
@@ -22,7 +21,6 @@ import org.appxi.util.DigestHelper;
 import org.appxi.util.StringHelper;
 import org.appxi.util.ext.HanLang;
 
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.function.Predicate;
@@ -31,7 +29,7 @@ public class BookBasicController extends WorkbenchPartController.SideView {
     final BookXmlReader reader;
 
     Accordion accordion;
-    TitledPane tocPane, volPane, infoPane;
+    TitledPane tocPane, volPane;
     TreeViewEx<Chapter> tocTree, volTree;
 
     TreeItem<Chapter> selectedTreeItem;
@@ -56,8 +54,7 @@ public class BookBasicController extends WorkbenchPartController.SideView {
 
         this.tocPane = new TitledPane("目次", this.tocTree = new TreeViewEx<>());
         this.volPane = new TitledPane("卷次", this.volTree = new TreeViewEx<>());
-        this.infoPane = new TitledPane("信息", new Label("Coming soon..."));
-        this.accordion = new Accordion(this.tocPane, this.volPane, this.infoPane);
+        this.accordion = new Accordion(this.tocPane, this.volPane);
         VBox.setVgrow(this.accordion, Priority.ALWAYS);
 
         viewport.setCenter(this.accordion);
@@ -150,6 +147,12 @@ public class BookBasicController extends WorkbenchPartController.SideView {
                     itm.isLeaf() && chapter.path.equals(itm.getValue().path)
                     && (null == chapter.anchor || chapter.anchor.equals(itm.getValue().anchor));
             detectAvailTarget(targetPane, targetTree, targetTreeItem, findByPath);
+
+            //
+            if (null == targetTreeItem.value) {
+                findByPath = itm -> itm.isLeaf() && chapter.path.equals(itm.getValue().path);
+                detectAvailTarget(targetPane, targetTree, targetTreeItem, findByPath);
+            }
         }
         if (null == targetTreeItem.value) {
             final String lastChapterId = app.recents.getString(book.id + ".chapter", null);
