@@ -662,17 +662,18 @@ public class BookXmlReader extends WebViewerPart.MainView {
             String chapter = null;
             boolean lineOrVolume = true;
             Matcher matcher;
+            searchTerm = searchTerm.split("-", 2)[0];
             if (searchTerm.isBlank()) {
                 if (!result.isEmpty())
                     return;
-            } else if ((matcher = Pattern.compile("p(.*)").matcher(searchTerm)).matches()) {
-                chapter = "p".concat(matcher.group(1));
             } else if ((matcher = Pattern.compile("p\\. (.*)").matcher(searchTerm)).matches()) {
                 String str = matcher.group(1);
                 if (str.matches(".*[a-z]\\d$"))
                     str = str.substring(0, str.length() - 1).concat("0").concat(str.substring(str.length() - 1));
                 str = StringHelper.padLeft(str, 7, '0');
                 chapter = "p".concat(str);
+            } else if ((matcher = Pattern.compile("p(.*)").matcher(searchTerm)).matches()) {
+                chapter = "p".concat(matcher.group(1));
             } else if ((matcher = Pattern.compile("(\\d+)").matcher(searchTerm)).matches()) {
                 chapter = matcher.group(1);
                 lineOrVolume = false;
