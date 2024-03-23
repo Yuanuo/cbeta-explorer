@@ -183,9 +183,9 @@ article {
 
 /*   *************************************************************************************************************    */
 .tippy-box {
-    font-size: 95% !important;
+    font-size: 90% !important;
     max-width: 70rem !important;
-    padding: .5rem 0 0 0;
+    padding: .5rem 0 0 2rem;
 }
 
 .theme-dark .tippy-box {
