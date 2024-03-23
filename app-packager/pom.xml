@@ -6,7 +6,7 @@
 
     <groupId>org.appxi</groupId>
     <artifactId>cbeta-explorer-packager</artifactId>
-    <version>24.02.18</version>
+    <version>24.03.24</version>
     <packaging>pom</packaging>
 
     <properties>
@@ -88,6 +88,17 @@
                                     <resource>
                                         <directory>${project.basedir}/../../appxi-dictionary.dd/3</directory>
                                         <targetPath>dict/3</targetPath>
+                                    </resource>
+                                    <resource>
+                                        <directory>C:\smartExp.CBETA\.cbetaExplorer.pkg</directory>
+                                        <targetPath>./.cbetaExplorer</targetPath>
+                                    </resource>
+                                    <resource>
+                                        <directory>C:\smartExp.CBETA</directory>
+                                        <targetPath>./</targetPath>
+                                        <includes>
+                                            <include>bookcase.zip</include>
+                                        </includes>
                                     </resource>
                                 </resources>
                             </packagingResources>
