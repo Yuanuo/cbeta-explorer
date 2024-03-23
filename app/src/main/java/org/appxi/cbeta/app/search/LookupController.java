@@ -294,6 +294,7 @@ public class LookupController extends WorkbenchPartController implements Workben
             String bookId = null, chapter = null;
             boolean lineOrVolume = true;
             Matcher matcher;
+            searchTerm = searchTerm.split("-", 2)[0];
             if (searchTerm.isBlank()) {
                 if (!result.isEmpty())
                     return;
@@ -416,6 +417,11 @@ public class LookupController extends WorkbenchPartController implements Workben
             this.authorInfo = authorInfo;
             this.extra = extra;
             this.bookVolsLabel = String.valueOf(bookVols).concat("卷");
+        }
+
+        @Override
+        public String toString() {
+            return bookTitle;
         }
     }
 
