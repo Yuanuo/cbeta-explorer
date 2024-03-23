@@ -1,220 +1,89 @@
 package org.appxi.cbeta.app.reader;
 
-import com.j256.ormlite.stmt.Where;
-import javafx.beans.binding.Bindings;
-import javafx.scene.control.ContentDisplay;
-import javafx.scene.control.ContextMenu;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
-import javafx.scene.control.ListView;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.SelectionMode;
-import javafx.scene.input.InputEvent;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
-import org.appxi.book.Chapter;
-import org.appxi.cbeta.Book;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import org.appxi.cbeta.app.DataApp;
-import org.appxi.cbeta.app.dao.Bookdata;
-import org.appxi.cbeta.app.dao.BookdataType;
 import org.appxi.cbeta.app.event.BookEvent;
-import org.appxi.cbeta.app.event.BookdataEvent;
-import org.appxi.holder.BoolHolder;
-import org.appxi.javafx.control.ListViewEx;
-import org.appxi.javafx.helper.FxHelper;
+import org.appxi.event.EventHandler;
+import org.appxi.javafx.settings.DefaultOption;
 import org.appxi.javafx.visual.MaterialIcon;
 import org.appxi.javafx.workbench.WorkbenchPane;
+import org.appxi.javafx.workbench.WorkbenchPart;
 import org.appxi.javafx.workbench.WorkbenchPartController;
-import org.appxi.util.DateHelper;
 
-import java.sql.SQLException;
-import java.util.Collection;
-import java.util.List;
 import java.util.Objects;
-import java.util.function.Consumer;
 
-public abstract class BookDataController extends WorkbenchPartController.SideView {
-    private final BoolHolder activated = new BoolHolder();
+public class BookDataController extends WorkbenchPartController.SideView {
+    private static final String PK_BOOK_DATA_SHOW = "book.data.show";
+
     final DataApp dataApp;
-    public final BookdataType dataType;
-    public final Book filterByBook;
-    protected ListView<Bookdata> listView;
 
-    public BookDataController(String viewId, WorkbenchPane workbench,
-                              DataApp dataApp, BookdataType dataType, Book filterByBook) {
+    public BookDataController(WorkbenchPane workbench, DataApp dataApp) {
         super(workbench);
         this.dataApp = dataApp;
 
-        this.id.set(viewId);
-
-        this.dataType = dataType;
-        this.filterByBook = filterByBook;
+        this.id.set("BOOK-DATA");
+        this.setTitles(null);
+        this.graphic.set(MaterialIcon.IMPORT_CONTACTS.graphic());
     }
+
+    protected void setTitles(String appendText) {
+        String title = "在读";
+        if (null != appendText) {
+            title = title.concat(" ").concat(appendText);
+        }
+        this.title.set(title);
+        this.tooltip.set(title);
+    }
+
+    private BookXmlReader bookXmlReader;
 
     @Override
     public void postConstruct() {
-        // not internal
-        if (null == this.filterByBook) {
-            app.eventBus.addEventHandler(BookdataEvent.CREATED, event -> {
-                if (event.data.type == dataType && activated.value) {
-                    FxHelper.runLater(() -> listView.getItems().add(0, event.data));
+        app.eventBus.addEventHandler(BookEvent.VIEW, event -> {
+            this.bookXmlReader = null;// always reset
+            final WorkbenchPart mainView = workbench.getSelectedMainViewPart();
+            if (mainView instanceof BookXmlReader bookXmlReader1) {
+                setTitles(dataApp.hanTextToShow(bookXmlReader1.book.title));
+                if (null != this.getViewport()) {
+                    this.getViewport().setCenter(bookXmlReader1.sideViews);
+                } else this.bookXmlReader = bookXmlReader1;
+
+                if (dataApp.config.getBoolean(PK_BOOK_DATA_SHOW, false)) {
+                    workbench.selectSideTool(id.get());
                 }
-            });
-
-            app.eventBus.addEventHandler(BookdataEvent.REMOVED, event -> {
-                if (event.data.type == dataType) {
-                    FxHelper.runLater(() -> listView.getItems().remove(event.data));
-                }
-            });
-        }
-    }
-
-    @Override
-    protected void createViewport(BorderPane viewport) {
-        super.createViewport(viewport);
-        //
-        if (null != this.filterByBook)
-            viewport.setTop(null);
-
-        this.listView = new ListViewEx<>(this::handleOnEnterOrDoubleClickAction);
-        this.listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        viewport.setCenter(this.listView);
-        //
-        this.listView.setCellFactory(v -> new ListCell<>() {
-            final VBox cardBox;
-            final Label textLabel, timeLabel, bookLabel;
-
-            {
-                textLabel = new Label();
-                textLabel.setWrapText(true);
-
-                timeLabel = new Label(null, MaterialIcon.ACCESS_TIME.graphic());
-                timeLabel.setStyle(timeLabel.getStyle().concat(";-fx-font-size: 80%;-fx-opacity: .65;"));
-
-                // global mode
-                if (null == filterByBook) {
-                    bookLabel = new Label(null, MaterialIcon.LOCATION_ON.graphic());
-                    bookLabel.setStyle(bookLabel.getStyle().concat("-fx-opacity:.75;"));
-                    HBox hBox = new HBox(timeLabel, bookLabel);
-                    hBox.setStyle(hBox.getStyle().concat("-fx-spacing:.5em;"));
-                    cardBox = new VBox(textLabel, hBox);
-                } else {
-                    bookLabel = null;
-                    cardBox = new VBox(textLabel, timeLabel);
-                }
-
-                cardBox.setStyle(cardBox.getStyle().concat("-fx-spacing:.85em;-fx-padding:.5em;"));
-                cardBox.maxWidthProperty().bind(Bindings.createDoubleBinding(
-                        () -> getWidth() - getPadding().getLeft() - getPadding().getRight() - 1,
-                        widthProperty(), paddingProperty()));
-
-                setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
-                getStyleClass().add("bookdata-item");
-            }
-
-            Bookdata updatedItem;
-
-            @Override
-            protected void updateItem(Bookdata item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty) {
-                    updatedItem = null;
-                    setText(null);
-                    setGraphic(null);
-                    return;
-                }
-                if (item == updatedItem)
-                    return;//
-                updatedItem = item;
-                textLabel.setText(item.data);
-                timeLabel.setText(DateHelper.format(item.updateAt));
-                if (null == filterByBook && null != bookLabel) {
-                    Book book = dataApp.dataContext.getBook(item.book);
-                    bookLabel.setText(null == book ? null : dataApp.hanTextToShow(book.title));
-                }
-                setGraphic(cardBox);
+            } else {
+                setTitles(null);
             }
         });
-
-        //
-        final Consumer<Boolean> removeAction = sel -> {
-            Collection<Bookdata> list = sel ? listView.getSelectionModel().getSelectedItems() : listView.getItems();
-            try {
-                dataApp.daoService.getBookdataDao().delete(list);
-                listView.getItems().removeAll(list);
-            } catch (SQLException t) {
-                app.toastError(t.getMessage());
+        final EventHandler<BookEvent> handleOnBookViewHideOrClose = event -> {
+            bookXmlReader = null;// always reset
+            setTitles(null);
+            if (null != this.getViewport()) {
+                this.getViewport().setCenter(null);
             }
         };
-        final MenuItem removeSel = new MenuItem("删除选中");
-        removeSel.setOnAction(event -> removeAction.accept(true));
-        final MenuItem removeAll = new MenuItem("删除全部");
-        removeAll.setOnAction(event -> removeAction.accept(false));
-
-        this.listView.setContextMenu(new ContextMenu(
-                removeSel, removeAll
-        ));
-    }
-
-    protected void handleOnEnterOrDoubleClickAction(InputEvent inputEvent, Bookdata item) {
-        if (null == item)
-            return;
-        final Book book = dataApp.dataContext.getBook(item.book);
-        final Chapter chapter = book.ofChapter();
-        chapter.path = item.volume;
-        chapter.anchor = item.anchor;
-        if (null != item.anchor)
-            chapter.attr("position.selector", item.anchor);
-        app.eventBus.fireEvent(new BookEvent(BookEvent.OPEN, book, chapter));
+        app.eventBus.addEventHandler(BookEvent.HIDE, handleOnBookViewHideOrClose);
+        app.eventBus.addEventHandler(BookEvent.CLOSE, handleOnBookViewHideOrClose);
+        //
+        dataApp.settings.add(() -> {
+            final BooleanProperty valueProperty = new SimpleBooleanProperty();
+            valueProperty.set(dataApp.config.getBoolean(PK_BOOK_DATA_SHOW, false));
+            valueProperty.addListener((o, ov, nv) -> {
+                if (null == ov || Objects.equals(ov, nv)) return;
+                dataApp.config.setProperty(PK_BOOK_DATA_SHOW, nv);
+            });
+            return new DefaultOption<Boolean>("自动显示在读本书数据", "开：自动显示；关：手动切换", "VIEWER", true)
+                    .setValueProperty(valueProperty);
+        });
     }
 
     @Override
     public void activeViewport(boolean firstTime) {
-        if (firstTime) {
-            activated.value = true;
-            refreshListView();
-        }
-    }
-
-    private void refreshListView() {
-        try {
-            List<Bookdata> list = startQueryWhere()
-                    .queryBuilder().orderBy("updateAt", false)
-                    .query();
-            listView.getItems().setAll(list);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    protected Where<Bookdata, Integer> startQueryWhere() throws Exception {
-        Where<Bookdata, Integer> where = dataApp.daoService.getBookdataDao().queryBuilder()
-                .where().eq("dataType", this.dataType);
-        if (null != this.filterByBook)
-            where = where.and().eq("book", filterByBook.id);
-        return where;
-    }
-
-    public Bookdata findDataByAnchor(String anchor) {
-        return this.listView.getItems().stream().filter(v -> Objects.equals(v.anchor, anchor)).findFirst().orElse(null);
-    }
-
-    public void createData(Bookdata data) {
-        try {
-            dataApp.daoService.getBookdataDao().create(data);
-            this.listView.getItems().add(0, data);
-        } catch (Throwable throwable) {
-            throwable.printStackTrace();
-        }
-    }
-
-    public void removeData(Bookdata data) {
-        try {
-            dataApp.daoService.getBookdataDao().delete(data);
-            this.listView.getItems().remove(data);
-        } catch (Throwable throwable) {
-            throwable.printStackTrace();
+        if (null != bookXmlReader) {
+            setTitles(dataApp.hanTextToShow(bookXmlReader.book.title));
+            this.getViewport().setCenter(bookXmlReader.sideViews);
+            bookXmlReader = null;
         }
     }
 }

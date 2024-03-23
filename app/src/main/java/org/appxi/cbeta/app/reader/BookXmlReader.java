@@ -34,7 +34,7 @@ import org.appxi.cbeta.app.dao.BookdataType;
 import org.appxi.cbeta.app.event.BookEvent;
 import org.appxi.cbeta.app.event.BookdataEvent;
 import org.appxi.cbeta.app.search.LookupLayerEx;
-import org.appxi.dictionary.ui.DictionaryViewer;
+import org.appxi.dictionary.ui.EntryViewer;
 import org.appxi.event.EventHandler;
 import org.appxi.holder.IntHolder;
 import org.appxi.javafx.app.BaseApp;
@@ -191,14 +191,14 @@ public class BookXmlReader extends WebViewerPart.MainView {
         this.sideViews.getTabs().setAll(tab1, tab2, tab3);
         //
         WebViewer.addShortcutKeys(this);
-        DictionaryViewer.addShortcutKeys(this);
+        EntryViewer.addShortcutKeys(this);
         BookXmlReader.addShortcutKeys(this);
 
         WebViewer.addShortcutMenu(this);
-        DictionaryViewer.addShortcutMenu(this);
+        EntryViewer.addShortcutMenu(this);
         BookXmlReader.addShortcutMenu(this);
 
-        DictionaryViewer.addSelectionEvent(this);
+        EntryViewer.addSelectionEvent(this);
 
         //
         webIncludesSupplier = ((WebApp)app).webIncludesSupplier();
@@ -226,7 +226,7 @@ public class BookXmlReader extends WebViewerPart.MainView {
     private void addTool_SideControl() {
         final Button button = MaterialIcon.IMPORT_CONTACTS.flatButton();
         button.setTooltip(new Tooltip("显示本书相关数据（目录、书签等）"));
-        button.setOnAction(event -> workbench.selectSideTool(dataApp.bookDataPlaceController.id.get()));
+        button.setOnAction(event -> workbench.selectSideTool(dataApp.bookDataController.id.get()));
         webPane.getTopBar().addLeft(button);
     }
 
@@ -464,7 +464,7 @@ public class BookXmlReader extends WebViewerPart.MainView {
     private void handleEventToCreateBookData(BookdataType dataType) {
         try {
             final String anchorInfo = webPane.executeScript("getFavoriteAnchorInfo()");
-            BookDataController dataHandle = null;
+            UserDataController dataHandle = null;
             if (dataType == BookdataType.bookmark) {
                 dataHandle = this.bookmarks;
             } else if (dataType == BookdataType.favorite) {
@@ -738,17 +738,17 @@ public class BookXmlReader extends WebViewerPart.MainView {
         final WebPane webPane = webViewer.webPane;
         final BaseApp app = webViewer.app;
         // Ctrl + LEFT
-        webPane.shortcutKeys.put(new KeyCodeCombination(KeyCode.LEFT, KeyCombination.SHORTCUT_DOWN), event -> {
+        webPane.shortcutKeys.put(new KeyCodeCombination(KeyCode.LEFT, KeyCombination.SHORTCUT_DOWN), (event, selection) -> {
             webViewer.gotoPrev.fire();
             event.consume();
         });
         // Ctrl + RIGHT
-        webPane.shortcutKeys.put(new KeyCodeCombination(KeyCode.RIGHT, KeyCombination.SHORTCUT_DOWN), event -> {
+        webPane.shortcutKeys.put(new KeyCodeCombination(KeyCode.RIGHT, KeyCombination.SHORTCUT_DOWN), (event, selection) -> {
             webViewer.gotoNext.fire();
             event.consume();
         });
         // Ctrl + T
-        webPane.shortcutKeys.put(new KeyCodeCombination(KeyCode.T, KeyCombination.SHORTCUT_DOWN), event -> {
+        webPane.shortcutKeys.put(new KeyCodeCombination(KeyCode.T, KeyCombination.SHORTCUT_DOWN), (event, selection) -> {
             webViewer.gotoMenu.fire();
             event.consume();
         });

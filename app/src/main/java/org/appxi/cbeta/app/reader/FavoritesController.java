@@ -6,7 +6,7 @@ import org.appxi.cbeta.app.dao.BookdataType;
 import org.appxi.javafx.visual.MaterialIcon;
 import org.appxi.javafx.workbench.WorkbenchPane;
 
-public class FavoritesController extends BookDataController {
+public class FavoritesController extends UserDataController {
 
     public FavoritesController(WorkbenchPane workbench, DataApp dataApp) {
         this(workbench, dataApp, null);
@@ -15,6 +15,7 @@ public class FavoritesController extends BookDataController {
     public FavoritesController(WorkbenchPane workbench, DataApp dataApp, Book filterByBook) {
         super("FAVORITES", workbench, dataApp, BookdataType.favorite, filterByBook);
 
+        this.title.set("收藏");
         this.tooltip.set("收藏");
         this.graphic.set(MaterialIcon.STAR.graphic());
     }

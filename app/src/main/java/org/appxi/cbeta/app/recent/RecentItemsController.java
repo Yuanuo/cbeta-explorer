@@ -36,6 +36,7 @@ public class RecentItemsController extends WorkbenchPartController.SideView {
         this.dataApp = dataApp;
 
         this.id.set("RECENT");
+        this.title.set("已读");
         this.tooltip.set("已读");
         this.graphic.set(MaterialIcon.HISTORY.graphic());
     }

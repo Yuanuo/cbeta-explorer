@@ -17,7 +17,7 @@ import org.appxi.cbeta.app.explorer.BookLabelStyle;
 import org.appxi.cbeta.app.explorer.BooklistExplorer;
 import org.appxi.cbeta.app.home.AboutController;
 import org.appxi.cbeta.app.home.PreferencesController;
-import org.appxi.cbeta.app.reader.BookDataPlaceController;
+import org.appxi.cbeta.app.reader.BookDataController;
 import org.appxi.cbeta.app.reader.BookmarksController;
 import org.appxi.cbeta.app.reader.FavoritesController;
 import org.appxi.cbeta.app.recent.RecentItemsController;
@@ -64,7 +64,7 @@ public class DataApp extends WorkbenchAppWindowed implements WebApp {
 
     public Preferences recentBooks = new PreferencesInMemory();
     public BooklistExplorer explorer;
-    public BookDataPlaceController bookDataPlaceController;
+    public BookDataController bookDataController;
 
     public DaoService daoService;
 
@@ -86,7 +86,7 @@ public class DataApp extends WorkbenchAppWindowed implements WebApp {
         final List<WorkbenchPart> result = new ArrayList<>();
 
         result.add(explorer = new BooklistExplorer(workbench, this));
-        result.add(bookDataPlaceController = new BookDataPlaceController(workbench, this));
+        result.add(bookDataController = new BookDataController(workbench, this));
         result.add(new RecentItemsController(workbench, this));
         result.add(new RecentViewsController(workbench, this));
         result.add(new FavoritesController(workbench, this));
