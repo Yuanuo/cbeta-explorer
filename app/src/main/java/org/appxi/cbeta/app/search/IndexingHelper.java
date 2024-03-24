@@ -3,6 +3,7 @@ package org.appxi.cbeta.app.search;
 import org.appxi.book.Chapter;
 import org.appxi.cbeta.Book;
 import org.appxi.cbeta.BookDocument;
+import org.appxi.cbeta.BookInfo;
 import org.appxi.cbeta.ChapterTree;
 import org.appxi.cbeta.Tripitaka;
 import org.appxi.cbeta.VolumeDocument;
@@ -57,6 +58,13 @@ abstract class IndexingHelper {
                 buildCategoryPaths(category, "ext/author", "其他");
             } else {
                 book.authors.forEach(v -> buildCategoryPaths(category, "ext/author", v));
+            }
+            //
+            BookInfo bookInfo = BookInfo.data.get(book.id);
+            if (null != bookInfo) {
+                buildCategoryPaths(category, "std/kind", bookInfo.kind.name());
+            } else {
+                buildCategoryPaths(category, "std/kind", BookInfo.Kind.other.name());
             }
         }
     }
@@ -403,6 +411,14 @@ abstract class IndexingHelper {
             category.forEach((k, v) -> {
                 if (k.startsWith("project/")) {
                     piece.projects.add(k.substring(8));
+                } else if (k.startsWith("std/kind")) {
+                    if (piece.title.endsWith("序")) {
+                        piece.categories.add("std/kind/" + BookInfo.Kind.xu.name());
+                    } else if (piece.title.endsWith("目次")) {
+                        piece.categories.add("std/kind/" + BookInfo.Kind.muLu.name());
+                    } else {
+                        piece.categories.add(k);
+                    }
                 } else {
                     piece.categories.add(k);
                 }

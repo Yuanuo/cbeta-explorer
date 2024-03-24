@@ -29,6 +29,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.TextAlignment;
 import javafx.util.Callback;
 import org.appxi.cbeta.Book;
+import org.appxi.cbeta.BookInfo;
 import org.appxi.cbeta.Period;
 import org.appxi.cbeta.app.DataApp;
 import org.appxi.cbeta.app.SpringConfig;
@@ -130,8 +131,9 @@ class SearcherController extends WorkbenchPartController.MainView {
         filterTabs = new TabPane(
                 new FacetsTab("/catalog/", "部类"),
                 new FacetsTab("/period/", "时域"),
-                new FacetsTab("/author/", "作译者"),
+                new FacetsTab("/author/", "人物"),
                 new FacetsTab("/tripitaka/", "藏经"),
+                new FacetsTab("/kind/", "典类"),
                 new ScopesTab("范围"),
                 new UsagesTab());
         filterTabs.getStyleClass().addAll("filters", "compact");
@@ -330,20 +332,30 @@ class SearcherController extends WorkbenchPartController.MainView {
                         continue;
 
                     String label = value.split(k, 2)[1];
-                    String order = PinyinHelper.convert(label, "-", false);
-                    facetListMap.get(k).add(new FacetItem(value, label, count, order));
+                    facetListMap.get(k).add(new FacetItem(value, label, count));
                     break;
                 }
             }));
             facetListMap.forEach((id, list) -> {
                 if ("/period/".equals(id)) {
                     // 按数字年份排序
-                    list.forEach(f -> Optional.ofNullable(Period.valueBy(f.label))
-                            .ifPresentOrElse(p -> f.update(p.toString(), p.start), () -> f.order = 99999));
-                    list.sort(Comparator.comparingInt(v -> (int) v.order));
+                    list.sort(Comparator.comparingInt(v -> {
+                        Period p = Period.valueBy(v.label);
+                        return null != p ? p.start : 99999;
+                    }));
+                } else if ("/kind/".equals(id)) {
+                    list.sort(Comparator.comparingInt(v -> {
+                        try {
+                            BookInfo.Kind k = BookInfo.Kind.valueOf(v.label);
+                            v.label = k.label;
+                            return k.ordinal();
+                        } catch (IllegalArgumentException iae) {
+                            return 99999;
+                        }
+                    }));
                 } else {
                     // 按字符拼音排序
-                    list.sort(Comparator.comparing(v -> String.valueOf(v.order)));
+                    list.sort(Comparator.comparing(v -> PinyinHelper.convert(v.label, "-", false)));
                 }
             });
         }
@@ -459,18 +471,11 @@ class SearcherController extends WorkbenchPartController.MainView {
         final String value;
         String label;
         final long count;
-        Object order;
 
-        FacetItem(String value, String label, long count, Object order) {
+        FacetItem(String value, String label, long count) {
             this.value = value;
             this.label = label;
             this.count = count;
-            this.order = order;
-        }
-
-        void update(String label, Object order) {
-            this.label = label;
-            this.order = order;
         }
 
         @Override

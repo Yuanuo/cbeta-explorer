@@ -11,7 +11,7 @@ import java.nio.file.Path;
 import java.util.Objects;
 
 public class IndexedManager {
-    private static final String BOOKCASE_V = "22.03.17.1";
+    private static final String BOOKCASE_V = "24.03.24.1";
     private static final String BOOKLIST_V = "21.10.24.1";
 
     final Bookcase bookcase;
