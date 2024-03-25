@@ -190,9 +190,22 @@ public class LookupController extends WorkbenchPartController implements Workben
             return str.length() > 3 ? str.substring(3) : str;
         }
 
+        static final Pattern PAT_PASTE_GOTO = Pattern.compile(".*[(](CBETA [^)]+)[)].*");
         @Override
         protected void lookupByKeywords(String lookupText, int resultLimit,
                                         List<LookupResultItem> result, List<String> usedKeywords) {
+            //
+            final String str = textInput.input.getText();
+            if (null != str && str.contains("(CBETA ")) {
+                Matcher m = PAT_PASTE_GOTO.matcher(str);
+                if (m.matches()) {
+                    String s = m.group(1).split(", ", 2)[1];
+                    FxHelper.runThread(30, () -> textInput.input.setText("#" + s));
+                    return;
+                }
+            }
+
+            //
             final String[] arr = lookupText.toLowerCase().split("[ 　]+");
             final LookupWord[] words = Arrays.stream(arr).filter(s -> !s.isBlank()).map(LookupWord::new).toArray(LookupWord[]::new);
             final boolean lookupTextIsBlank = words.length == 0;
