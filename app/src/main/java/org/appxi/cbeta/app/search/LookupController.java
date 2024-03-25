@@ -199,8 +199,8 @@ public class LookupController extends WorkbenchPartController implements Workben
             if (null != str && str.contains("(CBETA ")) {
                 Matcher m = PAT_PASTE_GOTO.matcher(str);
                 if (m.matches()) {
-                    String s = m.group(1).split(", ", 2)[1];
-                    FxHelper.runThread(30, () -> textInput.input.setText("#" + s));
+                    inputQuery = "#" + m.group(1).split(", ", 2)[1];
+                    FxHelper.runThread(30, () -> search(inputQuery));
                     return;
                 }
             }
