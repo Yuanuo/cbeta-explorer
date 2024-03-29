@@ -787,7 +787,7 @@ public class BookXmlReader extends WebViewerPart.MainView {
                         }
 
                         buff.append("：「");
-                        buff.append(refText);
+                        buff.append(refText.replace('「', '『').replace('」', '』'));
                         buff.append("」(CBETA ").append(AppContext.bookcase().getQuarterlyVersion()).append(", ");
                         buff.append(book.library).append(serial);
                         buff.append(", no. ").append(book.number.replaceAll("^0+", "")).append(", p. ");
