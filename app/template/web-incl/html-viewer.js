@@ -52,23 +52,67 @@ $(document).ready(function () {
 });
 
 function getValidSelectionAnchorInfo(outMapOrElseStr = true) {
-    const validSelection = getValidSelection();
-    if (!validSelection) return null;
-    const selected = validSelection.toString().trim();
-    if (selected.length < 1) return null;
-    const startEle = validSelection.baseNode.nodeType === 3
-        ? $(validSelection.baseNode.previousElementSibling || validSelection.baseNode.parentElement)
-        : $(validSelection.baseNode);
-    const endEle = validSelection.anchorNode.nodeType === 3
-        ? $(validSelection.anchorNode.nextElementSibling || validSelection.anchorNode.parentElement)
-        : $(validSelection.anchorNode);
-    let selector = endEle.cssSelectorEx();
-    if (!selector) selector = endEle.parent().cssSelectorEx();
-    if (!selector) return null;
+    const selection = getSelectionReference(true) || {};
     const map = {
-        "anchor": selector,
-        "text": selected,
-        "rangy": rangy.serializeSelection()
+        "anchor": selection.anchor,
+        "text": selection.text
+    };
+    return outMapOrElseStr ? map : JSON.stringify(map);
+}
+
+/* ************************************************************************************************************************************* */
+
+function getSelectionFrag(selectionInfo0) {
+    const selectionInfo = selectionInfo0 || getSelectionInfo();
+    if (!selectionInfo || !selectionInfo.range) return null;
+
+    const $startNode = $(selectionInfo.startNode);
+
+    const docFrag = selectionInfo.range.cloneContents();
+    const $docFrag = $(docFrag);
+    if (docFrag.children.length === 0) {
+        let $b = $startNode.prevUntil('.lb:nth-child(2)');
+        if ($b.length === 0) {
+            $b = $startNode.nextUntil('.lb:nth-child(2)');
+        }
+        let $lb = $b.filter('.lb').first();
+        if ($lb.length === 0) {
+            $lb = $b.filter('.pb').first();
+        }
+        if ($lb.length !== 0) {
+            docFrag.prepend($lb.get(0).cloneNode());
+        }
+    }
+    //
+    let $b = $docFrag.find('.lb');
+    if ($b.length === 0) {
+        $b = $docFrag.find('.pb');
+    }
+    if ($b.length === 0) {
+        $b = $startNode.parentsUntil('[id]:nth-child(2)');
+        if ($b.length > 0) {
+            docFrag.prepend($('<span class="lb" id="' + $b.first().attr('id') + '"></span>').get(0));
+        } else {
+            docFrag.prepend($('<span class="lb" id="_error_"></span>').get(0));
+        }
+    }
+    //
+    return $docFrag;
+}
+
+function getSelectionReference(outMapOrElseStr = false) {
+    const $docFrag = getSelectionFrag();
+    if (!$docFrag) return null;
+
+    let $ref = $docFrag.find('.lb').first();
+    if ($ref.length === 0) {
+        $ref = $docFrag.find('.pb').first();
+    }
+    const refId = '#' + $ref.attr('id');
+    const refText = $docFrag.text();
+    const map = {
+        "anchor" : refId,
+        "text" : refText
     };
     return outMapOrElseStr ? map : JSON.stringify(map);
 }
@@ -114,19 +158,15 @@ function getValidSelectionReferenceInfo(outMapOrElseStr = true) {
             return baseNodeHandled && extentNodeHandled;
         });
     }
-    if (!startLine) return null;
+    const refId = '#' + $ref.attr('id');
+    const refText = $docFrag.text();
+    const refNotes = resultNotes.join('\n');
     const map = {
-        "start": startLine.cssSelectorEx(),
-        "end": endLine.cssSelectorEx(),
-        "text": selected,
-        "rangy": rangy.serializeSelection()
+        "anchor" : refId,
+        "text" : refText,
+        "notes" : refNotes
     };
     return outMapOrElseStr ? map : JSON.stringify(map);
-}
-
-function getValidSelectionReferenceInfo2() {
-    const map = getValidSelectionReferenceInfo(true);
-    return map == null ? "||" : map.start + "|" + map.end + "|" + map.text;
 }
 
 /* ************************************************************************************************************************************* */
