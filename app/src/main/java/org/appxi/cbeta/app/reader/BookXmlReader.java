@@ -768,11 +768,12 @@ public class BookXmlReader extends WebViewerPart.MainView {
                 final StringBuilder buff = new StringBuilder();
                 try {
                     if (book.path.startsWith("toc/")) {
-                        String refInfoStr = webPane.executeScript("getValidSelectionReferenceInfo2()");
-                        String[] refInfo = refInfoStr.split("\\|", 3);
-                        if (refInfo.length < 2) return;
-                        if (refInfo[0].isBlank()) return;
-                        if (refInfo[1].isBlank() || refInfo[1].length() < 6) refInfo[1] = refInfo[0];
+                        String refMapStr = webPane.executeScript("getSelectionReferenceWithNotes()");
+                        JSONObject refMap = new JSONObject(refMapStr);
+
+                        String refAnchor = refMap.getString("anchor");
+                        String refText = refMap.getString("text");
+                        String refNotes = refMap.getString("notes");
 
                         // 《長阿含經》卷1：「玄旨非言不傳」(CBETA 2021.Q3, T01, no. 1, p. 1a5-6)
                         buff.append("《").append(book.title).append("》卷");
@@ -786,26 +787,22 @@ public class BookXmlReader extends WebViewerPart.MainView {
                         }
 
                         buff.append("：「");
-                        buff.append(selection.hasTrims ? selection.trims : "");
+                        buff.append(refText);
                         buff.append("」(CBETA ").append(AppContext.bookcase().getQuarterlyVersion()).append(", ");
                         buff.append(book.library).append(serial);
                         buff.append(", no. ").append(book.number.replaceAll("^0+", "")).append(", p. ");
-                        // span#p0154b10|span#p0154b15
-                        if (refInfo[0].matches("span#p\\d+[a-z]\\d+")) {
-                            String[] refStartInfo = refInfo[0].substring(6).replaceFirst("([a-z])", "@$1@").split("@", 3);
-                            String[] refEndInfo = refInfo[1].substring(6).replaceFirst("([a-z])", "@$1@").split("@", 3);
+                        // #p0154b or #p0154b15
+                        if (refAnchor.matches("#p\\d+[a-z]\\d+")) {
+                            String[] refStartInfo = refAnchor.substring(2).replaceFirst("([a-z])", "@$1@").split("@", 3);
                             buff.append(refStartInfo[0].replaceAll("^0+", ""))
                                     .append(refStartInfo[1])
                                     .append(refStartInfo[2].replaceAll("^0+", ""));
-                            if (!refStartInfo[1].equals(refEndInfo[1]) || !refStartInfo[2].equals(refEndInfo[2])) {
-                                buff.append("-");
-                                if (!refStartInfo[1].equals(refEndInfo[1])) buff.append(refEndInfo[1]);
-                                buff.append(refEndInfo[2].replaceAll("^0+", ""));
-                            }
+                        } else if (refAnchor.startsWith("#p")) {
+                            buff.append(refAnchor.substring(2));
                         } else {
                             buff.append("000");
                         }
-                        buff.append(")");
+                        buff.append(")\n").append(refNotes);
                     } else {
                         final String citeMeta = null == webViewer.htmlMetadata ? null :
                                 webViewer.htmlMetadata.select("meta[library], meta[cite]")

@@ -117,46 +117,22 @@ function getSelectionReference(outMapOrElseStr = false) {
     return outMapOrElseStr ? map : JSON.stringify(map);
 }
 
-function getValidSelectionReferenceInfo(outMapOrElseStr = true) {
-    const validSelection = getValidSelection();
-    if (!validSelection) return null;
-    const selected = validSelection.toString().trim();
-    if (selected.length < 1) return null;
-    let startLine, endLine;
-    if (validSelection.baseNode.nodeType !== 3) {
-        let tmp = $(validSelection.baseNode);
-        if (tmp.is("span.lb[id]")) startLine = tnp;
-    }
-    if (!startLine && validSelection.baseNode.nodeType === 3) {
-        let tmp = $(validSelection.baseNode.previousElementSibling);
-        if (tmp.is("span.lb[id]")) startLine = tmp;
-    }
-    /*  */
-    if (validSelection.baseNode == validSelection.extentNode) endLine = startLine;
-    else {
-        if (validSelection.extentNode.nodeType !== 3) {
-            let tmp = $(validSelection.extentNode);
-            if (tmp.is("span.lb[id]")) endLine = tnp;
-        }
-        if (!endLine && validSelection.extentNode.nodeType === 3) {
-            let tmp = $(validSelection.extentNode.previousElementSibling);
-            if (tmp.is("span.lb[id]")) endLine = tmp;
-        }
-    }
-    /*  */
-    if (!startLine || !endLine) {
-        let baseNodeHandled = false, extentNodeHandled = false;
-        let previousLine;
-        $('body > article').traverse(function (node) {
-            if (node.nodeType !== 3 && $(node).is("span.lb[id]")) previousLine = $(node);
-            if (!baseNodeHandled) baseNodeHandled = validSelection.baseNode === node;
-            if (baseNodeHandled) {
-                if (!startLine) startLine = previousLine;
-                if (!extentNodeHandled) extentNodeHandled = validSelection.extentNode === node;
-                if (extentNodeHandled && !endLine) endLine = previousLine;
-            }
-            return baseNodeHandled && extentNodeHandled;
-        });
+function getSelectionReferenceWithNotes(outMapOrElseStr = false) {
+    const $docFrag = getSelectionFrag();
+    if (!$docFrag) return null;
+
+    let aIdx = 1;
+    const resultNotes = [];
+    $docFrag.find('span.note.mod').each(function() {
+        let aName = '[A' + aIdx++ + ']';
+        resultNotes.push(aName + $(this).attr('data-t'));
+        $(this).text(aName);
+    });
+
+    //
+    let $ref = $docFrag.find('.lb').first();
+    if ($ref.length === 0) {
+        $ref = $docFrag.find('.pb').first();
     }
     const refId = '#' + $ref.attr('id');
     const refText = $docFrag.text();
