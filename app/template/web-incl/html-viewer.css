@@ -185,7 +185,7 @@ article {
 .tippy-box {
     font-size: 90% !important;
     max-width: 70rem !important;
-    padding: .5rem 0 0 2rem;
+    padding: .5rem 0 0 0;
 }
 
 .theme-dark .tippy-box {
