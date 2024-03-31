@@ -768,7 +768,7 @@ public class BookXmlReader extends WebViewerPart.MainView {
                 final StringBuilder buff = new StringBuilder();
                 try {
                     if (book.path.startsWith("toc/")) {
-                        String refMapStr = webPane.executeScript("getSelectionReferenceWithNotes()");
+                        String refMapStr = webPane.executeScript("getSelectionAnchorInfoWithNotes()");
                         JSONObject refMap = new JSONObject(refMapStr);
 
                         String refAnchor = refMap.getString("anchor");

@@ -51,98 +51,57 @@ $(document).ready(function () {
     });
 });
 
-function getValidSelectionAnchorInfo(outMapOrElseStr = true) {
-    const selection = getSelectionReference(true) || {};
-    const map = {
-        "anchor": selection.anchor,
-        "text": selection.text
-    };
-    return outMapOrElseStr ? map : JSON.stringify(map);
-}
-
 /* ************************************************************************************************************************************* */
 
-function getSelectionFrag(selectionInfo0) {
-    const selectionInfo = selectionInfo0 || getSelectionInfo();
-    if (!selectionInfo || !selectionInfo.range) return null;
+function getSelectionWithAnchor() {
+    const selection = getSelection2();
+    if (!selection || !selection.range) return selection;
 
-    const $startNode = $(selectionInfo.startNode);
+    const startNode$ = $(selection.startNode);
 
-    const docFrag = selectionInfo.range.cloneContents();
-    const $docFrag = $(docFrag);
-    if (docFrag.children.length === 0) {
-        let $b = $startNode.prevUntil('.lb:nth-child(2)');
-        if ($b.length === 0) {
-            $b = $startNode.nextUntil('.lb:nth-child(2)');
+    let ref$ = startNode$.prev('.lb');
+    if (ref$.length === 0) {
+        ref$ = startNode$.prev('.pb');
+    }
+    if (ref$.length === 0) {
+        let prt$ = startNode$.parent();
+        if (!prt$.is('[id]')) {
+            ref$ = prt$.prev('.lb');
         }
-        let $lb = $b.filter('.lb').first();
-        if ($lb.length === 0) {
-            $lb = $b.filter('.pb').first();
+        if (ref$.length === 0) {
+            prt$ = prt$.parent();
+            if (!prt$.is('[id]')) {
+                ref$ = prt$.prev('.lb');
+            }
         }
-        if ($lb.length !== 0) {
-            docFrag.prepend($lb.get(0).cloneNode());
-        }
+    }
+    if (ref$.length === 0) {
+        ref$ = startNode$.parents('[id]');
     }
     //
-    let $b = $docFrag.find('.lb');
-    if ($b.length === 0) {
-        $b = $docFrag.find('.pb');
-    }
-    if ($b.length === 0) {
-        $b = $startNode.parentsUntil('[id]:nth-child(2)');
-        if ($b.length > 0) {
-            docFrag.prepend($('<span class="lb" id="' + $b.first().attr('id') + '"></span>').get(0));
-        } else {
-            docFrag.prepend($('<span class="lb" id="_error_"></span>').get(0));
-        }
-    }
+    selection.anchor = '#' + ref$.first().attr('id');
     //
-    return $docFrag;
+    return selection;
 }
 
-function getSelectionReference(outMapOrElseStr = false) {
-    const $docFrag = getSelectionFrag();
-    if (!$docFrag) return null;
-
-    let $ref = $docFrag.find('.lb').first();
-    if ($ref.length === 0) {
-        $ref = $docFrag.find('.pb').first();
+function getSelectionAnchorInfoWithNotes(outMapOrElseStr = false) {
+    const selection = getSelectionWithAnchor();
+    const resultMap = {};
+    if (selection.anchor) {
+        let aIdx = 1;
+        const resultNotes = [];
+        const range2 = selection.range.cloneContents();
+        const range2$ = $(range2);
+        range2$.find('span.note.mod').each(function() {
+            let aName = '[A' + aIdx++ + ']';
+            resultNotes.push(aName + $(this).attr('data-t'));
+            $(this).text(aName);
+        });
+        resultMap.anchor = selection.anchor;
+        resultMap.text = range2$.text();
+        resultMap.notes = resultNotes.join('\n');
     }
-    const refId = '#' + $ref.attr('id');
-    const refText = $docFrag.text();
-    const map = {
-        "anchor" : refId,
-        "text" : refText
-    };
-    return outMapOrElseStr ? map : JSON.stringify(map);
-}
-
-function getSelectionReferenceWithNotes(outMapOrElseStr = false) {
-    const $docFrag = getSelectionFrag();
-    if (!$docFrag) return null;
-
-    let aIdx = 1;
-    const resultNotes = [];
-    $docFrag.find('span.note.mod').each(function() {
-        let aName = '[A' + aIdx++ + ']';
-        resultNotes.push(aName + $(this).attr('data-t'));
-        $(this).text(aName);
-    });
-
-    //
-    let $ref = $docFrag.find('.lb').first();
-    if ($ref.length === 0) {
-        $ref = $docFrag.find('.pb').first();
-    }
-    const refId = '#' + $ref.attr('id');
-    const refText = $docFrag.text();
-    const refNotes = resultNotes.join('\n');
-    const map = {
-        "anchor" : refId,
-        "text" : refText,
-        "notes" : refNotes
-    };
-    return outMapOrElseStr ? map : JSON.stringify(map);
+    return outMapOrElseStr ? resultMap : JSON.stringify(resultMap);
 }
 
 /* ************************************************************************************************************************************* */
