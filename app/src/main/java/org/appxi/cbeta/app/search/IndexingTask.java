@@ -17,7 +17,7 @@ import org.appxi.event.EventHandler;
 import org.appxi.holder.BoolHolder;
 import org.appxi.holder.IntHolder;
 import org.appxi.javafx.app.AppEvent;
-import org.appxi.javafx.app.BaseApp;
+import org.appxi.javafx.helper.FxHelper;
 import org.appxi.javafx.helper.TreeHelper;
 import org.appxi.search.solr.Piece;
 import org.appxi.util.StringHelper;
@@ -108,7 +108,7 @@ record IndexingTask(DataApp dataApp) implements Runnable {
                         }
                     } catch (Throwable e) {
                         // 忽略过程中的任何错误，因为出错原因可能是程序逻辑或数据异常，除了升级或修复外此过程会一直出现错误，在此中断亦无意义
-                        if (!BaseApp.productionMode)
+                        if (FxHelper.isDevMode)
                             e.printStackTrace();
                     }
                     dataApp.eventBus.fireEvent(new IndexingEvent(IndexingEvent.STATUS, step.value, steps.value, book.title));
@@ -165,7 +165,7 @@ record IndexingTask(DataApp dataApp) implements Runnable {
                         }
                     } catch (Throwable e) {
                         // 忽略过程中的任何错误，因为出错原因可能是程序逻辑或数据异常，除了升级或修复外此过程会一直出现错误，在此中断亦无意义
-                        if (!BaseApp.productionMode)
+                        if (FxHelper.isDevMode)
                             e.printStackTrace();
                     }
                     dataApp.eventBus.fireEvent(new IndexingEvent(IndexingEvent.STATUS, step.value, steps.value, book.title));
@@ -213,7 +213,7 @@ record IndexingTask(DataApp dataApp) implements Runnable {
                         }
                     } catch (Throwable e) {
                         // 忽略过程中的任何错误，因为出错原因可能是程序逻辑或数据异常，除了升级或修复外此过程会一直出现错误，在此中断亦无意义
-                        if (!BaseApp.productionMode)
+                        if (FxHelper.isDevMode)
                             e.printStackTrace();
                     }
                     dataApp.eventBus.fireEvent(new IndexingEvent(IndexingEvent.STATUS, step.value, steps.value, book.title));

@@ -1,7 +1,7 @@
 package org.appxi.cbeta.app;
 
 import javafx.application.Application;
-import org.appxi.javafx.app.BaseApp;
+import org.appxi.javafx.helper.FxHelper;
 import org.appxi.prefs.Preferences;
 import org.appxi.prefs.PreferencesInProperties;
 import org.appxi.prefs.UserPrefs;
@@ -26,7 +26,7 @@ public class AppLauncher {
         AppLauncher.dataDirName = null != dataDirName ? dataDirName : ".".concat(App.ID);
         UserPrefs.localDataDirectory(AppLauncher.dataDirName, null);
         // 由于在配置文件中不能使用动态变量作为路径，故在此设置日志文件路径
-        if (BaseApp.productionMode) {
+        if (!FxHelper.isDevMode) {
             final Path logFile = UserPrefs.dataDir().resolve(".logs")
                     .resolve(DateHelper.format3(new Date()).concat(".log"));
             FileHelper.makeParents(logFile);

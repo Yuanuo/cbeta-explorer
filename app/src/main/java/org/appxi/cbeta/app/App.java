@@ -13,8 +13,7 @@ import org.appxi.cbeta.app.search.IndexingEvent;
 import org.appxi.dictionary.ui.DictionaryContext;
 import org.appxi.file.FileWatcher;
 import org.appxi.javafx.app.AppEvent;
-import org.appxi.javafx.app.BaseApp;
-import org.appxi.javafx.app.BootstrapApp;
+import org.appxi.javafx.app.BaseApp2;
 import org.appxi.javafx.control.CardChooser;
 import org.appxi.javafx.helper.FxHelper;
 import org.appxi.javafx.visual.MaterialIcon;
@@ -34,7 +33,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-public class App extends BootstrapApp {
+public class App extends BaseApp2 {
     public static final String ID = "cbetaExplorer";
     public static final String NAME = "典 · 集";
     public static final String VERSION = "24.03.25";
@@ -56,15 +55,15 @@ public class App extends BootstrapApp {
         //
         new Thread(WebPane::preloadLibrary).start();
         //
-        settings.add(() -> visualProvider().optionForFontSmooth());
-        settings.add(() -> visualProvider().optionForFontName());
-        settings.add(() -> visualProvider().optionForFontSize());
-        settings.add(() -> visualProvider().optionForTheme());
-        settings.add(() -> visualProvider().optionForSwatch());
-        settings.add(() -> visualProvider().optionForWebFontName());
-        settings.add(() -> visualProvider().optionForWebFontSize());
-        settings.add(() -> visualProvider().optionForWebPageColor());
-        settings.add(() -> visualProvider().optionForWebTextColor());
+        options.add(() -> visualProvider().optionForFontSmooth());
+        options.add(() -> visualProvider().optionForFontName());
+        options.add(() -> visualProvider().optionForFontSize());
+        options.add(() -> visualProvider().optionForTheme());
+        options.add(() -> visualProvider().optionForSwatch());
+        options.add(() -> visualProvider().optionForWebFontName());
+        options.add(() -> visualProvider().optionForWebFontSize());
+        options.add(() -> visualProvider().optionForWebPageColor());
+        options.add(() -> visualProvider().optionForWebTextColor());
         //
         DictionaryContext.setupDirectories(this);
         //
@@ -107,7 +106,7 @@ public class App extends BootstrapApp {
         }
         //
         String cssByOS = "desktop@" + OSVersions.osName.toLowerCase().replace(" ", "") + ".css";
-        if (BaseApp.productionMode) {
+        if (!FxHelper.isDevMode) {
             Optional.ofNullable(App.class.getResource("app_desktop.css"))
                     .ifPresent(v -> primaryStage.getScene().getStylesheets().add(v.toExternalForm()));
             Optional.ofNullable(App.class.getResource("app_" + cssByOS))
@@ -166,7 +165,7 @@ public class App extends BootstrapApp {
     }
 
     @Override
-    protected List<URL> getAppIcons() {
+    public List<URL> getAppIcons() {
         return Stream.of("256")
                 .map(s -> App.class.getResource("icon-" + s + ".png"))
                 .filter(Objects::nonNull)

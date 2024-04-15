@@ -11,9 +11,9 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import org.appxi.cbeta.BookcaseInDir;
 import org.appxi.cbeta.BookcaseInZip;
-import org.appxi.javafx.app.BaseApp;
 import org.appxi.javafx.control.CardChooser;
 import org.appxi.javafx.helper.FontFaceHelper;
+import org.appxi.javafx.helper.FxHelper;
 import org.appxi.javafx.visual.MaterialIcon;
 import org.appxi.javafx.visual.Swatch;
 import org.appxi.javafx.visual.Theme;
@@ -66,7 +66,7 @@ public class AppPreloader extends Preloader {
             // 1，优先使用App集成数据包
             // 2，优先使用当前目录下的数据包
             for (String path : new String[]{
-                    BaseApp.appDir().resolve("bookcase.zip").toString(),
+                    FxHelper.appDir().resolve("bookcase.zip").toString(),
                     "../cbeta.zip",
                     "../bookcase.zip",
                     "cbeta.zip",

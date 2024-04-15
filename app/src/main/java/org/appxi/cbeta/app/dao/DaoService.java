@@ -7,7 +7,7 @@ import com.j256.ormlite.logger.Level;
 import com.j256.ormlite.logger.Logger;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
-import org.appxi.javafx.app.BaseApp;
+import org.appxi.javafx.helper.FxHelper;
 import org.appxi.util.StringHelper;
 
 import java.nio.file.Path;
@@ -20,7 +20,7 @@ public class DaoService {
     private String databaseUrl = "";
 
     public DaoService(Path dataDir) {
-        if (BaseApp.productionMode)
+        if (!FxHelper.isDevMode)
             Logger.setGlobalLogLevel(Level.WARNING);
         databaseUrl = StringHelper.concat("jdbc:h2:", dataDir.resolve("db"), ";database_to_upper=false");
     }

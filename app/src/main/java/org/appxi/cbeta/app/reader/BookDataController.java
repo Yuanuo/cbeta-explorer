@@ -66,7 +66,7 @@ public class BookDataController extends WorkbenchPartController.SideView {
         app.eventBus.addEventHandler(BookEvent.HIDE, handleOnBookViewHideOrClose);
         app.eventBus.addEventHandler(BookEvent.CLOSE, handleOnBookViewHideOrClose);
         //
-        dataApp.settings.add(() -> {
+        dataApp.options.add(() -> {
             final BooleanProperty valueProperty = new SimpleBooleanProperty();
             valueProperty.set(dataApp.config.getBoolean(PK_BOOK_DATA_SHOW, false));
             valueProperty.addListener((o, ov, nv) -> {

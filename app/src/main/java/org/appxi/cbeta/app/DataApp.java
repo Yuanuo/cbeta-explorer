@@ -11,7 +11,6 @@ import javafx.stage.Stage;
 import org.appxi.cbeta.Book;
 import org.appxi.cbeta.Profile;
 import org.appxi.cbeta.app.dao.DaoService;
-import org.appxi.cbeta.app.search.IndexedManager;
 import org.appxi.cbeta.app.event.GenericEvent;
 import org.appxi.cbeta.app.explorer.BookLabelStyle;
 import org.appxi.cbeta.app.explorer.BooklistExplorer;
@@ -22,14 +21,13 @@ import org.appxi.cbeta.app.reader.BookmarksController;
 import org.appxi.cbeta.app.reader.FavoritesController;
 import org.appxi.cbeta.app.recent.RecentItemsController;
 import org.appxi.cbeta.app.recent.RecentViewsController;
+import org.appxi.cbeta.app.search.IndexedManager;
 import org.appxi.cbeta.app.search.LookupController;
 import org.appxi.cbeta.app.search.SearchController;
 import org.appxi.cbeta.app.widget.WidgetsController;
 import org.appxi.dictionary.ui.DictionaryContext;
 import org.appxi.dictionary.ui.DictionaryController;
 import org.appxi.file.FileWatcher;
-import org.appxi.javafx.app.BaseApp;
-import org.appxi.javafx.app.WorkbenchAppWindowed;
 import org.appxi.javafx.app.web.WebApp;
 import org.appxi.javafx.app.web.WebViewer;
 import org.appxi.javafx.control.ProgressLayer;
@@ -38,6 +36,7 @@ import org.appxi.javafx.settings.DefaultOption;
 import org.appxi.javafx.visual.VisualEvent;
 import org.appxi.javafx.workbench.WorkbenchPane;
 import org.appxi.javafx.workbench.WorkbenchPart;
+import org.appxi.javafx.workbench.WorkbenchApp2;
 import org.appxi.prefs.Preferences;
 import org.appxi.prefs.PreferencesInMemory;
 import org.appxi.smartcn.convert.ChineseConvertors;
@@ -53,7 +52,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-public class DataApp extends WorkbenchAppWindowed implements WebApp {
+public class DataApp extends WorkbenchApp2 implements WebApp {
     public final App baseApp;
     public final DataContext dataContext;
     public final Profile profile;
@@ -98,6 +97,10 @@ public class DataApp extends WorkbenchAppWindowed implements WebApp {
         result.add(new PreferencesController(workbench, this));
         result.add(new AboutController(workbench));
 
+        if (FxHelper.isDevMode) {
+            result.add(new AppLauncherDev.MaterialIcons(workbench));
+        }
+
         return result;
     }
 
@@ -126,7 +129,7 @@ public class DataApp extends WorkbenchAppWindowed implements WebApp {
         super.showing(primaryStage);
         //
         String cssByOS = "desktop@" + OSVersions.osName.toLowerCase().replace(" ", "") + ".css";
-        if (BaseApp.productionMode) {
+        if (!FxHelper.isDevMode) {
             Optional.ofNullable(App.class.getResource("app_desktop.css"))
                     .ifPresent(v -> primaryStage.getScene().getStylesheets().add(v.toExternalForm()));
             Optional.ofNullable(App.class.getResource("app_" + cssByOS))
@@ -185,7 +188,7 @@ public class DataApp extends WorkbenchAppWindowed implements WebApp {
 
     private void attachSettings() {
         //
-        settings.add(() -> {
+        options.add(() -> {
             final ObjectProperty<BookLabelStyle> valueProperty = new SimpleObjectProperty<>(bookLabelStyle);
             valueProperty.addListener((o, ov, nv) -> {
                 if (null == ov || Objects.equals(ov, nv)) return;
@@ -197,7 +200,7 @@ public class DataApp extends WorkbenchAppWindowed implements WebApp {
                     .setValueProperty(valueProperty);
         });
         //
-        settings.add(() -> FxHelper.optionForHanLang(hanTextProvider, "以 简体/繁体 显示经名标题、阅读视图等经藏数据"));
+        options.add(() -> FxHelper.optionForHanLang(hanTextProvider, "以 简体/繁体 显示经名标题、阅读视图等经藏数据"));
     }
 
     public String formatBookLabel(Book book) {
@@ -247,7 +250,7 @@ public class DataApp extends WorkbenchAppWindowed implements WebApp {
     public Supplier<List<String>> webIncludesSupplier() {
         return () -> {
             List<String> result = WebViewer.getWebIncludeURIs();
-            final Path dir = BaseApp.appDir().resolve("template/web-incl");
+            final Path dir = FxHelper.appDir().resolve("template/web-incl");
             result.addAll(Stream.of("html-viewer.css", "html-viewer.js")
                     .map(s -> dir.resolve(s).toUri().toString())
                     .toList()

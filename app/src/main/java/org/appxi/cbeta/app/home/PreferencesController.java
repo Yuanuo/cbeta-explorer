@@ -40,7 +40,7 @@ public class PreferencesController extends WorkbenchPartController implements Wo
 
     @Override
     public void postConstruct() {
-        app.settings.add(() -> {
+        app.options.add(() -> {
             final Preferences appConfig = AppLauncher.appConfig;
             final String bookcase = appConfig.getString("bookcase", "");
             return new DefaultOption<String>("切换数据源", bookcase, "***数据源", true,
@@ -95,8 +95,8 @@ public class PreferencesController extends WorkbenchPartController implements Wo
     public void activeViewport(boolean firstTime) {
         SettingsPane settingsPane = new SettingsPane();
 
-        dataApp.baseApp.settings.forEach(s -> settingsPane.getOptions().add(s.get()));
-        app.settings.forEach(s -> settingsPane.getOptions().add(s.get()));
+        dataApp.baseApp.options.forEach(s -> settingsPane.getOptions().add(s.get()));
+        app.options.forEach(s -> settingsPane.getOptions().add(s.get()));
 
         final DialogPane dialogPane = new DialogPane() {
             @Override

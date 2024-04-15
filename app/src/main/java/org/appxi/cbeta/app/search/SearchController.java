@@ -98,7 +98,7 @@ public class SearchController extends WorkbenchPartController implements Workben
             app.eventBus.fireEvent(new BookEvent(BookEvent.OPEN, book, chapter));
         });
         //
-        dataApp.settings.add(() -> {
+        dataApp.options.add(() -> {
             final BooleanProperty valueProperty = new SimpleBooleanProperty();
             valueProperty.set(dataApp.config.getBoolean(PK_START_TYPE, true));
             valueProperty.addListener((o, ov, nv) -> {

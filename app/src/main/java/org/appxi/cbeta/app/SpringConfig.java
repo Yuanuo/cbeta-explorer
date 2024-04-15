@@ -6,6 +6,7 @@ import org.apache.solr.client.solrj.request.CoreAdminRequest;
 import org.apache.solr.core.NodeConfig;
 import org.appxi.cbeta.app.event.GenericEvent;
 import org.appxi.javafx.app.BaseApp;
+import org.appxi.javafx.helper.FxHelper;
 import org.appxi.search.solr.Piece;
 import org.appxi.util.FileHelper;
 import org.appxi.util.StringHelper;
@@ -71,7 +72,7 @@ public class SpringConfig {
     @Bean
     SolrClient solrClient() throws Exception {
         final Path solrHome = app.workspace.resolve(".solr");
-        final Path confHome = app.appDir().resolve("template");
+        final Path confHome = FxHelper.appDir().resolve("template");
 
         System.setProperty("solr.dns.prevent.reverse.lookup", "true");
         System.setProperty("solr.install.dir", solrHome.toString());
