@@ -6,7 +6,7 @@
 
     <groupId>org.appxi</groupId>
     <artifactId>cbeta-explorer-packager</artifactId>
-    <version>24.04.15</version>
+    <version>24.04.16</version>
     <packaging>pom</packaging>
 
     <properties>
