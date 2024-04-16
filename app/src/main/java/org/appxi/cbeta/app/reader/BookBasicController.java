@@ -128,6 +128,10 @@ public class BookBasicController extends WorkbenchPartController.SideView {
                     prev.value = itemValue;
                     return false;
                 });
+                // 未找到时，假设在最后一个章节
+                if (null == found.value) {
+                    found.value = prev.value;
+                }
                 if (null != found.value) {
                     chapter.path = found.value.path;
                 }
