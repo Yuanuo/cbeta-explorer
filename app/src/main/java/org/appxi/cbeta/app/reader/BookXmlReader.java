@@ -439,8 +439,6 @@ public class BookXmlReader extends WebViewerPart.MainView {
 
     @Override
     protected void onWebEngineLoadSucceeded() {
-        super.onWebEngineLoadSucceeded();
-
         updateTool_Goto();
         //
         app.eventBus.fireEvent(new BookEvent(BookEvent.VIEW, book));
@@ -458,6 +456,8 @@ public class BookXmlReader extends WebViewerPart.MainView {
                     }
                 }
             });
+            //
+            super.onWebEngineLoadSucceeded();
         });
     }
 
