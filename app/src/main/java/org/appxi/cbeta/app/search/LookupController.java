@@ -69,19 +69,16 @@ public class LookupController extends WorkbenchPartController implements Workben
                 event -> this.lookup(null != event.text ? event.text.strip() : null));
         app.eventBus.addEventHandler(GenericEvent.PROFILE_READY, event -> {
             if (null != lookupLayer) lookupLayer.reset();
-            TreeHelper.walkTree(dataApp.dataContext.booklist().tree(), new TreeHelper.TreeWalker<>() {
+            new Thread(() -> TreeHelper.walkTree(dataApp.dataContext.booklist().tree(), new TreeHelper.TreeWalker<>() {
                 @Override
                 public void visit(TreeItem<Book> treeItem, Book book) {
                     if (null == book || book.id == null || book.path == null || !book.path.startsWith("toc/")) {
                         return;
                     }
-//                        BookHelper.walkTocChaptersByXmlSAX(AppContext.bookcase(), book, (href, text) -> {
-//                            System.out.println(text);
-//                        });
                     // load chapters
                     new ChapterTree(dataApp.dataContext.bookcase, book).getTocChapters();
                 }
-            });
+            })).start();
         });
         // 当显示汉字类型改变时需要同步更新lookupView
         app.eventBus.addEventHandler(HanLang.Event.CHANGED,
