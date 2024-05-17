@@ -67,6 +67,7 @@ public class AppPreloader extends Preloader {
             // 2，优先使用当前目录下的数据包
             for (String path : new String[]{
                     FxHelper.appDir().resolve("bookcase.zip").toString(),
+                    FxHelper.appDir().resolve("cbeta.zip").toString(),
                     "../cbeta.zip",
                     "../bookcase.zip",
                     "cbeta.zip",
