@@ -423,7 +423,7 @@ class SearcherController extends WorkbenchPartController.MainView {
                     .text(locationLabel.value);
             //
             pieceCard.appendElement("div").addClass("authors")
-                    .text(piece.fields.getOrDefault("author_txt_aio", ""));
+                    .text(piece.fields.getOrDefault("author_txt_aio", "其他"));
             //
             Element highlightsDiv = pieceCard.appendElement("div").addClass("hl-items");
             List<HighlightEntry.Highlight> highlights = highlightPage.getHighlights(piece);
