@@ -174,6 +174,10 @@
                                         <directory>${project.basedir}/../../appxi-dictionary.dd/3</directory>
                                         <targetPath>dict/3</targetPath>
                                     </resource>
+                                    <resource>
+                                        <directory>${project.basedir}/../../appxi-cbeta.d1</directory>
+                                        <targetPath>./</targetPath>
+                                    </resource>
                                 </resources>
                             </packagingResources>
                             <!--   /////////////////////////////////////////////////////////////////  -->
