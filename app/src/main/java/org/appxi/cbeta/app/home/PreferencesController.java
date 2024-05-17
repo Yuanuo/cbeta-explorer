@@ -22,6 +22,7 @@ import org.appxi.javafx.workbench.WorkbenchPane;
 import org.appxi.javafx.workbench.WorkbenchPart;
 import org.appxi.javafx.workbench.WorkbenchPartController;
 import org.appxi.prefs.Preferences;
+import org.appxi.util.OSVersions;
 
 import java.io.File;
 
@@ -104,7 +105,9 @@ public class PreferencesController extends WorkbenchPartController implements Wo
                 return null;
             }
         };
-//        dialogPane.setPrefSize(480, 640);
+        if (OSVersions.isLinux) {
+            dialogPane.setPrefSize(540, 720);
+        }
         dialogPane.setContent(settingsPane);
         dialogPane.getButtonTypes().add(ButtonType.OK);
         //

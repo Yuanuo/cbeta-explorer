@@ -18,6 +18,7 @@ import org.appxi.javafx.visual.MaterialIcon;
 import org.appxi.javafx.workbench.WorkbenchPane;
 import org.appxi.javafx.workbench.WorkbenchPart;
 import org.appxi.javafx.workbench.WorkbenchPartController;
+import org.appxi.util.OSVersions;
 
 import java.util.Optional;
 
@@ -111,6 +112,10 @@ public class AboutController extends WorkbenchPartController implements Workbenc
         //
         final Dialog<?> dialog = new Dialog<>();
         dialog.setTitle(title.get());
+        if (OSVersions.isLinux) {
+            dialogPane.setPrefSize(540, 720);
+            dialog.setResizable(true);
+        }
         dialog.setDialogPane(dialogPane);
         dialog.initOwner(app.getPrimaryStage());
         dialog.show();
