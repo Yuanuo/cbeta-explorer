@@ -162,7 +162,7 @@ class SearcherController extends WorkbenchPartController.MainView {
         dataApp.eventBus.addEventHandler(IndexingEvent.STATUS, handleEventOnIndexingRunning);
         dataApp.eventBus.addEventHandler(IndexingEvent.STOP, handleEventOnIndexingStop);
         //
-        app.eventBus.addEventHandler(HanLang.Event.CHANGED, event -> {
+        app.eventBus.addEventHandler(HanLang.CHANGED, event -> {
             filterTabs.getTabs().forEach(t -> {
                 if (t instanceof FacetsTab ft) {
                     ft.listView.refresh();

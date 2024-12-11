@@ -81,7 +81,7 @@ public class LookupController extends WorkbenchPartController implements Workben
             })).start();
         });
         // 当显示汉字类型改变时需要同步更新lookupView
-        app.eventBus.addEventHandler(HanLang.Event.CHANGED,
+        app.eventBus.addEventHandler(HanLang.CHANGED,
                 event -> Optional.ofNullable(this.lookupLayer).ifPresent(LookupLayer::refresh));
     }
 

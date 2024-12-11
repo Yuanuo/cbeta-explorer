@@ -134,7 +134,7 @@ public class RecentItemsController extends WorkbenchPartController.SideView {
             });
             this.getViewport().setCenter(this.treeView);
             //
-            app.eventBus.addEventHandler(HanLang.Event.CHANGED, event -> this.treeView.refresh());
+            app.eventBus.addEventHandler(HanLang.CHANGED, event -> this.treeView.refresh());
         }
 
         final TreeItem<Object> treeRoot = this.treeView.getRoot();

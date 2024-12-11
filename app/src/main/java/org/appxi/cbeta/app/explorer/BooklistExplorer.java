@@ -133,7 +133,7 @@ public class BooklistExplorer extends WorkbenchPartController.SideView {
 //            });
         });
         // 当显示汉字类型改变时需要同步更新treeView
-        app.eventBus.addEventHandler(HanLang.Event.CHANGED,
+        app.eventBus.addEventHandler(HanLang.CHANGED,
                 event -> Optional.ofNullable(this.treeView).ifPresent(TreeView::refresh));
         // 当书名显示风格改变时需要同步更新treeView
         app.eventBus.addEventHandler(GenericEvent.BOOK_LABEL_STYLED,

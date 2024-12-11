@@ -35,6 +35,7 @@ import org.appxi.cbeta.app.event.BookEvent;
 import org.appxi.cbeta.app.event.BookdataEvent;
 import org.appxi.cbeta.app.search.LookupLayerEx;
 import org.appxi.dictionary.ui.EntryViewer;
+import org.appxi.event.Event;
 import org.appxi.event.EventHandler;
 import org.appxi.holder.IntHolder;
 import org.appxi.javafx.app.BaseApp;
@@ -69,7 +70,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class BookXmlReader extends WebViewerPart.MainView {
-    private final EventHandler<HanLang.Event> _onHanLangChanged = event -> {
+    private final EventHandler<Event> _onHanLangChanged = event -> {
         saveUserData();
         chapter = null;
         navigate(null);
@@ -165,14 +166,14 @@ public class BookXmlReader extends WebViewerPart.MainView {
 
     @Override
     public void deinitialize() {
-        app.eventBus.removeEventHandler(HanLang.Event.CHANGED, _onHanLangChanged);
+        app.eventBus.removeEventHandler(HanLang.CHANGED, _onHanLangChanged);
         super.deinitialize();
     }
 
     @Override
     public void initialize() {
         super.initialize();
-        app.eventBus.addEventHandler(HanLang.Event.CHANGED, _onHanLangChanged);
+        app.eventBus.addEventHandler(HanLang.CHANGED, _onHanLangChanged);
         //
         this.addTools();
         //

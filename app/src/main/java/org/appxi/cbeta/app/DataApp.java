@@ -173,7 +173,7 @@ public class DataApp extends WorkbenchApp2 implements WebApp {
             if (null == css) return;
             System.out.println("CSS < " + css);
             if (css.endsWith("web.css")) {
-                visualProvider().eventBus.fireEvent(new VisualEvent(VisualEvent.SET_STYLE, null));
+                visualProvider().eventBus.fireEvent(VisualEvent.SET_STYLE.of());
             } else if (scene.getStylesheets().contains(css)) {
                 final int idx = scene.getStylesheets().indexOf(css);
                 String finalCss = css;

@@ -13,6 +13,7 @@ import org.appxi.cbeta.app.DataApp;
 import org.appxi.cbeta.app.DataContext;
 import org.appxi.cbeta.app.SpringConfig;
 import org.appxi.cbeta.app.dao.PiecesRepository;
+import org.appxi.event.Event;
 import org.appxi.event.EventHandler;
 import org.appxi.holder.BoolHolder;
 import org.appxi.holder.IntHolder;
@@ -33,7 +34,7 @@ record IndexingTask(DataApp dataApp) implements Runnable {
     @Override
     public void run() {
         final BoolHolder breaking = new BoolHolder(false);
-        final EventHandler<AppEvent> handleEventToBreaking = event -> breaking.value = true;
+        final EventHandler<Event> handleEventToBreaking = event -> breaking.value = true;
         try {
             dataApp.eventBus.addEventHandler(AppEvent.STOPPING, handleEventToBreaking);
             dataApp.eventBus.addEventHandler(AppEvent.STOPPING, handleEventToBreaking);

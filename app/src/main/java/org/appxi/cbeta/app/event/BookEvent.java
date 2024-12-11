@@ -6,13 +6,13 @@ import org.appxi.event.Event;
 import org.appxi.event.EventType;
 
 public class BookEvent extends Event {
-    public static final EventType<BookEvent> OPEN = new EventType<>(Event.ANY, "BOOK_OPEN");
+    public static final EventType<BookEvent> OPEN = new EventType<>(Event.ANY);
 
-    public static final EventType<BookEvent> CLOSE = new EventType<>(Event.ANY, "BOOK_CLOSE");
+    public static final EventType<BookEvent> CLOSE = new EventType<>(Event.ANY);
 
-    public static final EventType<BookEvent> VIEW = new EventType<>(Event.ANY, "BOOK_VIEW");
+    public static final EventType<BookEvent> VIEW = new EventType<>(Event.ANY);
 
-    public static final EventType<BookEvent> HIDE = new EventType<>(Event.ANY, "BOOK_HIDE");
+    public static final EventType<BookEvent> HIDE = new EventType<>(Event.ANY);
 
     public final Book book;
     public final Chapter chapter;

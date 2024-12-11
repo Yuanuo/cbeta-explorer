@@ -76,7 +76,7 @@ public class BookBasicController extends WorkbenchPartController.SideView {
             }
         });
         // 当显示汉字类型改变时需要同步更新treeView
-        app.eventBus.addEventHandler(HanLang.Event.CHANGED, event -> this.tocTree.refresh());
+        app.eventBus.addEventHandler(HanLang.CHANGED, event -> this.tocTree.refresh());
     }
 
     void onTreeItemAction(final InputEvent event, final TreeItem<Chapter> treeItem, boolean toc) {

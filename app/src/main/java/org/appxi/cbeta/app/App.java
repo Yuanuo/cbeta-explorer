@@ -36,7 +36,7 @@ import java.util.stream.Stream;
 public class App extends BaseApp2 {
     public static final String ID = "cbetaExplorer";
     public static final String NAME = "典 · 集";
-    public static final String VERSION = "24.05.17";
+    public static final String VERSION = "24.12.12";
 
     public final Bookcase bookcase;
 
@@ -146,7 +146,7 @@ public class App extends BaseApp2 {
             if (null == css) return;
             System.out.println("CSS < " + css);
             if (css.endsWith("web.css")) {
-                visualProvider().eventBus.fireEvent(new VisualEvent(VisualEvent.SET_STYLE, null));
+                visualProvider().eventBus.fireEvent(VisualEvent.SET_STYLE.of());
             } else if (scene.getStylesheets().contains(css)) {
                 final int idx = scene.getStylesheets().indexOf(css);
                 String finalCss = css;

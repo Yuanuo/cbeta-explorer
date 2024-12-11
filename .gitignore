@@ -2,6 +2,7 @@
 /target
 /app/target
 /app-packager/target
+/app-packager2/target
 
 # eclipse
 /.settings

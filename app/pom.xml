@@ -5,7 +5,7 @@
 
 	<groupId>org.appxi</groupId>
 	<artifactId>cbeta-explorer</artifactId>
-	<version>24.05.17</version>
+	<version>24.12.12</version>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
