@@ -19,6 +19,8 @@ import org.appxi.javafx.visual.Swatch;
 import org.appxi.javafx.visual.Theme;
 import org.appxi.javafx.visual.Visual;
 import org.appxi.util.OSVersions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.Optional;
@@ -26,6 +28,7 @@ import java.util.Optional;
 import static org.appxi.cbeta.app.AppLauncher.appConfig;
 
 public class AppPreloader extends Preloader {
+    private static final Logger logger = LoggerFactory.getLogger(AppPreloader.class);
     private static Stage primaryStage;
 
     @Override
@@ -66,25 +69,29 @@ public class AppPreloader extends Preloader {
             // 1，优先使用App集成数据包
             // 2，优先使用当前目录下的数据包
             for (String path : new String[]{
+                    FxHelper.appDir().getParent().resolve("bookcase.zip").toString(),
+                    FxHelper.appDir().getParent().resolve("cbeta.zip").toString(),
                     FxHelper.appDir().resolve("bookcase.zip").toString(),
                     FxHelper.appDir().resolve("cbeta.zip").toString(),
                     "../cbeta.zip",
                     "../bookcase.zip",
-                    "cbeta.zip",
-                    "bookcase.zip",
+                    "./cbeta.zip",
+                    "./bookcase.zip",
             }) {
                 try {
                     AppContext.setupBookcase(new BookcaseInZip(path));
                     appConfig.setProperty(key, AppContext.bookcase.getPath());
                     return;
-                } catch (Throwable ignore) {
+                } catch (Throwable e) {
+                    logger.error("1", e);
                 }
             }
             // 3，优先使用已经选择的数据包
             try {
                 AppContext.setupBookcase(new BookcaseInZip(appConfig.getString(key, "")));
                 return;
-            } catch (Throwable ignore) {
+            } catch (Throwable e) {
+                logger.error("2", e);
             }
             if (!themed) {
                 primaryStage.getScene().getRoot().setStyle("-fx-font-size: 16px;");
