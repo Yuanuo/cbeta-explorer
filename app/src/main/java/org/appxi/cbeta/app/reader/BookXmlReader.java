@@ -55,6 +55,7 @@ import org.appxi.util.ext.Attributes;
 import org.appxi.util.ext.HanLang;
 import org.appxi.util.ext.LookupExpression;
 import org.json.JSONObject;
+import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.nio.file.Path;
@@ -431,6 +432,10 @@ public class BookXmlReader extends WebViewerPart.MainView {
         final String htmlFile = bookDocument.getVolumeHtmlDocument(chapter.path, dataApp.hanTextProvider.get(),
                 body -> {
                     htmlMetadata = body.ownerDocument().head().select("meta").remove();
+                    Element triliumH1 = body.selectFirst("h1[data-trilium-h1]");
+                    if (triliumH1 != null) {
+                        triliumH1.remove();
+                    }
                     return dataApp.hanTextToShow(StringHelper.concat("<body><article>", body.html(), "</article></body>"));
                 },
                 webIncludesSupplier.get().toArray(new String[0])
