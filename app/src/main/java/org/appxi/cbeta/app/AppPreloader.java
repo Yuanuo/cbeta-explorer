@@ -23,6 +23,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 import static org.appxi.cbeta.app.AppLauncher.appConfig;
@@ -63,35 +67,53 @@ public class AppPreloader extends Preloader {
 
     private static boolean themed = false;
 
+    private static Collection<Path> getPortablePaths() {
+        final Collection<Path> result = new ArrayList<>();
+        final Path appDir = FxHelper.appDir();
+        final Path appDirParent = appDir.getParent();
+
+        result.add(appDirParent.resolve("bookcase.zip"));
+        result.add(appDirParent.resolve("cbeta.zip"));
+        result.add(appDir.resolve("bookcase.zip"));
+        result.add(appDir.resolve("cbeta.zip"));
+        if (appDir.getNameCount() > 2) {
+            result.add(appDirParent.getParent().resolve("bookcase.zip"));
+            result.add(appDirParent.getParent().resolve("cbeta.zip"));
+        }
+
+        try {
+            File[] files = appDirParent.toFile().listFiles((dir, name) -> {
+                name = name.toLowerCase();
+                return name.endsWith(".zip") && (name.startsWith("bookcase") || name.startsWith("cbeta"));
+            });
+            if (null != files && files.length > 0) {
+                List.of(files).reversed().forEach(p -> result.add(p.toPath()));
+            }
+        } catch (Exception ignore) {
+        }
+        return result;
+    }
+
     static void setupBookcase(Stage primaryStage) {
         final String key = "bookcase";
         while (true) {
             // 1，优先使用App集成数据包
             // 2，优先使用当前目录下的数据包
-            for (String path : new String[]{
-                    FxHelper.appDir().getParent().resolve("bookcase.zip").toString(),
-                    FxHelper.appDir().getParent().resolve("cbeta.zip").toString(),
-                    FxHelper.appDir().resolve("bookcase.zip").toString(),
-                    FxHelper.appDir().resolve("cbeta.zip").toString(),
-                    "../cbeta.zip",
-                    "../bookcase.zip",
-                    "./cbeta.zip",
-                    "./bookcase.zip",
-            }) {
+            for (Path path : getPortablePaths()) {
                 try {
-                    AppContext.setupBookcase(new BookcaseInZip(path));
+                    AppContext.setupBookcase(new BookcaseInZip(path.toString()));
                     appConfig.setProperty(key, AppContext.bookcase.getPath());
                     return;
                 } catch (Throwable e) {
-                    logger.error("1", e);
+                    logger.error("try portable but {}", e.toString());
                 }
             }
             // 3，优先使用已经选择的数据包
             try {
-                AppContext.setupBookcase(new BookcaseInZip(appConfig.getString(key, "")));
+                AppContext.setupBookcase(new BookcaseInZip(appConfig.getString(key, "never used")));
                 return;
             } catch (Throwable e) {
-                logger.error("2", e);
+                logger.error("try lastUsed but {}", e.toString());
             }
             if (!themed) {
                 primaryStage.getScene().getRoot().setStyle("-fx-font-size: 16px;");
