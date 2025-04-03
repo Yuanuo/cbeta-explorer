@@ -36,7 +36,7 @@ import java.util.stream.Stream;
 public class App extends BaseApp2 {
     public static final String ID = "cbetaExplorer";
     public static final String NAME = "典 · 集";
-    public static final String VERSION = "25.03.20";
+    public static final String VERSION = "25.04.03";
 
     public final Bookcase bookcase;
 

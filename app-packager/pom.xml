@@ -6,7 +6,7 @@
 
     <groupId>org.appxi</groupId>
     <artifactId>cbeta-explorer-packager</artifactId>
-    <version>25.03.20</version>
+    <version>25.04.03</version>
     <packaging>pom</packaging>
 
     <properties>
@@ -89,17 +89,6 @@
                                         <directory>${project.basedir}/../../appxi-dictionary.dd/3</directory>
                                         <targetPath>dict/3</targetPath>
                                     </resource>
-                                    <resource>
-                                        <directory>C:\smartExp.CBETA\.cbetaExplorer.pkg</directory>
-                                        <targetPath>./.cbetaExplorer</targetPath>
-                                    </resource>
-                                    <resource>
-                                        <directory>C:\smartExp.CBETA</directory>
-                                        <targetPath>./</targetPath>
-                                        <includes>
-                                            <include>cbeta.zip</include>
-                                        </includes>
-                                    </resource>
                                 </resources>
                             </packagingResources>
                             <!--   /////////////////////////////////////////////////////////////////  -->
@@ -174,10 +163,6 @@
                                         <directory>${project.basedir}/../../appxi-dictionary.dd/3</directory>
                                         <targetPath>dict/3</targetPath>
                                     </resource>
-                                    <resource>
-                                        <directory>${project.basedir}/../../appxi-cbeta.d1</directory>
-                                        <targetPath>./</targetPath>
-                                    </resource>
                                 </resources>
                             </packagingResources>
                             <!--   /////////////////////////////////////////////////////////////////  -->
@@ -248,10 +233,6 @@
                                     <resource>
                                         <directory>${project.basedir}/../../appxi-dictionary.dd/3</directory>
                                         <targetPath>dict/3</targetPath>
-                                    </resource>
-                                    <resource>
-                                        <directory>${project.basedir}/../../appxi-cbeta.d1</directory>
-                                        <targetPath>./</targetPath>
                                     </resource>
                                 </resources>
                             </packagingResources>
