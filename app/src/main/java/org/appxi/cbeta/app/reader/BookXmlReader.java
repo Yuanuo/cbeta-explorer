@@ -193,14 +193,14 @@ public class BookXmlReader extends WebViewerPart.MainView {
         this.sideViews.getTabs().setAll(tab1, tab2, tab3);
         //
         WebViewer.addShortcutKeys(this);
-        EntryViewer.addShortcutKeys(this);
-        BookXmlReader.addShortcutKeys(this);
+        EntryViewer.addShortcutKeysX(this);
+        BookXmlReader.addShortcutKeysX(this);
 
         WebViewer.addShortcutMenu(this);
-        EntryViewer.addShortcutMenu(this);
-        BookXmlReader.addShortcutMenu(this);
+        EntryViewer.addShortcutMenuX(this);
+        BookXmlReader.addShortcutMenuX(this);
 
-        EntryViewer.addSelectionEvent(this);
+        EntryViewer.addSelectionEventX(this);
 
         //
         webIncludesSupplier = ((WebApp)app).webIncludesSupplier();
@@ -741,7 +741,7 @@ public class BookXmlReader extends WebViewerPart.MainView {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public static void addShortcutKeys(BookXmlReader webViewer) {
+    public static void addShortcutKeysX(BookXmlReader webViewer) {
         final WebPane webPane = webViewer.webPane;
         final BaseApp app = webViewer.app;
         // Ctrl + LEFT
@@ -761,7 +761,7 @@ public class BookXmlReader extends WebViewerPart.MainView {
         });
     }
 
-    public static void addShortcutMenu(BookXmlReader webViewer) {
+    public static void addShortcutMenuX(BookXmlReader webViewer) {
         final WebPane webPane = webViewer.webPane;
         final BaseApp app = webViewer.app;
         //
