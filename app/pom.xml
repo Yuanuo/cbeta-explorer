@@ -5,7 +5,7 @@
 
 	<groupId>org.appxi</groupId>
 	<artifactId>cbeta-explorer</artifactId>
-	<version>25.04.03</version>
+	<version>25.07.30</version>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -38,7 +38,7 @@
 		<dependency>
 			<groupId>org.json</groupId>
 			<artifactId>json</artifactId>
-			<version>[20230813,)</version>
+			<version>20250324</version>
 		</dependency>
 
 		<dependency>
