@@ -34,12 +34,14 @@ import org.appxi.cbeta.Period;
 import org.appxi.cbeta.app.DataApp;
 import org.appxi.cbeta.app.SpringConfig;
 import org.appxi.cbeta.app.dao.PiecesRepository;
+import org.appxi.dictionary.ui.EntryViewer;
 import org.appxi.event.EventHandler;
 import org.appxi.holder.BoolHolder;
 import org.appxi.holder.StringHolder;
 import org.appxi.javafx.app.BaseApp;
 import org.appxi.javafx.app.search.SearchedEvent;
 import org.appxi.javafx.app.web.WebRenderer;
+import org.appxi.javafx.app.web.WebViewer;
 import org.appxi.javafx.control.ListViewEx;
 import org.appxi.javafx.control.ProgressLayer;
 import org.appxi.javafx.helper.FxHelper;
@@ -175,6 +177,8 @@ class SearcherController extends WorkbenchPartController.MainView {
         });
         //
         resultView = new ResultView(dataApp);
+        WebViewer.addShortcutMenu(resultView);
+        EntryViewer.addShortcutMenuX(resultView);
     }
 
     private ProgressLayer indexingProgressLayer;
@@ -332,7 +336,7 @@ class SearcherController extends WorkbenchPartController.MainView {
                         continue;
 
                     String label = value.split(k, 2)[1];
-                    String order = PinyinHelper.convert(label, "-", false);
+                    String order = PinyinHelper.pinyin(label, "-");
                     facetListMap.get(k).add(new FacetItem(value, label, count, order));
                     break;
                 }
