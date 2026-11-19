@@ -2,6 +2,11 @@
 
 这是一款基于CBETA经藏数据进行本地阅读、记录、搜索的应用程序！
 
+> [!IMPORTANT]
+> **本项目已停止更新**，不再修复问题，也不再发布新版本。同样的需求已由新程序 **Smart Library** 继续：本地资料库、全文检索与阅读，支持 Windows / macOS / Linux，另有笔记、脑图、白板和 ZIM 离线资料包。
+>
+> 项目主页：[Yuanuo/smart-library](https://github.com/Yuanuo/smart-library) · 下载：[Releases](https://github.com/Yuanuo/smart-library/releases)
+
 ## 阅读
 ![image](https://user-images.githubusercontent.com/10892032/152895529-09faa134-d9e5-4659-9c65-7ea12e21654f.png)
 
@@ -100,4 +105,16 @@
 而CBETA经藏数据大约每个季度会更新一次，每次更新会涉及到较多内容的修整和变更，建议跟随使用新版本的经藏数据。
 更新新版数据后按程序提示更新书单和索引即可正常使用。
 
+## 项目现状：已停止更新
 
+这个项目诞生于对《大藏经》本地检索和阅读的需要，后来因为技术栈（Java 17 + Solr + JavaFX）和精力所限，维护成本越来越高，已经长期没有更新。与其继续修修补补，不如把同样的需求重写一遍。
+
+新程序 **Smart Library** 是这些工作的延续，用 Tauri + Rust + Tantivy + Svelte 重写：功能更多、体量更轻、启动和搜索更快，并且持续维护。
+
+- **更快、更轻**：全文检索换成 Tantivy，启动即可阅读；不再需要 JVM，也不再需要单独运行 Solr 服务。
+- **跨平台**：Windows、macOS、Linux 分别提供安装包。
+- **资料不变**：原来的 `bookcase.zip` 可以直接绑定使用，不用转换、不必解压；旧版导出的 `.smartlib` 数据包也可以导入。
+- **不止阅读**：多标签与分栏阅读、页内查找、书签与收藏、笔记、脑图、白板、日记、本地词典，以及可按需开启的 AI 助手。
+- **还能接入别的资料**：本地文件夹（Markdown、HTML、PDF、Office 文本）、ZIM 离线百科，与 CBETA 放在同一个工作区里跨库搜索。
+
+迁移只需要在新程序里「添加知识库 → CBETA 数据包」，选同一个 `bookcase.zip` 即可。本仓库保留为只读存档，不再接受功能请求和问题反馈；新问题请到 [smart-library 的 Issues](https://github.com/Yuanuo/smart-library/issues) 提出。
